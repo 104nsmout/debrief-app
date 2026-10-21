@@ -1,0 +1,1236 @@
+<title>Maneuver Debrief</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one-screen phone app on black, camo hero, lime-to-acid gradient for the one primary action */
+:root{
+  --bg:#000000; --surface:#131313; --surface-2:#1B1B1B; --sunk:#242424;
+  --ink:#F4F4F4; --ink-2:#9B9B9B; --line:#2C2C2C;
+  --go:#B6F34A; --on-go:#07130A; --go-soft:#16220C;
+  --warn:#FF8A3D; --on-warn:#1A0D03; --warn-soft:#2A1507; --warn-line:#4A2A12;
+  --grad:linear-gradient(100deg,#9EFD7A 0%,#C7FF4C 52%,#E7F529 100%);
+  --display:'Archivo',system-ui,-apple-system,sans-serif;
+  --body:'Archivo',system-ui,-apple-system,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%}
+#app{min-height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 16px}
+section{flex:1;display:flex;flex-direction:column;min-width:0}
+button{font-family:inherit;font-size:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+h1,h2{margin:0;text-wrap:balance}
+.d{font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:-.2px;line-height:1}
+/* camo field — organic blobs from turbulence, sits behind the hero and the page edge */
+.camo{position:absolute;inset:0;width:100%;height:100%;opacity:.9;pointer-events:none}
+.hero{position:relative;overflow:hidden;border-radius:22px;background:#0A0A0A;border:1px solid var(--line);
+  padding:22px 18px 20px;display:flex;flex-direction:column;gap:14px;isolation:isolate;
+  flex:1 1 auto;min-height:250px;max-height:430px;justify-content:flex-end}
+.hero::after{content:"";position:absolute;inset:auto 0 0;height:66%;z-index:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(10,10,10,0) 0%,rgba(10,10,10,.86) 46%,rgba(10,10,10,.96) 100%)}
+.hero>*:not(.camo){position:relative;z-index:1}
+.wordmark{font-family:var(--display);font-weight:800;font-size:25px;letter-spacing:2.5px;text-transform:uppercase}
+.pill{border:0;border-radius:999px;background:var(--grad);color:#07130A;font-family:var(--display);
+  font-weight:800;text-transform:uppercase;letter-spacing:1.4px;display:flex;align-items:center;justify-content:center;gap:10px;width:100%}
+.circbtn{width:44px;height:44px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);
+  display:flex;align-items:center;justify-content:center}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1px;color:var(--ink-2)}
+.muted{color:var(--ink-2)}
+.row{display:flex;align-items:center;gap:10px;min-width:0}
+.sp{flex-grow:1;min-width:0}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;flex:none}
+.iconbtn{width:44px;height:44px;border:0;background:none;display:flex;align-items:center;justify-content:center;border-radius:10px}
+.iconbtn:hover{background:var(--surface-2)}
+.ghost{border:1.5px solid var(--line);background:none;color:var(--go);border-radius:11px;font-weight:600;min-height:46px;padding:0 14px}
+.ghost:hover{background:var(--surface-2)}
+.link{border:0;background:none;padding:0;color:var(--warn);font-weight:600;font-size:13px;min-height:44px}
+.primary{border:0;border-radius:999px;background:var(--grad);color:#07130A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:100%}
+.primary .big{font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:1.3px;line-height:1}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.card>*+*{border-top:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{padding:7px 11px;border-radius:7px;background:var(--go-soft);color:var(--go);font-family:var(--mono);font-size:13px;font-weight:600}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.note{background:var(--surface-2);border-radius:9px;padding:11px 13px;font-size:13px;color:var(--ink-2)}
+input[type=text],textarea,select{width:100%;box-sizing:border-box;background:var(--surface);color:var(--ink);border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;font-family:var(--body);font-size:16px}
+textarea{resize:vertical;line-height:1.45}
+label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1px;color:var(--ink-2);margin-bottom:5px}
+.field+.field{margin-top:12px}
+.pick{display:flex;align-items:flex-start;gap:11px;padding:11px 12px;background:none;border:0;width:100%;text-align:left;color:inherit}
+.pick input{flex:none;width:21px;height:21px;margin:1px 0 0;accent-color:var(--go)}
+.areahead{background:var(--surface-2);padding:7px 12px;font-family:var(--display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.3px;color:var(--go)}
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;background:var(--sunk);border-radius:10px;padding:4px}
+.seg button{min-height:42px;border:0;border-radius:7px;background:none;font-weight:600;color:var(--ink-2)}
+.seg button[aria-pressed=true]{background:var(--go);color:var(--on-go)}
+.bar{display:grid;gap:4px;flex:none}
+.bar span{height:5px;border-radius:3px;background:var(--sunk)}
+.bar span.done{background:var(--go)}
+.bar span.now{background:var(--ink)}
+.bar span.bad{background:var(--warn)}
+.grades{display:flex;flex-direction:column;gap:12px;margin-top:auto;flex:none}
+.grade{border:0;border-radius:16px;min-height:clamp(128px,19vh,176px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:14px}
+.grade{border-radius:20px}
+.grade .big{font-family:var(--display);font-weight:800;font-size:46px;text-transform:uppercase;letter-spacing:1.2px;line-height:1}
+.grade .sub{font-size:13.5px;font-weight:500}
+.grade.sat{background:var(--grad);color:#07130A}
+.grade.sat .sub{color:#143007;opacity:.75}
+.grade.unsat{background:var(--warn);color:var(--on-warn)}
+.grade.unsat .sub{opacity:.85}
+.utils{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px;flex:none}
+.utils button{min-height:58px;border:1.5px solid var(--line);border-radius:12px;background:none;color:var(--go);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11.5px;font-weight:600;padding:0 2px}
+.utils button:disabled{opacity:.4}
+.whygrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.why{min-height:92px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px;text-align:center}
+.why .n{font-family:var(--display);font-weight:700;font-size:21px;text-transform:uppercase;line-height:1.02;color:var(--ink)}
+.why .lim{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--ink-2)}
+.why[aria-pressed=true]{background:var(--warn);border-color:var(--warn)}
+.why[aria-pressed=true] .n,.why[aria-pressed=true] .lim{color:var(--on-warn)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;flex:none}
+.stat{border-radius:10px;padding:9px 10px}
+.stat .n{font-family:var(--mono);font-size:25px;font-weight:600;line-height:1.1}
+.stat .l{font-size:11px;font-weight:600;letter-spacing:.5px}
+.stat.sat{background:var(--go);color:var(--on-go)}
+.stat.sat .l{color:var(--go-soft)}
+.stat.unsat{background:var(--warn);color:var(--on-warn)}
+.stat.no{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
+.rowitem{display:flex;align-items:center;gap:10px;padding:10px 11px;background:none;border:0;width:100%;text-align:left;color:inherit}
+/* swipe-to-delete row */
+.swipe{position:relative;overflow:hidden;background:var(--warn)}
+.sw-del{position:absolute;right:0;top:0;bottom:0;width:96px;border:0;background:var(--warn);color:var(--on-warn);
+  font-family:var(--display);font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:1px}
+.sw-in{position:relative;background:var(--surface);transform:translateX(0);transition:transform .18s ease;touch-action:pan-y}
+.swipe.open .sw-in{transform:translateX(-96px)}
+.swipe:focus-within .sw-in{transform:translateX(-96px)}
+@media (hover:hover){ .swipe:hover .sw-in{transform:translateX(-96px)} }
+@media (prefers-reduced-motion:reduce){ .sw-in{transition:none} }
+.tag{flex:none;min-width:54px;text-align:center;padding:3px 6px;border-radius:5px;font-family:var(--mono);font-size:11px;font-weight:600}
+.tag.sat{background:var(--go);color:var(--on-go)}
+.tag.unsat{background:var(--warn);color:var(--on-warn)}
+.tag.no{background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line)}
+.scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.stack{display:flex;flex-direction:column;gap:12px}
+.dots{display:flex;gap:5px}
+.dots span{width:14px;height:14px;border-radius:8px;background:var(--go)}
+.dots span.bad{background:var(--warn)}
+.sheet{position:fixed;inset:0;background:rgba(10,12,16,.55);display:flex;align-items:flex-end;justify-content:center;z-index:30;
+  padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom,0px))}
+.sheet .inner{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;width:100%;max-width:488px;
+  max-height:80vh;display:flex;flex-direction:column;min-height:0}
+.sheet .list{overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;margin:0 -16px;padding:0 16px}
+.jr{display:flex;align-items:center;gap:10px;width:100%;text-align:left;color:inherit;background:none;
+  border:0;border-bottom:1px solid var(--line);padding:11px 2px;min-height:56px}
+.jr:last-child{border-bottom:0}
+.jr.now{background:var(--go-soft);border-radius:10px;border-bottom-color:transparent;padding-left:10px;padding-right:10px}
+.jr .nm{display:block;font-size:15px;font-weight:600;line-height:1.25}
+.jr .tl{display:block;font-family:var(--mono);font-size:11px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rep{border-top:3px solid var(--go);background:var(--surface);border-radius:4px;padding:16px}
+.rep h2{font-family:var(--display);font-weight:700;font-size:17px;text-transform:uppercase;letter-spacing:.3px;color:var(--go);border-bottom:1.5px solid var(--go);padding-bottom:3px;margin-top:4px}
+.rep table{width:100%;border-collapse:collapse;font-size:13px}
+.rep th{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.7px;color:var(--ink-2);font-weight:600;padding:6px 10px 6px 0;border-bottom:1px solid var(--line)}
+.rep th:last-child,.rep td:last-child{padding-right:0}
+.rep td{padding:8px 10px 8px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.rep td:first-child{width:38%}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--go);color:var(--on-go);
+  padding:11px 16px;border-radius:11px;font-size:14px;font-weight:600;z-index:40;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+@media (prefers-reduced-motion:no-preference){.toast{animation:pop .18s ease-out}}
+@keyframes pop{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+@media print{
+  body{background:#fff;color:#000}
+  #app{max-width:none;padding:0}
+  .noprint{display:none!important}
+  .rep{border-top:3px solid #1F3A5F;padding:0}
+  .rep h2{color:#1F3A5F;border-color:#1F3A5F}
+}
+</style>
+
+<div id="app">
+
+<!-- HOME -->
+<section id="v-home">
+  <div class="topbar">
+    <div class="row" style="gap:10px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--go)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12h4l2.5-7 3.5 14 3-7h7"/></svg>
+      <span class="wordmark">Debrief</span>
+    </div>
+    <span class="mono" style="font-size:11px;color:var(--ink-2);letter-spacing:.5px" id="homeDate"></span>
+  </div>
+
+  <div class="hero" id="heroBox" style="margin-top:12px">
+    <svg class="camo" preserveAspectRatio="none" viewBox="0 0 400 400" aria-hidden="true">
+      <defs>
+        <filter id="camoF" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.014 0.007" numOctaves="4" seed="7" result="t"/>
+          <feColorMatrix in="t" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.6 0 0 0 -0.70" result="a"/>
+          <feComponentTransfer in="a" result="s"><feFuncA type="table" tableValues="0 0 0.25 0.9 1"/></feComponentTransfer>
+          <feGaussianBlur in="s" stdDeviation="2.6" result="b"/>
+          <feFlood flood-color="#272727" result="f"/>
+          <feComposite in="f" in2="b" operator="in"/>
+        </filter>
+      </defs>
+      <rect width="400" height="400" fill="#0B0B0B"/>
+      <rect width="400" height="400" filter="url(#camoF)"/>
+    </svg>
+
+    <div id="heroIdle">
+      <div class="eyebrow" style="color:var(--go)">READY</div>
+      <h1 class="d" style="font-size:40px;margin-top:8px;max-width:9ch">Grade in the air</h1>
+      <div class="muted" style="font-size:14px;margin-top:8px;max-width:30ch">One tap a maneuver. The debrief writes itself on the ground.</div>
+    </div>
+
+    <button id="resumeBtn" hidden style="border:0;background:none;padding:0;text-align:left;color:inherit;width:100%">
+      <div class="eyebrow" style="color:var(--go)">IN PROGRESS · TAP TO RESUME</div>
+      <h1 class="d" style="font-size:34px;margin-top:8px" id="resumeTitle">—</h1>
+      <div class="muted" style="font-size:13.5px;margin-top:6px" id="resumeSub"></div>
+      <div class="bar" id="resumeBar" style="margin-top:12px"></div>
+    </button>
+  </div>
+
+  <button class="pill" id="newFlightBtn" style="min-height:66px;margin-top:14px;font-size:24px;flex:none">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#07130A" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+    New Flight
+  </button>
+
+  <div id="recentWrap" class="stack" style="margin-top:22px" hidden>
+    <div class="row" style="align-items:baseline">
+      <span class="eyebrow sp">RECENT DEBRIEFS</span>
+      <span class="eyebrow" id="recentCount"></span>
+    </div>
+    <div class="card" id="recentList"></div>
+  </div>
+
+  <div id="emptyHint" class="note" style="margin-top:22px">
+    Set the flight up on the ground, grade each maneuver with one tap in the air, then close out and send the debrief. No signal needed — everything stays on this phone.
+  </div>
+
+  <div class="mono" style="margin-top:auto;padding-top:20px;font-size:10.5px;color:var(--ink-2);letter-spacing:.4px">
+    ACS TOLERANCES · 6C PRIVATE · 8C INSTRUMENT · 7B COMMERCIAL
+  </div>
+</section>
+
+<!-- SETUP -->
+<section id="v-setup" hidden>
+  <div class="topbar">
+    <button class="iconbtn" data-go="home" aria-label="Back to home" style="margin-left:-10px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--go)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h1 class="d sp" style="font-size:27px;color:var(--ink)">New Flight</h1>
+  </div>
+
+  <div class="scroll" style="margin-top:8px">
+    <div class="field"><label class="fl" for="f-student">STUDENT</label><input type="text" id="f-student" autocomplete="off" placeholder="Name"></div>
+    <div class="field"><label class="fl" for="f-aircraft">AIRCRAFT</label><input type="text" id="f-aircraft" autocomplete="off" placeholder="C172S · N7214G"></div>
+    <div class="field">
+      <label class="fl" for="f-course">TASK LIBRARY</label>
+      <select id="f-course">
+        <option value="ppl">Private Pilot — Airplane (ACS-6C)</option>
+        <option value="instrument">Instrument Rating — Airplane (ACS-8C)</option>
+        <option value="commercial">Commercial — Airplane (ACS-7B)</option>
+      </select>
+    </div>
+
+    <div class="row" style="margin-top:18px;align-items:baseline">
+      <span class="eyebrow sp">MANEUVER QUEUE · <span id="pickCount" style="color:var(--warn)">0</span></span>
+      <button class="link" id="clearPicks">Clear</button>
+    </div>
+    <div class="card" id="taskPicker" style="margin-top:8px"></div>
+    <div style="height:12px"></div>
+  </div>
+
+  <button class="primary noprint" id="startBtn" style="min-height:58px;margin-top:12px;flex:none">
+    <span class="big" style="font-size:23px">Start grading</span>
+  </button>
+</section>
+
+<!-- ARMED -->
+<section id="v-armed" hidden>
+  <div class="topbar">
+    <button class="iconbtn" data-go="setup" aria-label="Back to setup" style="margin-left:-10px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--go)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <span class="tag" style="background:var(--go);color:var(--on-go);min-width:0;padding:5px 9px;letter-spacing:.9px">ARMED</span>
+    <span class="sp muted" style="font-size:13px;font-weight:600" id="armedMeta"></span>
+  </div>
+
+  <div style="margin-top:22px;flex:none">
+    <div class="eyebrow">FIRST UP · MANEUVER 1 OF <span id="armedTotal">6</span></div>
+    <h1 class="d" style="font-size:52px;margin-top:6px;color:var(--ink)" id="armedName">—</h1>
+  </div>
+  <div class="chips" style="margin-top:14px;flex:none" id="armedTol"></div>
+  <div class="note" style="margin-top:16px;flex:none">Taxi, depart and get set up. Nothing is recorded until you tap Begin.</div>
+
+  <div class="stack" style="margin-top:auto;flex:none">
+    <div class="eyebrow">THEN</div>
+    <div class="card" id="armedQueue"></div>
+  </div>
+
+  <button class="primary" id="beginBtn" style="min-height:112px;margin-top:14px;flex:none">
+    <span class="big" style="font-size:44px">Begin</span>
+    <span style="font-size:13px;color:var(--go-soft)" id="beginSub"></span>
+  </button>
+</section>
+
+<!-- GRADE -->
+<section id="v-grade" hidden>
+  <div class="topbar">
+    <button id="jumpBtn" style="border:0;background:none;padding:0;min-height:44px;display:flex;align-items:center;gap:7px;color:inherit">
+      <span class="eyebrow" id="gradeCount">MANEUVER 1 OF 6</span>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--go)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <button class="link" id="endEarly">End &amp; close out</button>
+  </div>
+  <div class="bar" id="gradeBar" style="margin-top:2px"></div>
+
+  <div style="margin-top:18px;flex:none">
+    <div class="eyebrow" style="color:var(--go)" id="attemptLabel">ATTEMPT 1</div>
+    <h1 class="d" style="font-size:50px;margin-top:5px;color:var(--ink)" id="gradeName">—</h1>
+  </div>
+  <div class="chips" style="margin-top:12px;flex:none" id="gradeTol"></div>
+  <div id="noteShown" class="note" style="margin-top:12px;flex:none" hidden></div>
+
+  <div class="grades">
+    <button class="grade unsat" data-grade="unsat"><span class="big">Unsat</span><span class="sub">what broke &rarr;</span></button>
+    <button class="grade sat" data-grade="sat"><span class="big">Sat</span><span class="sub">one tap · next maneuver</span></button>
+  </div>
+
+  <div class="utils">
+    <button id="repeatBtn">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 20v-5h5"/></svg>Repeat</button>
+    <button id="noteBtn">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Note</button>
+    <button id="skipBtn">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Not flown</button>
+    <button id="undoBtn">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg>Undo</button>
+  </div>
+</section>
+
+<!-- WHY -->
+<section id="v-why" hidden>
+  <div class="topbar">
+    <button class="iconbtn" id="whyBack" aria-label="Back to grade" style="margin-left:-10px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--go)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <span class="tag unsat" style="min-width:0;padding:5px 9px;letter-spacing:.8px">UNSAT</span>
+    <span class="sp muted" style="font-size:13.5px;font-weight:600" id="whyMeta"></span>
+  </div>
+
+  <div style="margin-top:14px;flex:none">
+    <h1 class="d" style="font-size:44px;color:var(--ink)">What broke?</h1>
+    <div class="muted" style="font-size:13px;margin-top:4px">Tap one, or more than one. The limits are the ACS values for this task.</div>
+  </div>
+
+  <div class="scroll" style="margin-top:14px">
+    <div class="whygrid" id="whyGrid"></div>
+    <div style="height:12px"></div>
+  </div>
+
+  <div class="row" style="margin-top:10px;flex:none;gap:10px">
+    <button class="ghost" id="whyNote" style="flex:none">Add note</button>
+    <button class="primary sp" id="whyDone" style="min-height:58px"><span class="big" style="font-size:22px">Done</span></button>
+  </div>
+</section>
+
+<!-- CLOSE OUT -->
+<section id="v-close" hidden>
+  <div class="topbar">
+    <button class="iconbtn" id="closeBack" aria-label="Back to grading" style="margin-left:-10px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--go)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="sp">
+      <h1 class="d" style="font-size:28px;color:var(--ink)">Close out lesson</h1>
+      <div class="muted" style="font-size:12.5px" id="closeMeta"></div>
+    </div>
+  </div>
+
+  <div class="stats" style="margin-top:12px">
+    <div class="stat sat"><div class="n" id="cSat">0</div><div class="l">SATISFACTORY</div></div>
+    <div class="stat unsat"><div class="n" id="cUnsat">0</div><div class="l">UNSATISFACTORY</div></div>
+    <div class="stat no"><div class="n" id="cNo">0</div><div class="l">NOT FLOWN</div></div>
+  </div>
+
+  <div class="scroll" style="margin-top:10px">
+    <div class="card" id="closeList"></div>
+    <div class="field" style="margin-top:12px">
+      <label class="fl" for="f-summary">YOUR SUMMARY · THE STUDENT READS THIS FIRST</label>
+      <textarea id="f-summary" rows="4" placeholder="Two sentences: the theme of the flight and what to do before the next one."></textarea>
+    </div>
+    <div style="height:10px"></div>
+  </div>
+
+  <button class="primary" id="buildBtn" style="min-height:58px;margin-top:10px;flex:none">
+    <span class="big" style="font-size:23px">Build debrief</span>
+  </button>
+</section>
+
+<!-- DEBRIEF -->
+<section id="v-debrief" hidden>
+  <div class="topbar noprint">
+    <button class="iconbtn" id="debriefBack" aria-label="Back to close out" style="margin-left:-10px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--go)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <span class="eyebrow sp">DEBRIEF</span>
+    <button class="link" id="doneBtn">Finish</button>
+  </div>
+
+  <div class="scroll" style="margin-top:10px">
+    <div class="rep" id="report"></div>
+    <div style="height:12px"></div>
+  </div>
+
+  <div class="row noprint" style="margin-top:10px;flex:none;gap:8px;flex-wrap:wrap">
+    <button class="ghost sp" id="copyBtn" style="flex:1 1 150px">Copy debrief</button>
+    <button class="ghost sp" id="copyLog" style="flex:1 1 150px">Copy logbook</button>
+    <button class="ghost" id="printBtn" style="flex:1 1 110px" hidden>Save PDF</button>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- task libraries: name, ACS tolerance chips, and the "what broke" options ---------- */
+var CAUSE = ["Procedure","Safety or clearing"];
+function T(id,name,tol,why){ return {id:id,name:name,tol:tol,why:why.concat(CAUSE)}; }
+
+var LIB = {
+  ppl: {
+    label:"Private Pilot — Airplane", acs:"FAA-S-ACS-6C", far:"§ 61.107 Flight proficiency",
+    areas:[
+      {name:"III · Airport Operations", tasks:[
+        T("tpat","Traffic Patterns",["ALT ±100","IAS ±10"],["Pattern altitude","Spacing","Wind correction","Radio calls","Traffic scan"])
+      ]},
+      {name:"IV · Takeoffs, Landings & Go-Arounds", tasks:[
+        T("nto","Normal Takeoff & Climb",["Vy +10/−5"],["Centerline","Rotation speed","Climb speed","Crosswind correction"]),
+        T("nldg","Normal Approach & Landing",["1.3 Vso +10/−5","≤400 ft beyond point"],["Touchdown point","Approach speed","Centerline","Flare timing","Crosswind correction"]),
+        T("sfto","Soft-Field Takeoff & Climb",["Vx / Vy +10/−5"],["Back pressure","Lift-off technique","Ground effect","Climb speed"]),
+        T("sfldg","Soft-Field Approach & Landing",["1.3 Vso +10/−5"],["Sink rate at touchdown","Nosewheel","Power management","Approach speed"]),
+        T("shto","Short-Field Takeoff & Max Performance Climb",["Vx +10/−5 to 50 ft","then Vy"],["Runway used","Flap setting","Obstacle speed","Climb speed"]),
+        T("shldg","Short-Field Approach & Landing",["1.3 Vso +10/−5","≤200 ft beyond point"],["Touchdown point","Approach speed","Stabilization","Braking"]),
+        T("slip","Forward Slip to a Landing",["≤400 ft beyond point"],["Slip technique","Airspeed control","Runway alignment","Recovery timing","Touchdown point"]),
+        T("ga","Go-Around / Rejected Landing",["Vx / Vy +10/−5"],["Decision timing","Power and pitch","Configuration sequence","Runway offset"])
+      ]},
+      {name:"V · Performance & Ground Reference", tasks:[
+        T("steep","Steep Turns",["Bank 45° ±5°","ALT ±100","IAS ±10","Rollout ±10°"],["Altitude","Bank angle","Airspeed","Rollout heading","Coordination"]),
+        T("grm","Ground Reference Maneuvers",["ALT ±100","IAS ±10","Entry 600–1,000 AGL"],["Altitude","Wind correction","Ground track","Coordination","Division of attention"])
+      ]},
+      {name:"VI · Navigation", tasks:[
+        T("pilotage","Pilotage & Dead Reckoning",["ALT ±200","HDG ±15°","ETA ±5 min","Within 3 NM"],["Altitude","Heading","Position awareness","ETA accuracy","Chart use"]),
+        T("navsys","Navigation Systems & Radar Services",["ALT ±200","HDG ±15°"],["Tune / ID / verify","Tracking","Altitude","Heading","Automation management"]),
+        T("divert","Diversion",["ALT ±200","HDG ±15°"],["Decision timing","Heading and time estimate","Fuel estimate","Airport selection"]),
+        T("lost","Lost Procedures",["—"],["Recognition","Use of navaids","ATC contact","Fuel planning"])
+      ]},
+      {name:"VII · Slow Flight & Stalls", tasks:[
+        T("slow","Maneuvering During Slow Flight",["ALT ±100","HDG ±10°","IAS +10/−0","Bank ±10°"],["Altitude","Heading","Airspeed","Bank","Stall warning ignored"]),
+        T("postall","Power-Off Stalls",["Bank ≤20°","HDG ±10°","≥1,500 AGL"],["Late recognition","Recovery technique","Altitude loss","Heading","Secondary stall"]),
+        T("ponstall","Power-On Stalls",["Bank ≤20°","HDG ±10°","≥1,500 AGL"],["Late recognition","Recovery technique","Altitude loss","Heading","Secondary stall"])
+      ]},
+      {name:"VIII · Basic Instrument Maneuvers", tasks:[
+        T("bisl","Straight-and-Level Flight",["ALT ±200","HDG ±20°","IAS ±10"],["Altitude","Heading","Airspeed","Scan breakdown","Trim"]),
+        T("biclimb","Constant Airspeed Climbs",["ALT ±200","HDG ±20°","IAS ±10"],["Altitude","Heading","Airspeed","Scan breakdown","Level-off"]),
+        T("bidesc","Constant Airspeed Descents",["ALT ±200","HDG ±20°","IAS ±10"],["Altitude","Heading","Airspeed","Scan breakdown","Level-off"]),
+        T("biturns","Turns to Headings",["ALT ±200","Rollout ±10°","IAS ±10","Standard rate"],["Altitude","Rollout heading","Airspeed","Turn rate","Scan breakdown"]),
+        T("biua","Recovery from Unusual Flight Attitudes",["Within aircraft limits"],["Recognition","Recovery sequence","Overcontrol","Coordination"])
+      ]},
+      {name:"IX · Emergency Operations", tasks:[
+        T("emdesc","Emergency Descent",["Bank 30°–45°","IAS +0/−10","Level-off ALT ±100"],["Airspeed","Bank angle","Configuration","Level-off altitude"]),
+        T("emldg","Emergency Approach & Landing",["Best glide ±10"],["Glide speed","Field selection","Pattern planning","Checklist","Declaring"]),
+        T("malf","Systems & Equipment Malfunctions",["—"],["Recognition","Checklist use","Decision making","Aircraft control"])
+      ]}
+    ]
+  },
+  commercial: {
+    label:"Commercial — Airplane", acs:"FAA-S-ACS-7B", far:"§ 61.127 Flight proficiency",
+    areas:[
+      {name:"III · Airport Operations", tasks:[
+        T("tpat","Traffic Patterns",["ALT ±100","IAS ±10"],["Pattern altitude","Spacing","Wind correction","Radio calls","Traffic scan"])
+      ]},
+      {name:"IV · Takeoffs, Landings & Go-Arounds", tasks:[
+        T("nto","Normal Takeoff & Climb",["Vy ±5"],["Centerline","Rotation speed","Climb speed","Crosswind correction"]),
+        T("nldg","Normal Approach & Landing",["1.3 Vso ±5","≤200 ft beyond point"],["Touchdown point","Approach speed","Centerline","Flare timing","Crosswind correction"]),
+        T("sfto","Soft-Field Takeoff & Climb",["Vx / Vy ±5"],["Back pressure","Lift-off technique","Ground effect","Climb speed"]),
+        T("sfldg","Soft-Field Approach & Landing",["Approach speed ±5"],["Sink rate at touchdown","Nosewheel","Power management","Approach speed"]),
+        T("shto","Short-Field Takeoff",["Vx ±5 to obstacle","then Vy ±5"],["Runway used","Flap setting","Obstacle speed","Climb speed"]),
+        T("shldg","Short-Field Approach & Landing",["Approach speed ±5","≤100 ft beyond point"],["Touchdown point","Approach speed","Stabilization","Braking"]),
+        T("po180","Power-Off 180° Accuracy Landing",["≤200 ft beyond point"],["Touchdown point","Abeam position","Energy management","Excessive slip","Approach speed"]),
+        T("ga","Go-Around / Rejected Landing",["Vy ±5"],["Decision timing","Power and pitch","Configuration sequence","Runway offset"])
+      ]},
+      {name:"V · Performance & Ground Reference", tasks:[
+        T("steep","Steep Turns",["Bank 50° ±5°","ALT ±100","IAS ±10","Rollout ±10°"],["Altitude","Bank angle","Airspeed","Rollout heading","Coordination"]),
+        T("spiral","Steep Spiral",["Bank ≤60°","IAS ±10","Rollout ±10°","≥1,500 AGL"],["Airspeed","Bank angle","Ground track","Rollout heading","Clearing the engine"]),
+        T("chandelle","Chandelles",["Bank ~30°","Rollout ±10° at 180°","≥1,500 AGL"],["Rollout heading","Bank angle","Pitch rate","Airspeed at the top","Coordination"]),
+        T("lazy","Lazy Eights",["ALT ±100 at 180°","IAS ±10","HDG ±10°","Bank ~30° max"],["Altitude at 180°","Airspeed","Heading at 180°","Symmetry","Coordination"]),
+        T("pylons","Eights on Pylons",["Pivotal altitude","No slip or skid"],["Pivotal altitude","Pylon drift","Coordination","Wind correction"])
+      ]},
+      {name:"VI · Navigation", tasks:[
+        T("pilotage","Pilotage & Dead Reckoning",["ALT ±100","HDG ±10°","ETA ±5 min","Within 3 NM"],["Altitude","Heading","Position awareness","ETA accuracy","Chart use"]),
+        T("navsys","Navigation Systems & Radar Services",["ALT ±100","HDG ±10°"],["Tune / ID / verify","Tracking","Altitude","Heading","Automation management"]),
+        T("divert","Diversion",["ALT ±100","HDG ±10°"],["Decision timing","Heading and time estimate","Fuel estimate","Airport selection"]),
+        T("lost","Lost Procedures",["—"],["Recognition","Use of navaids","ATC contact","Fuel planning"])
+      ]},
+      {name:"VII · Slow Flight & Stalls", tasks:[
+        T("slow","Maneuvering During Slow Flight",["ALT ±50","HDG ±10°","IAS +5/−0","Bank ±5°"],["Altitude","Heading","Airspeed","Bank","Stall warning ignored"]),
+        T("postall","Power-Off Stalls",["Bank 20° ±10°","≥1,500 AGL"],["Late recognition","Recovery technique","Altitude loss","Heading","Secondary stall"]),
+        T("ponstall","Power-On Stalls",["Bank 20° ±10°","≥1,500 AGL"],["Late recognition","Recovery technique","Altitude loss","Heading","Secondary stall"]),
+        T("accel","Accelerated Stalls",["45° bank","Entry ≤ Va","≥3,000 AGL"],["Late recognition","Recovery technique","Bank angle","Load factor"])
+      ]},
+      {name:"IX · Emergency Operations", tasks:[
+        T("emdesc","Emergency Descent",["Bank 30°–45°","IAS +0/−10"],["Airspeed","Bank angle","Configuration","Level-off altitude"]),
+        T("emldg","Emergency Approach & Landing",["Best glide ±10"],["Glide speed","Field selection","Pattern planning","Checklist","Declaring"]),
+        T("malf","Systems & Equipment Malfunctions",["—"],["Recognition","Checklist use","Decision making","Aircraft control"])
+      ]}
+    ]
+  },
+  instrument: {
+    label:"Instrument Rating — Airplane", acs:"FAA-S-ACS-8C", far:"§ 61.65(c) Flight proficiency",
+    areas:[
+      {name:"III · ATC Clearances & Holding", tasks:[
+        T("clear","Compliance with ATC Clearances",["ALT ±100","HDG ±10°","IAS ±10"],["Readback","Altitude","Heading","Airspeed","Avionics setup"]),
+        T("hold","Holding Procedures",["ALT ±100","HDG ±10°","IAS ±10","≤¾ CDI"],["Entry","Timing","Wind correction","Altitude","Reporting"])
+      ]},
+      {name:"IV · Flight by Reference to Instruments", tasks:[
+        T("ifr","Instrument Flight — Full Panel",["ALT ±100","HDG ±10°","IAS ±10","Bank ±5°"],["Altitude","Heading","Airspeed","Bank","Scan breakdown","Trim"]),
+        T("partial","Instrument Flight — Partial Panel",["ALT ±100","HDG ±10°","IAS ±10"],["Altitude","Heading","Airspeed","Scan breakdown","Compass turns"]),
+        T("ua","Recovery from Unusual Attitudes",["Within aircraft limits"],["Recognition","Recovery sequence","Overcontrol","Coordination"])
+      ]},
+      {name:"V · Navigation Systems", tasks:[
+        T("intercept","Intercepting & Tracking, DME Arcs",["≤¾ CDI / ±10° RMI","Arc ±1 NM","ALT ±100"],["Intercept angle","Tracking","Arc distance","Station passage","Tune / ID / verify"]),
+        T("dep","Departure, En Route & Arrival",["ALT ±100","HDG ±10°","≤¾ CDI"],["Altitude","Course","Restrictions","Automation management","Briefing"])
+      ]},
+      {name:"VI · Instrument Approaches", tasks:[
+        T("nonprec","Nonprecision Approach",["MDA +100/−0","≤¾ CDI","IAS ±10"],["Course","MDA","Descent planning","MAP timing","Briefing","Configuration"]),
+        T("prec","Precision Approach",["≤¾ lateral & vertical","IAS ±10"],["Localizer","Glideslope","Airspeed","Stabilization","Configuration"]),
+        T("missed","Missed Approach",["ALT ±100","HDG ±10°","≤¾ CDI"],["Prompt initiation","Configuration","Course","ATC communication"]),
+        T("circle","Circling Approach",["MDA +100/−0","Bank ≤30°"],["MDA","Bank angle","Circling area","Descent to land"]),
+        T("ldgapp","Landing from an Approach",["91.175 references"],["Visual references","Descent rate","Centerline","Crosswind correction"])
+      ]},
+      {name:"VII · Emergency Operations", tasks:[
+        T("nocomm","Loss of Communications",["Squawk 7600","91.185"],["Route","Altitude","Timing","Squawk"]),
+        T("ppapp","Approach — Loss of Primary Flight Instruments",["Nonprecision tolerances"],["Course","MDA","Scan breakdown","ATC notification"])
+      ]}
+    ]
+  }
+};
+
+function taskById(libKey,id){
+  var lib=LIB[libKey]; if(!lib) return null;
+  for(var a=0;a<lib.areas.length;a++){
+    var ts=lib.areas[a].tasks;
+    for(var i=0;i<ts.length;i++){ if(ts[i].id===id) return ts[i]; }
+  }
+  return null;
+}
+
+/* ---------- storage ---------- */
+var KEY="debrief.v1";
+var S={ current:null, flights:[], lastLib:null };
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function load(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(raw){ var p=JSON.parse(raw); if(p&&typeof p==="object"){ S.current=p.current||null; S.flights=Array.isArray(p.flights)?p.flights:[]; S.lastLib=p.lastLib||null; } }
+  }catch(e){}
+}
+
+/* ---------- helpers ---------- */
+function $(id){ return document.getElementById(id); }
+function el(tag,cls,txt){ var n=document.createElement(tag); if(cls)n.className=cls; if(txt!=null)n.textContent=txt; return n; }
+function fmtDate(iso){
+  var d=new Date(iso);
+  var m=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return d.getDate()+" "+m[d.getMonth()]+" "+d.getFullYear();
+}
+function toast(msg,undoFn){
+  var t=el("div","toast"); t.appendChild(el("span",null,msg));
+  if(undoFn){
+    var u=el("button",null,"UNDO");
+    u.style.cssText="margin-left:14px;border:0;background:none;padding:0;color:var(--on-go);font-family:var(--mono);"+
+      "font-size:12px;font-weight:600;letter-spacing:1px;text-decoration:underline";
+    u.addEventListener("click",function(){ undoFn(); if(t.parentNode) t.parentNode.removeChild(t); });
+    t.appendChild(u);
+  }
+  document.body.appendChild(t);
+  setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, undoFn?5200:1900);
+}
+
+/* swipe a row left to uncover its Delete; hover or keyboard focus uncovers it too */
+function attachSwipe(wrap){
+  var inner=wrap.querySelector(".sw-in");
+  var x0=0,y0=0,drag=false,dx=0;
+  inner.addEventListener("touchstart",function(e){
+    if(e.touches.length!==1) return;
+    x0=e.touches[0].clientX; y0=e.touches[0].clientY; drag=true; dx=0;
+    inner.style.transition="none";
+  },{passive:true});
+  inner.addEventListener("touchmove",function(e){
+    if(!drag) return;
+    var ddx=e.touches[0].clientX-x0, ddy=e.touches[0].clientY-y0;
+    if(Math.abs(ddy)>Math.abs(ddx)){ drag=false; inner.style.transition=""; inner.style.transform=""; return; }
+    dx=Math.max(Math.min(ddx,0),-96);
+    inner.style.transform="translateX("+dx+"px)";
+  },{passive:true});
+  inner.addEventListener("touchend",function(){
+    if(!drag) return;
+    drag=false; inner.style.transition=""; inner.style.transform="";
+    if(dx<-48) wrap.classList.add("open"); else wrap.classList.remove("open");
+  });
+}
+/* long task names get a smaller display size so the grade buttons never get pushed off screen */
+function fitName(node,name,base){
+  node.textContent=name||"—";
+  var n=(name||"").length;
+  node.style.fontSize=(n>30?base-20:n>20?base-11:base)+"px";
+}
+var VIEWS=["home","setup","armed","grade","why","close","debrief"];
+function show(v){
+  for(var i=0;i<VIEWS.length;i++){ $("v-"+VIEWS[i]).hidden = (VIEWS[i]!==v); }
+  window.scrollTo(0,0);
+  var sc=document.querySelector("#v-"+v+" .scroll"); if(sc) sc.scrollTop=0;
+}
+
+/* entry = one maneuver in this flight */
+function entryResult(e){
+  if(e.skipped) return "no";
+  if(!e.attempts.length) return null;
+  var anyUnsat=false;
+  for(var i=0;i<e.attempts.length;i++){ if(e.attempts[i].result==="unsat") anyUnsat=true; }
+  return anyUnsat ? "unsat" : "sat";
+}
+function lastAttempt(e){ return e.attempts.length? e.attempts[e.attempts.length-1] : null; }
+function allWhy(e){
+  var seen={},out=[];
+  for(var i=0;i<e.attempts.length;i++){
+    var w=e.attempts[i].why||[];
+    for(var j=0;j<w.length;j++){ if(!seen[w[j]]){ seen[w[j]]=1; out.push(w[j]); } }
+  }
+  return out;
+}
+function allNotes(e){
+  var out=[];
+  for(var i=0;i<e.attempts.length;i++){ if(e.attempts[i].note) out.push(e.attempts[i].note); }
+  if(e.note) out.push(e.note);
+  return out;
+}
+
+/* ---------- HOME ---------- */
+function renderHome(){
+  var c=S.current;
+  var rb=$("resumeBtn"), idle=$("heroIdle");
+  $("homeDate").textContent=fmtDate(new Date().toISOString()).toUpperCase();
+  if(c && !c.done){
+    rb.hidden=false; idle.hidden=true;
+    $("resumeTitle").textContent=c.student||"Flight in progress";
+    var graded=0; for(var i=0;i<c.entries.length;i++){ if(entryResult(c.entries[i])) graded++; }
+    $("resumeSub").textContent=graded+" of "+c.entries.length+" graded"+(c.aircraft?" · "+c.aircraft:"");
+    var bar=$("resumeBar"); bar.innerHTML="";
+    bar.style.gridTemplateColumns="repeat("+c.entries.length+",minmax(0,1fr))";
+    for(var b2=0;b2<c.entries.length;b2++){
+      var s2=el("span"), r2=entryResult(c.entries[b2]);
+      if(r2==="unsat") s2.className="bad"; else if(r2) s2.className="done";
+      bar.appendChild(s2);
+    }
+  } else { rb.hidden=true; idle.hidden=false; }
+
+  var list=$("recentList"); list.innerHTML="";
+  var done=S.flights.slice(0,5);
+  $("recentWrap").hidden = done.length===0;
+  $("emptyHint").hidden = done.length>0;
+  $("recentCount").textContent = done.length? String(S.flights.length) : "";
+  for(var k=0;k<done.length;k++){
+    (function(f){
+      var wrap=el("div","swipe");
+      var del=el("button","sw-del","Delete");
+      del.setAttribute("aria-label","Delete the debrief for "+(f.student||"this flight")+", "+fmtDate(f.date));
+      var inner=el("div","sw-in");
+      var b=el("button","rowitem");
+      var sat=0,uns=0;
+      for(var q=0;q<f.entries.length;q++){ var r=entryResult(f.entries[q]); if(r==="sat")sat++; else if(r==="unsat")uns++; }
+      var sp=el("span","sp");
+      var n=el("span",null,f.student||"Flight"); n.style.display="block"; n.style.fontWeight="600"; n.style.fontSize="15px";
+      var s=el("span","muted",fmtDate(f.date)+" · "+sat+" sat · "+uns+" unsat"); s.style.display="block"; s.style.fontSize="11.5px";
+      sp.appendChild(n); sp.appendChild(s);
+      var go=el("span","mono","OPEN"); go.style.cssText="font-size:10.5px;font-weight:600;color:var(--go);letter-spacing:.8px";
+      b.appendChild(sp); b.appendChild(go);
+      b.addEventListener("click",function(){
+        if(wrap.classList.contains("open")){ wrap.classList.remove("open"); return; }
+        S.current=f; renderDebrief(); show("debrief");
+      });
+      del.addEventListener("click",function(){
+        var at=S.flights.indexOf(f);
+        if(at<0) return;
+        S.flights.splice(at,1); save(); renderHome();
+        toast("Debrief deleted", function(){
+          S.flights.splice(Math.min(at,S.flights.length),0,f); save(); renderHome();
+        });
+      });
+      inner.appendChild(b); wrap.appendChild(del); wrap.appendChild(inner);
+      attachSwipe(wrap);
+      list.appendChild(wrap);
+    })(done[k]);
+  }
+}
+$("newFlightBtn").addEventListener("click",function(){ renderPicker(); show("setup"); });
+$("resumeBtn").addEventListener("click",function(){
+  var c=S.current; if(!c) return;
+  if(c.started){ renderGrade(); show("grade"); } else { renderArmed(); show("armed"); }
+});
+document.addEventListener("click",function(ev){
+  var b=ev.target.closest ? ev.target.closest("[data-go]") : null;
+  if(b){ var v=b.getAttribute("data-go"); if(v==="home"){ renderHome(); show("home"); } else show(v); }
+});
+
+/* ---------- SETUP ---------- */
+var picked={};
+function renderPicker(){
+  var libKey=$("f-course").value;
+  var lib=LIB[libKey];
+  var host=$("taskPicker"); host.innerHTML="";
+  for(var a=0;a<lib.areas.length;a++){
+    var area=lib.areas[a];
+    host.appendChild(el("div","areahead",area.name));
+    for(var i=0;i<area.tasks.length;i++){
+      (function(t){
+        var wrap=el("label","pick");
+        var cb=document.createElement("input"); cb.type="checkbox"; cb.id="pick-"+t.id; cb.checked=!!picked[t.id];
+        cb.addEventListener("change",function(){ picked[t.id]=cb.checked; updateCount(); });
+        var sp=el("span","sp");
+        var n=el("span",null,t.name); n.style.display="block"; n.style.fontWeight="600"; n.style.fontSize="15px";
+        var s=el("span","mono muted",t.tol.join(" · ")); s.style.display="block"; s.style.fontSize="11.5px";
+        sp.appendChild(n); sp.appendChild(s);
+        wrap.appendChild(cb); wrap.appendChild(sp);
+        host.appendChild(wrap);
+      })(area.tasks[i]);
+    }
+  }
+  updateCount();
+}
+function pickedIds(){
+  var libKey=$("f-course").value, lib=LIB[libKey], out=[];
+  for(var a=0;a<lib.areas.length;a++){
+    var ts=lib.areas[a].tasks;
+    for(var i=0;i<ts.length;i++){ if(picked[ts[i].id]) out.push(ts[i].id); }
+  }
+  return out;
+}
+function updateCount(){ $("pickCount").textContent=String(pickedIds().length); }
+$("f-course").addEventListener("change",function(){ picked={}; renderPicker(); });
+$("clearPicks").addEventListener("click",function(){ picked={}; renderPicker(); });
+
+$("startBtn").addEventListener("click",function(){
+  var ids=pickedIds();
+  if(!ids.length){ toast("Pick at least one maneuver"); return; }
+  var entries=[];
+  for(var i=0;i<ids.length;i++){ entries.push({ taskId:ids[i], attempts:[], skipped:false, note:"" }); }
+  S.lastLib=$("f-course").value;
+  S.current={
+    id:String(Date.now()),
+    date:new Date().toISOString(),
+    student:$("f-student").value.trim(),
+    aircraft:$("f-aircraft").value.trim(),
+    libKey:$("f-course").value,
+    entries:entries, idx:0, started:false, done:false, summary:""
+  };
+  save(); renderArmed(); show("armed");
+});
+
+/* ---------- ARMED ---------- */
+function renderArmed(){
+  var c=S.current; if(!c) return;
+  var t=taskById(c.libKey,c.entries[0].taskId);
+  $("armedMeta").textContent=(c.student||"Flight")+(c.aircraft?" · "+c.aircraft:"")+" · "+c.entries.length+" queued";
+  $("armedTotal").textContent=String(c.entries.length);
+  fitName($("armedName"), t?t.name:"—", 52);
+  var tol=$("armedTol"); tol.innerHTML="";
+  if(t) for(var i=0;i<t.tol.length;i++){ tol.appendChild(el("span","chip",t.tol[i])); }
+  $("beginSub").textContent="starts maneuver 1 · "+(t?t.name:"");
+  var q=$("armedQueue"); q.innerHTML="";
+  for(var k=1;k<c.entries.length;k++){
+    var tk=taskById(c.libKey,c.entries[k].taskId);
+    var row=el("div","rowitem");
+    var num=el("span","mono muted",String(k+1)); num.style.fontSize="12px"; num.style.fontWeight="600";
+    var nm=el("span","sp",tk?tk.name:"—"); nm.style.fontSize="14px"; nm.style.fontWeight="500";
+    row.appendChild(num); row.appendChild(nm); q.appendChild(row);
+  }
+  if(c.entries.length===1) q.appendChild(el("div","rowitem","Nothing else queued."));
+}
+$("beginBtn").addEventListener("click",function(){
+  S.current.started=true; save(); renderGrade(); show("grade");
+});
+
+/* ---------- GRADE ---------- */
+function renderGrade(){
+  var c=S.current; if(!c) return;
+  if(c.idx>=c.entries.length){ renderClose(); show("close"); return; }
+  var e=c.entries[c.idx], t=taskById(c.libKey,e.taskId);
+  $("gradeCount").textContent="MANEUVER "+(c.idx+1)+" OF "+c.entries.length;
+  fitName($("gradeName"), t?t.name:"—", 50);
+  $("attemptLabel").textContent="ATTEMPT "+(e.attempts.length+1);
+  var tol=$("gradeTol"); tol.innerHTML="";
+  if(t) for(var i=0;i<t.tol.length;i++){ tol.appendChild(el("span","chip",t.tol[i])); }
+
+  var bar=$("gradeBar"); bar.innerHTML="";
+  bar.style.gridTemplateColumns="repeat("+c.entries.length+",minmax(0,1fr))";
+  for(var k=0;k<c.entries.length;k++){
+    var s=el("span");
+    var r=entryResult(c.entries[k]);
+    if(k===c.idx) s.className="now";
+    else if(r==="unsat") s.className="bad";
+    else if(r==="sat") s.className="done";
+    bar.appendChild(s);
+  }
+  var notes=allNotes(e);
+  var nd=$("noteShown");
+  if(notes.length){ nd.hidden=false; nd.textContent="Note: "+notes.join(" · "); } else nd.hidden=true;
+  $("undoBtn").disabled = !(e.attempts.length || e.skipped || typeof c.lastGraded==="number" || c.idx>0);
+}
+
+/* go to the next maneuver that still has no grade — forward first, then wrap.
+   Order is a convenience, not a rule: nothing is stranded when you grade out of sequence. */
+function nextUngraded(from){
+  var c=S.current, i;
+  for(i=from+1;i<c.entries.length;i++){ if(!entryResult(c.entries[i])) return i; }
+  for(i=0;i<=from && i<c.entries.length;i++){ if(!entryResult(c.entries[i])) return i; }
+  return -1;
+}
+function advance(){
+  var c=S.current;
+  var n=nextUngraded(c.idx);
+  if(n<0){ c.idx=c.entries.length; save(); renderClose(); show("close"); return; }
+  c.idx=n; save(); renderGrade(); show("grade");
+}
+
+/* ---------- jump sheet: switch maneuvers, or add one mid-flight ---------- */
+function openJump(){
+  var c=S.current; if(!c) return;
+  var wrap=el("div","sheet"), inner=el("div","inner");
+  var head=el("div","row"); head.style.cssText="flex:none;margin-bottom:10px;align-items:baseline";
+  var h=el("div","d"); h.style.cssText="font-size:24px;color:var(--ink)"; h.textContent="Jump to";
+  var sub=el("div","eyebrow sp"); sub.style.textAlign="right";
+  var ug=0; for(var u=0;u<c.entries.length;u++){ if(!entryResult(c.entries[u])) ug++; }
+  sub.textContent=ug+" LEFT";
+  head.appendChild(h); head.appendChild(sub);
+  var list=el("div","list");
+  inner.appendChild(head); inner.appendChild(list);
+
+  function close(){ if(wrap.parentNode) wrap.parentNode.removeChild(wrap); }
+
+  function drawQueue(){
+    list.innerHTML="";
+    for(var i=0;i<c.entries.length;i++){
+      (function(e,i){
+        var t=taskById(c.libKey,e.taskId), r=entryResult(e);
+        var b=el("button","jr"+(i===c.idx?" now":""));
+        var tg=el("span","tag "+(r||"no"), r==="sat"?"SAT":r==="unsat"?"UNSAT":e.skipped?"N/O":"—");
+        if(!r && !e.skipped){ tg.style.cssText="flex:none;min-width:0;width:18px;text-align:center;background:none;border:0;color:var(--ink-2);font-family:var(--mono);font-size:15px"; }
+        var sp=el("span","sp");
+        var nm=el("span","nm",t?t.name:"—");
+        var tl=el("span","tl",(t?t.tol.join(" · "):""));
+        sp.appendChild(nm); sp.appendChild(tl);
+        b.appendChild(tg); b.appendChild(sp);
+        if(i===c.idx){ var here=el("span","mono","HERE"); here.style.cssText="font-size:10px;font-weight:600;color:var(--go);letter-spacing:.8px"; b.appendChild(here); }
+        b.addEventListener("click",function(){ c.idx=i; save(); close(); renderGrade(); show("grade"); });
+        list.appendChild(b);
+      })(c.entries[i],i);
+    }
+  }
+
+  function drawAdd(){
+    list.innerHTML="";
+    h.textContent="Add maneuver";
+    var lib=LIB[c.libKey], have={}, any=false;
+    for(var q=0;q<c.entries.length;q++){ have[c.entries[q].taskId]=1; }
+    for(var a=0;a<lib.areas.length;a++){
+      var area=lib.areas[a], shown=false;
+      for(var i=0;i<area.tasks.length;i++){
+        var t=area.tasks[i];
+        if(have[t.id]) continue;
+        if(!shown){ var ah=el("div","areahead",area.name); ah.style.margin="0 -16px"; list.appendChild(ah); shown=true; }
+        any=true;
+        (function(t){
+          var b=el("button","jr");
+          var sp=el("span","sp");
+          sp.appendChild(el("span","nm",t.name));
+          sp.appendChild(el("span","tl",t.tol.join(" · ")));
+          var plus=el("span","mono","ADD"); plus.style.cssText="font-size:10px;font-weight:600;color:var(--go);letter-spacing:.8px";
+          b.appendChild(sp); b.appendChild(plus);
+          b.addEventListener("click",function(){
+            c.entries.push({ taskId:t.id, attempts:[], skipped:false, note:"" });
+            c.idx=c.entries.length-1; save(); close(); renderGrade(); show("grade");
+            toast(t.name+" added");
+          });
+          list.appendChild(b);
+        })(area.tasks[i]);
+      }
+    }
+    if(!any) list.appendChild(el("div","note","Every maneuver in this library is already in the queue."));
+    addBtn.textContent="Back to queue";
+    addBtn.onclick=function(){ h.textContent="Jump to"; drawQueue(); addBtn.textContent="Add a maneuver"; addBtn.onclick=drawAdd; };
+  }
+
+  var foot=el("div","row"); foot.style.cssText="flex:none;margin-top:12px;gap:10px";
+  var addBtn=el("button","ghost sp","Add a maneuver");
+  addBtn.onclick=drawAdd;
+  var cancel=el("button","ghost","Close");
+  cancel.addEventListener("click",close);
+  foot.appendChild(addBtn); foot.appendChild(cancel);
+  inner.appendChild(foot);
+
+  drawQueue();
+  wrap.appendChild(inner); document.body.appendChild(wrap);
+  wrap.addEventListener("click",function(ev){ if(ev.target===wrap) close(); });
+}
+$("jumpBtn").addEventListener("click",openJump);
+
+document.querySelectorAll("#v-grade [data-grade]").forEach(function(btn){
+  btn.addEventListener("click",function(){
+    var c=S.current, e=c.entries[c.idx];
+    var g=btn.getAttribute("data-grade");
+    e.skipped=false;
+    e.attempts.push({ result:g, why:[], note:"", at:new Date().toISOString() });
+    c.lastGraded=c.idx;
+    save();
+    if(g==="unsat"){ renderWhy(); show("why"); }
+    else advance();
+  });
+});
+
+$("repeatBtn").addEventListener("click",function(){
+  var e=S.current.entries[S.current.idx];
+  if(!e.attempts.length){ toast("Grade this attempt first"); return; }
+  renderGrade(); toast("Another attempt at this maneuver");
+});
+$("skipBtn").addEventListener("click",function(){
+  var c=S.current, e=c.entries[c.idx];
+  e.skipped=true; e.attempts=[]; c.lastGraded=c.idx; save(); advance();
+});
+$("undoBtn").addEventListener("click",function(){
+  var c=S.current, e=c.entries[c.idx];
+  if(e.attempts.length){ e.attempts.pop(); }
+  else if(e.skipped){ e.skipped=false; }
+  else if(typeof c.lastGraded==="number" && c.entries[c.lastGraded]){
+    c.idx=c.lastGraded;
+    var p=c.entries[c.idx];
+    if(p.attempts.length) p.attempts.pop();
+    p.skipped=false;
+  }
+  else if(c.idx>0){ c.idx--; var q=c.entries[c.idx]; if(q.attempts.length) q.attempts.pop(); q.skipped=false; }
+  save(); renderGrade(); toast("Undone");
+});
+$("endEarly").addEventListener("click",function(){ renderClose(); show("close"); });
+$("noteBtn").addEventListener("click",function(){ openNote(S.current.entries[S.current.idx]); });
+
+/* note sheet — the phone keyboard's mic key does the dictation */
+function openNote(entry){
+  var wrap=el("div","sheet");
+  var inner=el("div","inner");
+  var lab=el("label","fl","NOTE · TAP THE MIC ON YOUR KEYBOARD TO DICTATE"); lab.setAttribute("for","noteInput");
+  var ta=document.createElement("textarea"); ta.id="noteInput"; ta.rows=3;
+  ta.value = entry.note || (lastAttempt(entry)&&lastAttempt(entry).note) || "";
+  ta.placeholder="Rollout about 20 degrees past the 180.";
+  var row=el("div","row"); row.style.marginTop="12px"; row.style.gap="10px";
+  var cancel=el("button","ghost sp","Cancel");
+  var ok=el("button","primary sp","");
+  ok.style.minHeight="46px"; ok.appendChild(el("span","big","Save")); ok.querySelector(".big").style.fontSize="19px";
+  row.appendChild(cancel); row.appendChild(ok);
+  inner.appendChild(lab); inner.appendChild(ta); inner.appendChild(row);
+  wrap.appendChild(inner); document.body.appendChild(wrap);
+  ta.focus();
+  function close(){ if(wrap.parentNode) wrap.parentNode.removeChild(wrap); }
+  cancel.addEventListener("click",close);
+  wrap.addEventListener("click",function(ev){ if(ev.target===wrap) close(); });
+  ok.addEventListener("click",function(){
+    var v=ta.value.trim();
+    var la=lastAttempt(entry);
+    if(la) la.note=v; else entry.note=v;
+    save(); close();
+    if(!$("v-grade").hidden) renderGrade();
+    if(!$("v-why").hidden) renderWhy();
+    toast(v?"Note saved":"Note cleared");
+  });
+}
+
+/* ---------- WHY ---------- */
+function renderWhy(){
+  var c=S.current, e=c.entries[c.idx], t=taskById(c.libKey,e.taskId);
+  var att=lastAttempt(e);
+  $("whyMeta").textContent=(t?t.name:"")+" · attempt "+e.attempts.length;
+  var grid=$("whyGrid"); grid.innerHTML="";
+  if(!t) return;
+  for(var i=0;i<t.why.length;i++){
+    (function(w){
+      var b=el("button","why");
+      var on = att && att.why.indexOf(w)>=0;
+      b.setAttribute("aria-pressed", on?"true":"false");
+      b.appendChild(el("span","n",w));
+      var lim=matchLimit(t,w);
+      if(lim) b.appendChild(el("span","lim",lim));
+      b.addEventListener("click",function(){
+        var k=att.why.indexOf(w);
+        if(k>=0) att.why.splice(k,1); else att.why.push(w);
+        b.setAttribute("aria-pressed", att.why.indexOf(w)>=0?"true":"false");
+        save();
+      });
+      grid.appendChild(b);
+    })(t.why[i]);
+  }
+}
+/* show the ACS limit on a cause when one of the task's tolerance chips names it */
+function matchLimit(t,why){
+  var w=why.toLowerCase().split(" ")[0];
+  for(var i=0;i<t.tol.length;i++){
+    var s=t.tol[i].toLowerCase();
+    if(w.length>3 && s.indexOf(w)>=0) return t.tol[i];
+    if(w==="altitude" && (s.indexOf("alt")===0||s.indexOf("agl")>=0||s.indexOf("mda")>=0)) return t.tol[i];
+    if(w==="airspeed" && (s.indexOf("ias")>=0||s.indexOf("vy")>=0||s.indexOf("vx")>=0||s.indexOf("glide")>=0||s.indexOf("vso")>=0)) return t.tol[i];
+    if(w==="heading" && s.indexOf("hdg")>=0) return t.tol[i];
+    if(w==="bank" && s.indexOf("bank")>=0) return t.tol[i];
+    if(w==="touchdown" && s.indexOf("beyond")>=0) return t.tol[i];
+    if(w==="rollout" && s.indexOf("rollout")>=0) return t.tol[i];
+    if(w==="course" && s.indexOf("cdi")>=0) return t.tol[i];
+  }
+  return "";
+}
+$("whyBack").addEventListener("click",function(){ renderGrade(); show("grade"); });
+$("whyNote").addEventListener("click",function(){ openNote(S.current.entries[S.current.idx]); });
+$("whyDone").addEventListener("click",function(){ advance(); });
+
+/* ---------- CLOSE OUT ---------- */
+function renderClose(){
+  var c=S.current; if(!c) return;
+  $("closeMeta").textContent=(c.student||"Flight")+(c.aircraft?" · "+c.aircraft:"")+" · "+fmtDate(c.date);
+  var sat=0,uns=0,no=0;
+  var list=$("closeList"); list.innerHTML="";
+  for(var i=0;i<c.entries.length;i++){
+    (function(e,i){
+      var t=taskById(c.libKey,e.taskId), r=entryResult(e);
+      if(r==="sat")sat++; else if(r==="unsat")uns++; else no++;
+      var b=el("button","rowitem");
+      var tg=el("span","tag "+(r||"no"), r==="sat"?"SAT":r==="unsat"?"UNSAT":"N/O");
+      var sp=el("span","sp");
+      var n=el("span",null,t?t.name:"—"); n.style.display="block"; n.style.fontWeight="600"; n.style.fontSize="14px";
+      var detail=[];
+      if(e.attempts.length) detail.push(e.attempts.length+(e.attempts.length===1?" attempt":" attempts"));
+      var w=allWhy(e); if(w.length) detail.push(w.join(", "));
+      if(r==="unsat" && e.attempts.length>1 && lastAttempt(e).result==="sat") detail.push("last attempt sat");
+      if(r==="no") detail.push("not flown");
+      var s=el("span","muted",detail.join(" · ")); s.style.display="block"; s.style.fontSize="11.5px";
+      sp.appendChild(n); sp.appendChild(s);
+      b.appendChild(tg); b.appendChild(sp);
+      b.addEventListener("click",function(){ c.idx=i; save(); renderGrade(); show("grade"); });
+      list.appendChild(b);
+    })(c.entries[i],i);
+  }
+  $("cSat").textContent=String(sat); $("cUnsat").textContent=String(uns); $("cNo").textContent=String(no);
+  $("f-summary").value=c.summary||"";
+}
+$("closeBack").addEventListener("click",function(){
+  var c=S.current; if(c.idx>=c.entries.length) c.idx=c.entries.length-1;
+  renderGrade(); show("grade");
+});
+$("buildBtn").addEventListener("click",function(){
+  S.current.summary=$("f-summary").value.trim();
+  save(); renderDebrief(); show("debrief");
+});
+
+/* ---------- DEBRIEF ---------- */
+function renderDebrief(){
+  var c=S.current, lib=LIB[c.libKey];
+  var host=$("report"); host.innerHTML="";
+
+  var head=el("div"); head.style.borderBottom="2px solid var(--go)"; head.style.paddingBottom="9px";
+  var h=el("h1","d","Flight Debrief · "+(c.student||"Student")); h.style.fontSize="26px"; h.style.color="var(--ink)";
+  var meta=el("div","mono muted", fmtDate(c.date)+" · "+(c.aircraft||"—")+" · "+lib.label);
+  meta.style.fontSize="11.5px"; meta.style.marginTop="5px";
+  head.appendChild(h); head.appendChild(meta); host.appendChild(head);
+
+  if(c.summary){
+    var sw=el("div"); sw.style.marginTop="12px"; sw.style.background="var(--surface-2)"; sw.style.borderRadius="8px"; sw.style.padding="11px 13px";
+    sw.appendChild(el("div","eyebrow","FROM YOUR INSTRUCTOR"));
+    var p=el("div",null,c.summary); p.style.marginTop="4px"; p.style.fontSize="13.5px";
+    sw.appendChild(p); host.appendChild(sw);
+  }
+
+  host.appendChild(el("h2",null,"Scorecard"));
+  var tbl=el("table");
+  var thead=el("thead"), trh=el("tr");
+  ["Maneuver","Result","What was observed"].forEach(function(x){ trh.appendChild(el("th",null,x)); });
+  thead.appendChild(trh); tbl.appendChild(thead);
+  var tb=el("tbody");
+  for(var i=0;i<c.entries.length;i++){
+    var e=c.entries[i], t=taskById(c.libKey,e.taskId), r=entryResult(e);
+    var tr=el("tr");
+    var td1=el("td");
+    var nm=el("strong",null,t?t.name:"—"); td1.appendChild(nm);
+    var att=el("div","muted", e.attempts.length? (e.attempts.length+(e.attempts.length===1?" attempt":" attempts")) : "not flown");
+    att.style.fontSize="11px"; td1.appendChild(att);
+    var td2=el("td"); td2.style.whiteSpace="nowrap";
+    var tg=el("span","mono", r==="sat"?"SAT":r==="unsat"?"UNSAT":"N/O");
+    tg.style.fontSize="11px"; tg.style.fontWeight="600";
+    tg.style.color = r==="unsat" ? "var(--warn)" : r==="sat" ? "var(--go)" : "var(--ink-2)";
+    td2.appendChild(tg);
+    var td3=el("td");
+    var bits=[];
+    var w=allWhy(e); if(w.length) bits.push(w.join(", "));
+    if(t && r==="unsat"){ bits.push("limit: "+t.tol.join(" · ")); }
+    if(r==="unsat" && e.attempts.length>1 && lastAttempt(e).result==="sat") bits.push("last attempt inside tolerance");
+    var notes=allNotes(e); if(notes.length) bits.push("“"+notes.join("” · “")+"”");
+    if(r==="sat") bits.unshift("inside tolerance");
+    td3.textContent=bits.join(" · ") || "—";
+    td3.style.fontSize="12px";
+    tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tb.appendChild(tr);
+  }
+  tbl.appendChild(tb); host.appendChild(tbl);
+
+  /* attempt by attempt — only where it says something */
+  var multi=[];
+  for(var k=0;k<c.entries.length;k++){ if(c.entries[k].attempts.length>1) multi.push(c.entries[k]); }
+  if(multi.length){
+    host.appendChild(el("h2",null,"Attempt by attempt"));
+    var wrap2=el("div"); wrap2.style.display="flex"; wrap2.style.flexDirection="column"; wrap2.style.gap="8px"; wrap2.style.marginTop="8px";
+    for(var m=0;m<multi.length;m++){
+      var e2=multi[m], t2=taskById(c.libKey,e2.taskId);
+      var row=el("div","row");
+      var nm2=el("span",null,t2?t2.name:"—"); nm2.style.width="132px"; nm2.style.fontWeight="600"; nm2.style.fontSize="12.5px";
+      var dots=el("span","dots");
+      for(var d=0;d<e2.attempts.length;d++){
+        var s=el("span"); if(e2.attempts[d].result==="unsat") s.className="bad"; dots.appendChild(s);
+      }
+      var tail=el("span","muted", lastAttempt(e2).result==="sat" ? "last one held it" : "still outside");
+      tail.style.fontSize="11.5px";
+      row.appendChild(nm2); row.appendChild(dots); row.appendChild(tail);
+      wrap2.appendChild(row);
+    }
+    host.appendChild(wrap2);
+  }
+
+  /* homework from the unsat causes */
+  var todo=buildTodo(c);
+  if(todo.length){
+    host.appendChild(el("h2",null,"Before the next lesson"));
+    var ol=el("div"); ol.style.display="flex"; ol.style.flexDirection="column"; ol.style.gap="7px"; ol.style.marginTop="8px";
+    for(var q=0;q<todo.length;q++){
+      var r2=el("div","row"); r2.style.alignItems="flex-start";
+      var num=el("span","mono",String(q+1));
+      num.style.cssText="flex:none;width:19px;height:19px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:2px";
+      var tx=el("span","sp",todo[q]); tx.style.fontSize="13px";
+      r2.appendChild(num); r2.appendChild(tx); ol.appendChild(r2);
+    }
+    host.appendChild(ol);
+  }
+
+  host.appendChild(el("h2",null,"Logbook remarks"));
+  var lb=el("div","mono");
+  lb.style.cssText="margin-top:8px;background:var(--surface-2);border-radius:8px;padding:10px 12px;font-size:11.5px;line-height:1.55;color:var(--ink)";
+  lb.textContent=logbookText();
+  host.appendChild(lb);
+
+  var foot=el("div","muted");
+  foot.style.cssText="margin-top:14px;border-top:1px solid var(--line);padding-top:8px;font-size:11px";
+  foot.textContent="Graded against "+lib.acs+". Tolerances shown are the ACS limits for each task. This debrief is a training record, not a certification result.";
+  host.appendChild(foot);
+
+  $("printBtn").hidden = (window.self !== window.top);
+}
+
+function buildTodo(c){
+  var out=[];
+  for(var i=0;i<c.entries.length;i++){
+    var e=c.entries[i], t=taskById(c.libKey,e.taskId), r=entryResult(e);
+    if(r==="unsat"){
+      var w=allWhy(e);
+      out.push("Re-fly "+(t?t.name:"the maneuver")+(w.length?" — focus on "+w.join(", ").toLowerCase():"")+".");
+    }
+  }
+  for(var k=0;k<c.entries.length;k++){
+    if(entryResult(c.entries[k])==="no"){
+      var tk=taskById(c.libKey,c.entries[k].taskId);
+      out.push("Fly "+(tk?tk.name:"the skipped maneuver")+" — not flown this lesson.");
+    }
+  }
+  return out;
+}
+
+function debriefText(){
+  var c=S.current, lib=LIB[c.libKey], L=[];
+  L.push("FLIGHT DEBRIEF — "+(c.student||"Student"));
+  L.push(fmtDate(c.date)+" · "+(c.aircraft||"—")+" · "+lib.label+" ("+lib.acs+")");
+  if(c.summary){ L.push(""); L.push("SUMMARY"); L.push(c.summary); }
+  L.push(""); L.push("SCORECARD");
+  for(var i=0;i<c.entries.length;i++){
+    var e=c.entries[i], t=taskById(c.libKey,e.taskId), r=entryResult(e);
+    var line="• "+(t?t.name:"—")+" — "+(r==="sat"?"SAT":r==="unsat"?"UNSAT":"NOT FLOWN");
+    if(e.attempts.length) line+=" ("+e.attempts.length+(e.attempts.length===1?" attempt":" attempts")+")";
+    var w=allWhy(e); if(w.length) line+=" — "+w.join(", ");
+    if(r==="unsat"&&t) line+=" [limit: "+t.tol.join(" · ")+"]";
+    if(r==="unsat"&&e.attempts.length>1&&lastAttempt(e).result==="sat") line+=" — last attempt inside tolerance";
+    L.push(line);
+    var notes=allNotes(e);
+    for(var n=0;n<notes.length;n++){ L.push("    note: "+notes[n]); }
+  }
+  var todo=buildTodo(c);
+  if(todo.length){ L.push(""); L.push("BEFORE THE NEXT LESSON");
+    for(var q=0;q<todo.length;q++){ L.push((q+1)+". "+todo[q]); } }
+  L.push(""); L.push("Graded against "+lib.acs+". Training record, not a certification result.");
+  return L.join("\n");
+}
+function logbookText(){
+  var c=S.current, lib=LIB[c.libKey], names=[], weak=[], notflown=[];
+  for(var i=0;i<c.entries.length;i++){
+    var e=c.entries[i], t=taskById(c.libKey,e.taskId); if(!t) continue;
+    var r=entryResult(e);
+    if(r!=="no") names.push(t.name);
+    if(r==="unsat") weak.push(t.name);
+    if(r==="no") notflown.push(t.name);
+  }
+  var s="Flight training per "+(lib.far||lib.label)+".";
+  if(names.length) s+=" "+names.join(", ")+".";
+  if(weak.length) s+=" "+weak.join(", ")+(weak.length===1?" requires":" require")+" additional practice.";
+  if(notflown.length) s+=" Not flown: "+notflown.join(", ")+".";
+  return s;
+}
+
+function copy(text,label){
+  function fallback(){
+    var ta=document.createElement("textarea");
+    ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); toast(label+" copied"); }
+    catch(e){ toast("Select the text to copy it"); }
+    document.body.removeChild(ta);
+  }
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ toast(label+" copied"); }, fallback);
+    } else fallback();
+  }catch(e){ fallback(); }
+}
+$("copyBtn").addEventListener("click",function(){ copy(debriefText(),"Debrief"); });
+$("copyLog").addEventListener("click",function(){ copy(logbookText(),"Logbook remarks"); });
+$("printBtn").addEventListener("click",function(){ window.print(); });
+$("debriefBack").addEventListener("click",function(){ renderClose(); show("close"); });
+$("doneBtn").addEventListener("click",function(){
+  var c=S.current;
+  if(c && !c.done){
+    c.done=true;
+    S.flights.unshift(c);
+    if(S.flights.length>25) S.flights.length=25;
+    S.current=null;
+  }
+  save(); renderHome(); show("home"); toast("Lesson closed out");
+});
+
+/* ---------- boot ---------- */
+load();
+if(S.lastLib && LIB[S.lastLib]) $("f-course").value=S.lastLib;
+renderPicker(); renderHome();
+if(S.current && !S.current.done){
+  /* keep the in-progress flight one tap away, but open on Home */
+  show("home");
+} else show("home");
+})();
+</script>
