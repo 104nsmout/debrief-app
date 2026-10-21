@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Maneuver Debrief</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
@@ -23,6 +24,46 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 #app{min-height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 16px}
 section{flex:1;display:flex;flex-direction:column;min-width:0}
+@media (pointer:coarse){ #app{max-width:none} }
+/* a phone whose viewer lays the page out at desktop width then scales it down:
+   grow the shell so the result is still thumb-sized on the glass */
+@media (pointer:coarse) and (min-width:620px){
+  body{font-size:25px}
+  #app{padding-block:24px 26px}
+  .wordmark{font-size:42px;letter-spacing:4px}
+  .eyebrow{font-size:18px}
+  .hero{border-radius:34px;padding:36px 30px 32px;min-height:420px;max-height:720px;gap:22px}
+  .pill{min-height:108px;font-size:40px;letter-spacing:2px}
+  .primary .big{font-size:38px}
+  .grade{min-height:clamp(210px,19vh,300px);border-radius:32px}
+  .grade .big{font-size:76px}
+  .grade .sub{font-size:22px}
+  .utils button{min-height:94px;font-size:19px;border-radius:20px}
+  .utils svg,.circbtn svg{width:30px;height:30px}
+  .chip{font-size:22px;padding:11px 18px;border-radius:11px}
+  .note{font-size:21px;padding:18px 21px;border-radius:15px}
+  input[type=text],textarea,select{font-size:26px;padding:18px 19px;border-radius:16px}
+  label.fl{font-size:18px}
+  .rowitem{padding:17px 18px;gap:16px}
+  .pick{padding:18px 19px;gap:18px}
+  .pick input{width:34px;height:34px}
+  .areahead{font-size:25px;padding:12px 19px}
+  .card,.sheet .inner{border-radius:20px}
+  .tag{font-size:18px;min-width:88px;border-radius:8px}
+  .why{min-height:150px;border-radius:23px}
+  .why .n{font-size:34px}
+  .why .lim{font-size:19px}
+  .stat .n{font-size:40px}
+  .stat .l{font-size:18px}
+  .ghost{min-height:76px;font-size:24px;border-radius:18px}
+  .link{font-size:21px}
+  .jr{min-height:92px}
+  .jr .nm{font-size:25px}
+  .jr .tl{font-size:18px}
+  .sw-del{width:160px;font-size:21px}
+  .swipe.open .sw-in,.swipe:focus-within .sw-in{transform:translateX(-160px)}
+  .toast{font-size:23px;padding:17px 25px;border-radius:17px}
+}
 button{font-family:inherit;font-size:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
 button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 h1,h2{margin:0;text-wrap:balance}
@@ -1240,3 +1281,5 @@ if(S.current && !S.current.done){
 } else show("home");
 })();
 </script>
+
+</body></html>
