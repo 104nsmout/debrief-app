@@ -1,4 +1,3 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Maneuver Debrief</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
@@ -7,21 +6,35 @@
 :root{
   --bg:#000000; --surface:#131313; --surface-2:#1B1B1B; --sunk:#242424;
   --ink:#F4F4F4; --ink-2:#9B9B9B; --line:#2C2C2C;
+  /* themed accent — follows the ACS library in use */
   --go:#B6F34A; --on-go:#07130A; --go-soft:#16220C;
-  --warn:#FF8A3D; --on-warn:#1A0D03; --warn-soft:#2A1507; --warn-line:#4A2A12;
   --grad:linear-gradient(100deg,#9EFD7A 0%,#C7FF4C 52%,#E7F529 100%);
+  /* verdict colors — fixed in every theme, so a grade never changes color */
+  --sat:#B6F34A; --on-sat:#07130A;
+  --sat-grad:linear-gradient(100deg,#9EFD7A 0%,#C7FF4C 52%,#E7F529 100%);
+  --warn:#FF8A3D; --on-warn:#1A0D03; --warn-soft:#2A1507; --warn-line:#4A2A12;
   --topo:#1E1E1E;
   --display:'Archivo',system-ui,-apple-system,sans-serif;
   --body:'Archivo',system-ui,-apple-system,sans-serif;
   --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
   color-scheme:dark;
 }
+/* instrument: magenta is the GPS course line, cyan the sky half of the AI */
+:root[data-lib="instrument"]{
+  --go:#3DD5F3; --on-go:#04171C; --go-soft:#0B2027;
+  --grad:linear-gradient(100deg,#2FC4EE 0%,#5BE0F7 52%,#9DF2FF 100%);
+}
+/* commercial: gold for the professional certificate */
+:root[data-lib="commercial"]{
+  --go:#F5B700; --on-go:#1A1200; --go-soft:#2B2008;
+  --grad:linear-gradient(100deg,#E5A200 0%,#F5B700 52%,#FFD75A 100%);
+}
 html,body{height:100%}
 [hidden]{display:none!important}
 #topoBg{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;-webkit-mask-image:radial-gradient(125% 75% at 50% 46%,rgba(0,0,0,.10) 0%,rgba(0,0,0,.42) 52%,#000 100%);mask-image:radial-gradient(125% 75% at 50% 46%,rgba(0,0,0,.10) 0%,rgba(0,0,0,.42) 52%,#000 100%)}
 #topoBg path{fill:none;stroke:var(--topo);stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%}
-#app{min-height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%}
+#app{box-sizing:border-box;min-height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 16px}
 section{flex:1;display:flex;flex-direction:column;min-width:0}
 @media (pointer:coarse){ #app{max-width:none} }
@@ -63,11 +76,33 @@ section{flex:1;display:flex;flex-direction:column;min-width:0}
   .sw-del{width:160px;font-size:21px}
   .swipe.open .sw-in,.swipe:focus-within .sw-in{transform:translateX(-160px)}
   .toast{font-size:23px;padding:17px 25px;border-radius:17px}
+  .qmark{font-size:98px}
+  .qtext{font-size:50px;margin-top:34px}
+  .qauthor{font-size:19px;margin-top:30px}
+  .qnote{font-size:17px}
+  .status{font-size:18px;margin-top:20px}
+  .sdot{width:10px;height:10px}
+  .resume{border-radius:22px;padding:20px 23px;border-left-width:6px}
+  .rname{font-size:42px}
 }
 button{font-family:inherit;font-size:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
 button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 h1,h2{margin:0;text-wrap:balance}
 .d{font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:-.2px;line-height:1}
+
+/* home: the quote carries the screen, the gradient pill is the only action */
+.quote{flex:1 1 auto;min-height:38vh;display:flex;flex-direction:column;justify-content:center;margin:0;padding:10px 2px 6px}
+.qmark{font-family:var(--display);font-weight:800;font-size:60px;line-height:.42;color:var(--go)}
+.qtext{margin:22px 0 0;font-family:var(--display);font-weight:700;font-size:31px;line-height:1.17;letter-spacing:-.3px;color:var(--ink);text-wrap:balance}
+.qauthor{margin-top:20px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-2)}
+.qnote{margin-top:7px;font-family:var(--mono);font-size:11px;letter-spacing:.3px;color:#6B6B6B}
+.status{flex:none;margin-top:13px;display:flex;align-items:center;justify-content:center;gap:8px;
+  font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:1.3px;text-transform:uppercase;color:var(--ink-2)}
+.sdot{width:6px;height:6px;border-radius:4px;background:var(--go);box-shadow:0 0 8px rgba(182,243,74,.8)}
+.resume{flex:none;display:block;width:100%;text-align:left;color:inherit;background:var(--surface);
+  border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:14px;padding:13px 15px;margin-bottom:13px}
+.rname{display:block;margin-top:6px;font-size:26px;color:var(--ink)}
+
 /* camo field — organic blobs from turbulence, sits behind the hero and the page edge */
 .camo{position:absolute;inset:0;width:100%;height:100%;opacity:.9;pointer-events:none}
 .hero{position:relative;overflow:hidden;border-radius:22px;background:#0A0A0A;border:1px solid var(--line);
@@ -77,7 +112,7 @@ h1,h2{margin:0;text-wrap:balance}
   background:linear-gradient(180deg,rgba(10,10,10,0) 0%,rgba(10,10,10,.86) 46%,rgba(10,10,10,.96) 100%)}
 .hero>*:not(.camo){position:relative;z-index:1}
 .wordmark{font-family:var(--display);font-weight:800;font-size:25px;letter-spacing:2.5px;text-transform:uppercase}
-.pill{border:0;border-radius:999px;background:var(--grad);color:#07130A;font-family:var(--display);
+.pill{border:0;border-radius:999px;background:var(--grad);color:var(--on-go);min-height:66px;font-size:24px;flex:none;font-family:var(--display);
   font-weight:800;text-transform:uppercase;letter-spacing:1.4px;display:flex;align-items:center;justify-content:center;gap:10px;width:100%}
 .circbtn{width:44px;height:44px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);
   display:flex;align-items:center;justify-content:center}
@@ -92,7 +127,7 @@ h1,h2{margin:0;text-wrap:balance}
 .ghost{border:1.5px solid var(--line);background:none;color:var(--go);border-radius:11px;font-weight:600;min-height:46px;padding:0 14px}
 .ghost:hover{background:var(--surface-2)}
 .link{border:0;background:none;padding:0;color:var(--warn);font-weight:600;font-size:13px;min-height:44px}
-.primary{border:0;border-radius:999px;background:var(--grad);color:#07130A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:100%}
+.primary{border:0;border-radius:999px;background:var(--grad);color:var(--on-go);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:100%}
 .primary .big{font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:1.3px;line-height:1}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .card>*+*{border-top:1px solid var(--line)}
@@ -112,7 +147,7 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 .seg button[aria-pressed=true]{background:var(--go);color:var(--on-go)}
 .bar{display:grid;gap:4px;flex:none}
 .bar span{height:5px;border-radius:3px;background:var(--sunk)}
-.bar span.done{background:var(--go)}
+.bar span.done{background:var(--sat)}
 .bar span.now{background:var(--ink)}
 .bar span.bad{background:var(--warn)}
 .grades{display:flex;flex-direction:column;gap:12px;margin-top:auto;flex:none}
@@ -120,7 +155,7 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 .grade{border-radius:20px}
 .grade .big{font-family:var(--display);font-weight:800;font-size:46px;text-transform:uppercase;letter-spacing:1.2px;line-height:1}
 .grade .sub{font-size:13.5px;font-weight:500}
-.grade.sat{background:var(--grad);color:#07130A}
+.grade.sat{background:var(--sat-grad);color:var(--on-sat)}
 .grade.sat .sub{color:#143007;opacity:.75}
 .grade.unsat{background:var(--warn);color:var(--on-warn)}
 .grade.unsat .sub{opacity:.85}
@@ -137,8 +172,8 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 .stat{border-radius:10px;padding:9px 10px}
 .stat .n{font-family:var(--mono);font-size:25px;font-weight:600;line-height:1.1}
 .stat .l{font-size:11px;font-weight:600;letter-spacing:.5px}
-.stat.sat{background:var(--go);color:var(--on-go)}
-.stat.sat .l{color:var(--go-soft)}
+.stat.sat{background:var(--sat);color:var(--on-sat)}
+.stat.sat .l{color:rgba(7,19,10,.7)}
 .stat.unsat{background:var(--warn);color:var(--on-warn)}
 .stat.no{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
 .rowitem{display:flex;align-items:center;gap:10px;padding:10px 11px;background:none;border:0;width:100%;text-align:left;color:inherit}
@@ -152,7 +187,7 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 @media (hover:hover){ .swipe:hover .sw-in{transform:translateX(-96px)} }
 @media (prefers-reduced-motion:reduce){ .sw-in{transition:none} }
 .tag{flex:none;min-width:54px;text-align:center;padding:3px 6px;border-radius:5px;font-family:var(--mono);font-size:11px;font-weight:600}
-.tag.sat{background:var(--go);color:var(--on-go)}
+.tag.sat{background:var(--sat);color:var(--on-sat)}
 .tag.unsat{background:var(--warn);color:var(--on-warn)}
 .tag.no{background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line)}
 .scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
@@ -203,58 +238,38 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--go)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12h4l2.5-7 3.5 14 3-7h7"/></svg>
       <span class="wordmark">Debrief</span>
     </div>
-    <span class="mono" style="font-size:11px;color:var(--ink-2);letter-spacing:.5px" id="homeDate"></span>
+    <span class="mono" style="font-size:12px;color:var(--ink-2);letter-spacing:1.2px" id="homeDate"></span>
   </div>
 
-  <div class="hero" id="heroBox" style="margin-top:12px">
-    <svg class="camo" preserveAspectRatio="none" viewBox="0 0 400 400" aria-hidden="true">
-      <defs>
-        <filter id="camoF" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
-          <feTurbulence type="fractalNoise" baseFrequency="0.014 0.007" numOctaves="4" seed="7" result="t"/>
-          <feColorMatrix in="t" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.6 0 0 0 -0.70" result="a"/>
-          <feComponentTransfer in="a" result="s"><feFuncA type="table" tableValues="0 0 0.25 0.9 1"/></feComponentTransfer>
-          <feGaussianBlur in="s" stdDeviation="2.6" result="b"/>
-          <feFlood flood-color="#272727" result="f"/>
-          <feComposite in="f" in2="b" operator="in"/>
-        </filter>
-      </defs>
-      <rect width="400" height="400" fill="#0B0B0B"/>
-      <rect width="400" height="400" filter="url(#camoF)"/>
-    </svg>
+  <figure class="quote" id="quoteBox">
+    <div class="qmark" aria-hidden="true">&ldquo;</div>
+    <blockquote class="qtext" id="qText"></blockquote>
+    <figcaption>
+      <div class="qauthor" id="qAuthor"></div>
+      <div class="qnote" id="qNote" hidden></div>
+    </figcaption>
+  </figure>
 
-    <div id="heroIdle">
-      <div class="eyebrow" style="color:var(--go)">READY</div>
-      <h1 class="d" style="font-size:40px;margin-top:8px;max-width:9ch">Grade in the air</h1>
-      <div class="muted" style="font-size:14px;margin-top:8px;max-width:30ch">One tap a maneuver. The debrief writes itself on the ground.</div>
-    </div>
+  <button id="resumeBtn" class="resume" hidden>
+    <span class="eyebrow" style="color:var(--warn)">IN PROGRESS &middot; TAP TO RESUME</span>
+    <span class="rname d" id="resumeTitle">&mdash;</span>
+    <span class="muted" style="display:block;font-size:13px" id="resumeSub"></span>
+    <span class="bar" id="resumeBar" style="margin-top:10px"></span>
+  </button>
 
-    <button id="resumeBtn" hidden style="border:0;background:none;padding:0;text-align:left;color:inherit;width:100%">
-      <div class="eyebrow" style="color:var(--go)">IN PROGRESS · TAP TO RESUME</div>
-      <h1 class="d" style="font-size:34px;margin-top:8px" id="resumeTitle">—</h1>
-      <div class="muted" style="font-size:13.5px;margin-top:6px" id="resumeSub"></div>
-      <div class="bar" id="resumeBar" style="margin-top:12px"></div>
-    </button>
-  </div>
-
-  <button class="pill" id="newFlightBtn" style="min-height:66px;margin-top:14px;font-size:24px;flex:none">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#07130A" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+  <button class="pill" id="newFlightBtn">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
     New Flight
   </button>
 
-  <div id="recentWrap" class="stack" style="margin-top:22px" hidden>
+  <div class="status"><span class="sdot" aria-hidden="true"></span>Offline ready</div>
+
+  <div id="recentWrap" class="stack" style="margin-top:26px" hidden>
     <div class="row" style="align-items:baseline">
       <span class="eyebrow sp">RECENT DEBRIEFS</span>
       <span class="eyebrow" id="recentCount"></span>
     </div>
     <div class="card" id="recentList"></div>
-  </div>
-
-  <div id="emptyHint" class="note" style="margin-top:22px">
-    Set the flight up on the ground, grade each maneuver with one tap in the air, then close out and send the debrief. No signal needed — everything stays on this phone.
-  </div>
-
-  <div class="mono" style="margin-top:auto;padding-top:20px;font-size:10.5px;color:var(--ink-2);letter-spacing:.4px">
-    ACS TOLERANCES · 6C PRIVATE · 8C INSTRUMENT · 7B COMMERCIAL
   </div>
 </section>
 
@@ -573,18 +588,58 @@ function taskById(libKey,id){
   return null;
 }
 
+var QUOTES=[
+{t:"When performance is measured, performance improves.",a:"Pearson's Law",n:"Popularized by Thomas S. Monson"},
+{t:"What gets measured gets managed.",a:"Peter Drucker",n:"Commonly attributed; disputed"},
+{t:"If you can't measure it, you can't improve it.",a:"Lord Kelvin",n:"Attributed; paraphrase"},
+{t:"Without data, you're just another person with an opinion.",a:"W. Edwards Deming",n:"Attributed"},
+{t:"In God we trust; all others must bring data.",a:"W. Edwards Deming",n:"Attributed"},
+{t:"Feedback is the breakfast of champions.",a:"Ken Blanchard"},
+{t:"Measure what is measurable, and make measurable what is not so.",a:"Galileo Galilei",n:"Attributed; disputed"},
+{t:"We are what we repeatedly do. Excellence, then, is not an act, but a habit.",a:"Will Durant",n:"Often misattributed to Aristotle"},
+{t:"Practice doesn't make perfect. Perfect practice makes perfect.",a:"Vince Lombardi"},
+{t:"We don't rise to the level of our expectations; we fall to the level of our training.",a:"Archilochus",n:"Attributed; paraphrase"},
+{t:"Success is the sum of small efforts, repeated day in and day out.",a:"Robert Collier"},
+{t:"Nothing is particularly hard if you divide it into small jobs.",a:"Henry Ford"},
+{t:"Learning is not attained by chance; it must be sought with ardor.",a:"Abigail Adams"},
+{t:"Slow is smooth, smooth is fast.",a:"Military maxim"},
+{t:"The most effective way to do it, is to do it.",a:"Amelia Earhart"},
+{t:"The hardest thing is the decision to act; the rest is merely tenacity.",a:"Amelia Earhart"},
+{t:"The superior pilot uses his superior judgment to avoid situations requiring his superior skills.",a:"Frank Borman",n:"Attributed"},
+{t:"It is possible to fly without motors, but not without knowledge and skill.",a:"Wilbur Wright"},
+{t:"Aviation is proof that given the will, we have the capacity to achieve the impossible.",a:"Eddie Rickenbacker"},
+{t:"The engine is the heart of an airplane, but the pilot is its soul.",a:"Sir Walter Raleigh",n:"The professor (1861\u20131922), not the explorer"},
+{t:"To most people, the sky is the limit. To those who love aviation, the sky is home.",a:"Jerry Crawford"},
+{t:"Pilots take no special joy in walking. Pilots like flying.",a:"Neil Armstrong"},
+{t:"The airplane stays up because it doesn't have the time to fall.",a:"Orville Wright",n:"Attributed"},
+{t:"Once you have tasted flight, you will forever walk the earth with your eyes turned skyward.",a:"Leonardo da Vinci",n:"Commonly attributed; likely misattributed"},
+{t:"Aviate, navigate, communicate.",a:"Aviation proverb"},
+{t:"Plan the flight. Fly the plan.",a:"Aviation proverb"},
+{t:"Fly the airplane first.",a:"Aviation proverb"},
+{t:"Always leave yourself an out.",a:"Aviation proverb"},
+{t:"There are old pilots and bold pilots, but no old, bold pilots.",a:"Aviation proverb"},
+{t:"A good landing is one you can walk away from.",a:"Aviation proverb"}
+];
+
 /* ---------- storage ---------- */
 var KEY="debrief.v1";
-var S={ current:null, flights:[], lastLib:null };
+var S={ current:null, flights:[], lastLib:null, bag:null, lastQuote:null };
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
 function load(){
   try{
     var raw=localStorage.getItem(KEY);
-    if(raw){ var p=JSON.parse(raw); if(p&&typeof p==="object"){ S.current=p.current||null; S.flights=Array.isArray(p.flights)?p.flights:[]; S.lastLib=p.lastLib||null; } }
+    if(raw){ var p=JSON.parse(raw); if(p&&typeof p==="object"){ S.current=p.current||null; S.flights=Array.isArray(p.flights)?p.flights:[]; S.lastLib=p.lastLib||null; S.bag=Array.isArray(p.bag)?p.bag:null; S.lastQuote=(typeof p.lastQuote==="number")?p.lastQuote:null; } }
   }catch(e){}
 }
 
 /* ---------- helpers ---------- */
+/* the accent follows the certificate being trained; grade colors never move */
+function applyLib(key){
+  if(key==="instrument"||key==="commercial") document.documentElement.setAttribute("data-lib",key);
+  else document.documentElement.removeAttribute("data-lib");
+}
+function libTheme(){ applyLib((S.current && S.current.libKey) || S.lastLib || "ppl"); }
+
 function $(id){ return document.getElementById(id); }
 function el(tag,cls,txt){ var n=document.createElement(tag); if(cls)n.className=cls; if(txt!=null)n.textContent=txt; return n; }
 function fmtDate(iso){
@@ -664,13 +719,42 @@ function allNotes(e){
   return out;
 }
 
+/* ---------- quote of the launch ----------
+   A shuffle bag: every quote shows once before any repeats, and the bag never
+   re-opens on the same quote it just closed with. */
+function drawQuote(){
+  var bag = Array.isArray(S.bag) ? S.bag.slice() : [];
+  if(!bag.length){
+    for(var i=0;i<QUOTES.length;i++) bag.push(i);
+    for(var j=bag.length-1;j>0;j--){
+      var k=Math.floor(Math.random()*(j+1)), t=bag[j]; bag[j]=bag[k]; bag[k]=t;
+    }
+    if(bag.length>1 && S.lastQuote!==null && bag[bag.length-1]===S.lastQuote){
+      var swap=bag[bag.length-1]; bag[bag.length-1]=bag[0]; bag[0]=swap;
+    }
+  }
+  var idx=bag.pop();
+  S.bag=bag; S.lastQuote=idx; save();
+  return QUOTES[idx] || QUOTES[0];
+}
+var sessionQuote=null;
+
 /* ---------- HOME ---------- */
 function renderHome(){
+  libTheme();
   var c=S.current;
-  var rb=$("resumeBtn"), idle=$("heroIdle");
-  $("homeDate").textContent=fmtDate(new Date().toISOString()).toUpperCase();
+  var rb=$("resumeBtn");
+  var now=new Date(), MON=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  $("homeDate").textContent=now.getDate()+" "+MON[now.getMonth()];
+
+  if(!sessionQuote) sessionQuote=drawQuote();
+  $("qText").textContent=sessionQuote.t;
+  $("qAuthor").textContent="— "+sessionQuote.a;
+  var qn=$("qNote");
+  if(sessionQuote.n){ qn.hidden=false; qn.textContent=sessionQuote.n; } else qn.hidden=true;
+
   if(c && !c.done){
-    rb.hidden=false; idle.hidden=true;
+    rb.hidden=false;
     $("resumeTitle").textContent=c.student||"Flight in progress";
     var graded=0; for(var i=0;i<c.entries.length;i++){ if(entryResult(c.entries[i])) graded++; }
     $("resumeSub").textContent=graded+" of "+c.entries.length+" graded"+(c.aircraft?" · "+c.aircraft:"");
@@ -681,12 +765,11 @@ function renderHome(){
       if(r2==="unsat") s2.className="bad"; else if(r2) s2.className="done";
       bar.appendChild(s2);
     }
-  } else { rb.hidden=true; idle.hidden=false; }
+  } else { rb.hidden=true; }
 
   var list=$("recentList"); list.innerHTML="";
   var done=S.flights.slice(0,5);
   $("recentWrap").hidden = done.length===0;
-  $("emptyHint").hidden = done.length>0;
   $("recentCount").textContent = done.length? String(S.flights.length) : "";
   for(var k=0;k<done.length;k++){
     (function(f){
@@ -765,7 +848,7 @@ function pickedIds(){
   return out;
 }
 function updateCount(){ $("pickCount").textContent=String(pickedIds().length); }
-$("f-course").addEventListener("change",function(){ picked={}; renderPicker(); });
+$("f-course").addEventListener("change",function(){ picked={}; applyLib($("f-course").value); renderPicker(); });
 $("clearPicks").addEventListener("click",function(){ picked={}; renderPicker(); });
 
 $("startBtn").addEventListener("click",function(){
@@ -787,9 +870,10 @@ $("startBtn").addEventListener("click",function(){
 
 /* ---------- ARMED ---------- */
 function renderArmed(){
+  libTheme();
   var c=S.current; if(!c) return;
   var t=taskById(c.libKey,c.entries[0].taskId);
-  $("armedMeta").textContent=(c.student||"Flight")+(c.aircraft?" · "+c.aircraft:"")+" · "+c.entries.length+" queued";
+  $("armedMeta").textContent=(c.student||"Flight")+(c.aircraft?" · "+c.aircraft:"")+" · "+LIB[c.libKey].acs.replace("FAA-S-","");
   $("armedTotal").textContent=String(c.entries.length);
   fitName($("armedName"), t?t.name:"—", 52);
   var tol=$("armedTol"); tol.innerHTML="";
@@ -811,6 +895,7 @@ $("beginBtn").addEventListener("click",function(){
 
 /* ---------- GRADE ---------- */
 function renderGrade(){
+  libTheme();
   var c=S.current; if(!c) return;
   if(c.idx>=c.entries.length){ renderClose(); show("close"); return; }
   var e=c.entries[c.idx], t=taskById(c.libKey,e.taskId);
@@ -1003,6 +1088,7 @@ function openNote(entry){
 
 /* ---------- WHY ---------- */
 function renderWhy(){
+  libTheme();
   var c=S.current, e=c.entries[c.idx], t=taskById(c.libKey,e.taskId);
   var att=lastAttempt(e);
   $("whyMeta").textContent=(t?t.name:"")+" · attempt "+e.attempts.length;
@@ -1048,6 +1134,7 @@ $("whyDone").addEventListener("click",function(){ advance(); });
 
 /* ---------- CLOSE OUT ---------- */
 function renderClose(){
+  libTheme();
   var c=S.current; if(!c) return;
   $("closeMeta").textContent=(c.student||"Flight")+(c.aircraft?" · "+c.aircraft:"")+" · "+fmtDate(c.date);
   var sat=0,uns=0,no=0;
@@ -1086,6 +1173,7 @@ $("buildBtn").addEventListener("click",function(){
 
 /* ---------- DEBRIEF ---------- */
 function renderDebrief(){
+  libTheme();
   var c=S.current, lib=LIB[c.libKey];
   var host=$("report"); host.innerHTML="";
 
@@ -1118,7 +1206,7 @@ function renderDebrief(){
     var td2=el("td"); td2.style.whiteSpace="nowrap";
     var tg=el("span","mono", r==="sat"?"SAT":r==="unsat"?"UNSAT":"N/O");
     tg.style.fontSize="11px"; tg.style.fontWeight="600";
-    tg.style.color = r==="unsat" ? "var(--warn)" : r==="sat" ? "var(--go)" : "var(--ink-2)";
+    tg.style.color = r==="unsat" ? "var(--warn)" : r==="sat" ? "var(--sat)" : "var(--ink-2)";
     td2.appendChild(tg);
     var td3=el("td");
     var bits=[];
@@ -1274,6 +1362,7 @@ $("doneBtn").addEventListener("click",function(){
 /* ---------- boot ---------- */
 load();
 if(S.lastLib && LIB[S.lastLib]) $("f-course").value=S.lastLib;
+libTheme();
 renderPicker(); renderHome();
 if(S.current && !S.current.done){
   /* keep the in-progress flight one tap away, but open on Home */
@@ -1281,5 +1370,3 @@ if(S.current && !S.current.done){
 } else show("home");
 })();
 </script>
-
-</body></html>
