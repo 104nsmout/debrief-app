@@ -49,7 +49,7 @@ html,body{height:100%}
 #topoBg path{fill:none;stroke:var(--topo);stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%}
 #app{box-sizing:border-box;min-height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 16px}
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:max(14px,env(safe-area-inset-top,0px));padding-bottom:16px}
 section{flex:1;display:flex;flex-direction:column;min-width:0}
 @media (pointer:coarse){ #app{max-width:none} }
 /* a phone whose viewer lays the page out at desktop width then scales it down:
@@ -191,6 +191,38 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 .stat.unsat{background:var(--warn);color:var(--on-warn)}
 .stat.no{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
 .rowitem{display:flex;align-items:center;gap:10px;padding:10px 11px;background:none;border:0;width:100%;text-align:left;color:inherit}
+
+/* --- grade screen --- */
+.nextup{flex:none;margin-top:12px;font-family:var(--mono);font-size:11.5px;letter-spacing:1.1px;color:var(--ink-2)}
+.attwrap{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:16px}
+.att{border-radius:13px;margin-bottom:8px}
+.att .sw-in{border:1px solid var(--line);border-radius:13px;padding:11px 13px}
+.attnote{display:block;width:100%;margin-top:7px;text-align:left;background:var(--surface-2);
+  border:1px dashed var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);font-size:14px;min-height:44px}
+.attnote.empty{color:var(--ink-2)}
+.attwhy{display:block;margin-top:6px;font-family:var(--mono);font-size:11.5px;color:var(--warn)}
+.nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px;flex:none}
+.nav button{min-height:56px;border:1.5px solid var(--line);border-radius:14px;background:none;color:var(--go);
+  font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}
+.nav button:disabled{opacity:.35}
+.nav.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.nav button.muted{color:var(--ink-2)}
+.nav button.strong{border-color:var(--go);background:var(--go-soft);font-weight:700}
+.danger{border:0;border-radius:11px;background:var(--warn);color:var(--on-warn);font-weight:700;min-height:48px;font-size:15px}
+/* once a maneuver has an attempt, the grade buttons recede and sit side by side */
+#v-grade.graded .grades{flex-direction:row;gap:10px;margin-top:0}
+#v-grade.graded .grade{flex:1 1 0;min-height:96px;border-radius:20px;padding:10px}
+#v-grade.graded .grade .big{font-size:27px}
+#v-grade.graded .grade .sub{font-size:11.5px}
+#v-grade.graded .grade.sat{background:#27330F;color:#9DBF4C}
+#v-grade.graded .grade.sat .sub{color:#9DBF4C;opacity:.9}
+#v-grade.graded .grade.unsat{background:#3A2415;color:#C97440}
+#v-grade.graded .grade.unsat .sub{opacity:.9}
+/* area headers double as select-all for their section */
+.areahead{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;min-height:44px}
+.areahead .cnt{flex:none;font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--ink-2)}
+.areahead .cnt.on{color:var(--go)}
+
 /* swipe-to-delete row */
 .swipe{position:relative;overflow:hidden;background:var(--warn)}
 .sw-del{position:absolute;right:0;top:0;bottom:0;width:96px;border:0;background:var(--warn);color:var(--on-warn);
@@ -337,6 +369,7 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 
     <div class="row" style="margin-top:18px;align-items:baseline">
       <span class="eyebrow sp">MANEUVER QUEUE · <span id="pickCount" style="color:var(--warn)">0</span></span>
+      <button class="link" id="allPicks" style="color:var(--go);margin-right:14px">All</button>
       <button class="link" id="clearPicks">Clear</button>
     </div>
     <div class="card" id="taskPicker" style="margin-top:8px"></div>
@@ -349,65 +382,40 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 </section>
 
 <!-- ARMED -->
-<section id="v-armed" hidden>
-  <div class="topbar">
-    <button class="iconbtn" data-go="setup" aria-label="Back to setup" style="margin-left:-10px">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--go)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
-    </button>
-    <span class="tag" style="background:var(--go);color:var(--on-go);min-width:0;padding:5px 9px;letter-spacing:.9px">ARMED</span>
-    <span class="sp muted" style="font-size:13px;font-weight:600" id="armedMeta"></span>
-  </div>
-
-  <div style="margin-top:22px;flex:none">
-    <div class="eyebrow">FIRST UP · MANEUVER 1 OF <span id="armedTotal">6</span></div>
-    <h1 class="d" style="font-size:52px;margin-top:6px;color:var(--ink)" id="armedName">—</h1>
-  </div>
-  <div class="chips" style="margin-top:14px;flex:none" id="armedTol"></div>
-  <div class="note" style="margin-top:16px;flex:none">Taxi, depart and get set up. Nothing is recorded until you tap Begin.</div>
-
-  <div class="stack" style="margin-top:auto;flex:none">
-    <div class="eyebrow">THEN</div>
-    <div class="card" id="armedQueue"></div>
-  </div>
-
-  <button class="primary" id="beginBtn" style="min-height:112px;margin-top:14px;flex:none">
-    <span class="big" style="font-size:44px">Begin</span>
-    <span style="font-size:13px;color:var(--go-soft)" id="beginSub"></span>
-  </button>
-</section>
-
 <!-- GRADE -->
 <section id="v-grade" hidden>
   <div class="topbar">
-    <button id="jumpBtn" style="border:0;background:none;padding:0;min-height:44px;display:flex;align-items:center;gap:7px;color:inherit">
+    <button id="jumpBtn" style="flex:1 1 auto;border:0;background:none;padding:0;min-height:44px;display:flex;align-items:center;gap:7px;color:inherit;text-align:left">
       <span class="eyebrow" id="gradeCount">MANEUVER 1 OF 6</span>
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--go)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--go)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
     </button>
-    <button class="link" id="endEarly">End &amp; close out</button>
+    <button class="link" id="endEarly" style="flex:none">End &amp; close out</button>
   </div>
   <div class="bar" id="gradeBar" style="margin-top:2px"></div>
 
-  <div style="margin-top:18px;flex:none">
-    <div class="eyebrow" style="color:var(--go)" id="attemptLabel">ATTEMPT 1</div>
-    <h1 class="d" style="font-size:50px;margin-top:5px;color:var(--ink)" id="gradeName">—</h1>
+  <div style="margin-top:16px;flex:none">
+    <div class="eyebrow" style="color:var(--go)" id="attemptLabel">NOT YET GRADED</div>
+    <h1 class="d" style="font-size:46px;margin-top:5px;color:var(--ink)" id="gradeName">&mdash;</h1>
   </div>
   <div class="chips" style="margin-top:12px;flex:none" id="gradeTol"></div>
-  <div id="noteShown" class="note" style="margin-top:12px;flex:none" hidden></div>
+  <div class="nextup" id="nextUp" hidden></div>
+
+  <div class="attwrap" id="attWrap">
+    <div class="eyebrow" id="attemptsHead" style="margin-bottom:8px" hidden>ATTEMPTS &middot; SWIPE A ROW TO DELETE</div>
+    <div id="attemptList"></div>
+  </div>
 
   <div class="grades">
     <button class="grade unsat" data-grade="unsat"><span class="big">Unsat</span><span class="sub">what broke &rarr;</span></button>
-    <button class="grade sat" data-grade="sat"><span class="big">Sat</span><span class="sub">one tap · next maneuver</span></button>
+    <button class="grade sat" data-grade="sat"><span class="big">Sat</span><span class="sub">records attempt 1</span></button>
   </div>
 
-  <div class="utils">
-    <button id="repeatBtn">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 20v-5h5"/></svg>Repeat</button>
-    <button id="noteBtn">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Note</button>
-    <button id="skipBtn">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Not flown</button>
-    <button id="undoBtn">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg>Undo</button>
+  <div class="nav">
+    <button id="prevBtn" type="button">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Previous</button>
+    <button id="skipBtn" type="button" class="muted">Not flown</button>
+    <button id="nextBtn" type="button" class="strong">Next
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
   </div>
 </section>
 
@@ -730,7 +738,7 @@ function fitName(node,name,base){
   var n=(name||"").length;
   node.style.fontSize=(n>30?base-20:n>20?base-11:base)+"px";
 }
-var VIEWS=["home","setup","armed","grade","why","close","debrief"];
+var VIEWS=["home","setup","grade","why","close","debrief"];
 function show(v){
   for(var i=0;i<VIEWS.length;i++){ $("v-"+VIEWS[i]).hidden = (VIEWS[i]!==v); }
   window.scrollTo(0,0);
@@ -849,7 +857,7 @@ function renderHome(){
 $("newFlightBtn").addEventListener("click",function(){ renderPicker(); show("setup"); });
 $("resumeBtn").addEventListener("click",function(){
   var c=S.current; if(!c) return;
-  if(c.started){ renderGrade(); show("grade"); } else { renderArmed(); show("armed"); }
+  renderGrade(); show("grade");
 });
 document.addEventListener("click",function(ev){
   var b=ev.target.closest ? ev.target.closest("[data-go]") : null;
@@ -858,26 +866,51 @@ document.addEventListener("click",function(ev){
 
 /* ---------- SETUP ---------- */
 var picked={};
+function areaOn(area){
+  var n=0; for(var i=0;i<area.tasks.length;i++){ if(picked[area.tasks[i].id]) n++; }
+  return n;
+}
+function paintCnt(area,cnt){
+  var on=areaOn(area);
+  cnt.textContent=on+"/"+area.tasks.length;
+  cnt.className="cnt"+(on?" on":"");
+}
 function renderPicker(){
   var libKey=$("f-course").value;
   var lib=LIB[libKey];
   var host=$("taskPicker"); host.innerHTML="";
   for(var a=0;a<lib.areas.length;a++){
-    var area=lib.areas[a];
-    host.appendChild(el("div","areahead",area.name));
-    for(var i=0;i<area.tasks.length;i++){
-      (function(t){
-        var wrap=el("label","pick");
-        var cb=document.createElement("input"); cb.type="checkbox"; cb.id="pick-"+t.id; cb.checked=!!picked[t.id];
-        cb.addEventListener("change",function(){ picked[t.id]=cb.checked; updateCount(); });
-        var sp=el("span","sp");
-        var n=el("span",null,t.name); n.style.display="block"; n.style.fontWeight="600"; n.style.fontSize="16px";
-        var s=el("span","mono muted",t.tol.join(" · ")); s.style.display="block"; s.style.fontSize="13px"; s.style.marginTop="2px";
-        sp.appendChild(n); sp.appendChild(s);
-        wrap.appendChild(cb); wrap.appendChild(sp);
-        host.appendChild(wrap);
-      })(area.tasks[i]);
-    }
+    (function(area){
+      var ah=el("button","areahead"); ah.type="button";
+      ah.appendChild(el("span","sp",area.name));
+      var cnt=el("span","cnt","");
+      paintCnt(area,cnt);
+      ah.appendChild(cnt);
+      /* tapping the header selects or clears the whole section */
+      ah.addEventListener("click",function(){
+        var all=(areaOn(area)===area.tasks.length);
+        for(var i=0;i<area.tasks.length;i++){
+          var t=area.tasks[i];
+          picked[t.id]=!all;
+          var box=$("pick-"+t.id); if(box) box.checked=!all;
+        }
+        paintCnt(area,cnt); updateCount();
+      });
+      host.appendChild(ah);
+      for(var i=0;i<area.tasks.length;i++){
+        (function(t){
+          var wrap=el("label","pick");
+          var cb=document.createElement("input"); cb.type="checkbox"; cb.id="pick-"+t.id; cb.checked=!!picked[t.id];
+          cb.addEventListener("change",function(){ picked[t.id]=cb.checked; paintCnt(area,cnt); updateCount(); });
+          var sp=el("span","sp");
+          var n=el("span",null,t.name); n.style.display="block"; n.style.fontWeight="600"; n.style.fontSize="16px";
+          var s=el("span","mono muted",t.tol.join(" \u00b7 ")); s.style.display="block"; s.style.fontSize="13px"; s.style.marginTop="2px";
+          sp.appendChild(n); sp.appendChild(s);
+          wrap.appendChild(cb); wrap.appendChild(sp);
+          host.appendChild(wrap);
+        })(area.tasks[i]);
+      }
+    })(lib.areas[a]);
   }
   updateCount();
 }
@@ -892,6 +925,12 @@ function pickedIds(){
 function updateCount(){ $("pickCount").textContent=String(pickedIds().length); }
 $("f-course").addEventListener("change",function(){ picked={}; applyLib($("f-course").value); renderPicker(); });
 $("clearPicks").addEventListener("click",function(){ picked={}; renderPicker(); });
+$("allPicks").addEventListener("click",function(){
+  var lib=LIB[$("f-course").value];
+  for(var a=0;a<lib.areas.length;a++){ var ts=lib.areas[a].tasks;
+    for(var i=0;i<ts.length;i++){ picked[ts[i].id]=true; } }
+  renderPicker();
+});
 
 $("startBtn").addEventListener("click",function(){
   var ids=pickedIds();
@@ -907,31 +946,6 @@ $("startBtn").addEventListener("click",function(){
     libKey:$("f-course").value,
     entries:entries, idx:0, started:false, done:false, summary:""
   };
-  save(); renderArmed(); show("armed");
-});
-
-/* ---------- ARMED ---------- */
-function renderArmed(){
-  libTheme();
-  var c=S.current; if(!c) return;
-  var t=taskById(c.libKey,c.entries[0].taskId);
-  $("armedMeta").textContent=(c.student||"Flight")+(c.aircraft?" · "+c.aircraft:"")+" · "+LIB[c.libKey].acs.replace("FAA-S-","");
-  $("armedTotal").textContent=String(c.entries.length);
-  fitName($("armedName"), t?t.name:"—", 52);
-  var tol=$("armedTol"); tol.innerHTML="";
-  if(t) for(var i=0;i<t.tol.length;i++){ tol.appendChild(el("span","chip",t.tol[i])); }
-  $("beginSub").textContent="starts maneuver 1 · "+(t?t.name:"");
-  var q=$("armedQueue"); q.innerHTML="";
-  for(var k=1;k<c.entries.length;k++){
-    var tk=taskById(c.libKey,c.entries[k].taskId);
-    var row=el("div","rowitem");
-    var num=el("span","mono muted",String(k+1)); num.style.fontSize="12px"; num.style.fontWeight="600";
-    var nm=el("span","sp",tk?tk.name:"—"); nm.style.fontSize="14px"; nm.style.fontWeight="500";
-    row.appendChild(num); row.appendChild(nm); q.appendChild(row);
-  }
-  if(c.entries.length===1) q.appendChild(el("div","rowitem","Nothing else queued."));
-}
-$("beginBtn").addEventListener("click",function(){
   S.current.started=true; save(); renderGrade(); show("grade");
 });
 
@@ -940,42 +954,115 @@ function renderGrade(){
   libTheme();
   var c=S.current; if(!c) return;
   if(c.idx>=c.entries.length){ renderClose(); show("close"); return; }
-  var e=c.entries[c.idx], t=taskById(c.libKey,e.taskId);
+  var e=c.entries[c.idx], t=taskById(c.libKey,e.taskId), r=entryResult(e);
+  var n=e.attempts.length;
+
   $("gradeCount").textContent="MANEUVER "+(c.idx+1)+" OF "+c.entries.length;
-  fitName($("gradeName"), t?t.name:"—", 50);
-  $("attemptLabel").textContent="ATTEMPT "+(e.attempts.length+1);
+  fitName($("gradeName"), t?t.name:"\u2014", n?38:46);
+
+  /* the eyebrow reports the state of the whole maneuver, not the next attempt */
+  var lab=$("attemptLabel");
+  if(e.skipped){ lab.textContent="MARKED NOT FLOWN"; lab.style.color="var(--ink-2)"; }
+  else if(!n){ lab.textContent="NOT YET GRADED"; lab.style.color="var(--go)"; }
+  else {
+    var la=lastAttempt(e);
+    var tail=(r==="unsat" && la && la.result==="sat") ? " \u00b7 LAST ONE HELD" : "";
+    lab.textContent=(r==="sat"?"SAT":"UNSAT")+" \u00b7 "+n+(n===1?" ATTEMPT":" ATTEMPTS")+tail;
+    lab.style.color=(r==="sat")?"var(--sat)":"var(--warn)";
+  }
+
   var tol=$("gradeTol"); tol.innerHTML="";
   if(t) for(var i=0;i<t.tol.length;i++){ tol.appendChild(el("span","chip",t.tol[i])); }
 
   var bar=$("gradeBar"); bar.innerHTML="";
   bar.style.gridTemplateColumns="repeat("+c.entries.length+",minmax(0,1fr))";
   for(var k=0;k<c.entries.length;k++){
-    var s=el("span");
-    var r=entryResult(c.entries[k]);
-    if(k===c.idx) s.className="now";
-    else if(r==="unsat") s.className="bad";
-    else if(r==="sat") s.className="done";
-    bar.appendChild(s);
+    var sp=el("span"), rk=entryResult(c.entries[k]);
+    if(k===c.idx) sp.className="now";
+    else if(rk==="unsat") sp.className="bad";
+    else if(rk==="sat") sp.className="done";
+    bar.appendChild(sp);
   }
-  var notes=allNotes(e);
-  var nd=$("noteShown");
-  if(notes.length){ nd.hidden=false; nd.textContent="Note: "+notes.join(" · "); } else nd.hidden=true;
-  $("undoBtn").disabled = !(e.attempts.length || e.skipped || typeof c.lastGraded==="number" || c.idx>0);
+
+  var nu=$("nextUp");
+  if(c.idx+1<c.entries.length){
+    var nt=taskById(c.libKey,c.entries[c.idx+1].taskId);
+    nu.textContent="NEXT UP \u00b7 "+((nt?nt.name:"\u2014").toUpperCase());
+    nu.hidden=false;
+  } else { nu.textContent="LAST MANEUVER IN THE QUEUE"; nu.hidden=false; }
+
+  drawAttempts(e);
+
+  /* graded: the buttons recede and record the NEXT attempt */
+  $("v-grade").classList.toggle("graded", n>0);
+  var ssub=document.querySelector("#v-grade .grade.sat .sub");
+  var usub=document.querySelector("#v-grade .grade.unsat .sub");
+  ssub.textContent="records attempt "+(n+1);
+  usub.textContent=n ? ("records attempt "+(n+1)) : "what broke \u2192";
+
+  var sk=$("skipBtn");
+  sk.hidden=(n>0);
+  sk.textContent=e.skipped?"Un-mark":"Not flown";
+  document.querySelector("#v-grade .nav").classList.toggle("two", n>0);
+  $("prevBtn").disabled=(c.idx===0);
 }
 
-/* go to the next maneuver that still has no grade — forward first, then wrap.
-   Order is a convenience, not a rule: nothing is stranded when you grade out of sequence. */
-function nextUngraded(from){
-  var c=S.current, i;
-  for(i=from+1;i<c.entries.length;i++){ if(!entryResult(c.entries[i])) return i; }
-  for(i=0;i<=from && i<c.entries.length;i++){ if(!entryResult(c.entries[i])) return i; }
-  return -1;
+/* one row per attempt, each carrying its own note */
+function drawAttempts(e){
+  var host=$("attemptList"); host.innerHTML="";
+  $("attemptsHead").hidden=!e.attempts.length;
+  for(var i=0;i<e.attempts.length;i++){
+    (function(a,i){
+      var wrap=el("div","swipe att");
+      var del=el("button","sw-del","Delete");
+      var inner=el("div","sw-in");
+      var top=el("div","row");
+      var lb=el("span","mono muted","ATTEMPT "+(i+1));
+      lb.style.cssText="font-size:11.5px;font-weight:600;letter-spacing:1px";
+      var tg=el("span","tag "+a.result, a.result==="sat"?"SAT":"UNSAT");
+      top.appendChild(lb); top.appendChild(tg);
+      inner.appendChild(top);
+      if(a.why && a.why.length) inner.appendChild(el("span","attwhy",a.why.join(", ")));
+      var note=el("button","attnote"+(a.note?"":" empty"), a.note||"Tap to add a note");
+      note.type="button";
+      note.addEventListener("click",function(){ openNote(e,i); });
+      inner.appendChild(note);
+      del.addEventListener("click",function(){ confirmDeleteAttempt(e,i); });
+      wrap.appendChild(del); wrap.appendChild(inner);
+      host.appendChild(wrap);
+      attachSwipe(wrap);
+    })(e.attempts[i],i);
+  }
 }
-function advance(){
-  var c=S.current;
-  var n=nextUngraded(c.idx);
-  if(n<0){ c.idx=c.entries.length; save(); renderClose(); show("close"); return; }
-  c.idx=n; save(); renderGrade(); show("grade");
+
+/* deleting an attempt can change the maneuver's grade, so say so first */
+function confirmDeleteAttempt(entry,i){
+  var left=entry.attempts.slice(); left.splice(i,1);
+  var after=entryResult({skipped:entry.skipped,attempts:left});
+  var msg;
+  if(!left.length) msg="This maneuver goes back to ungraded.";
+  else if(after===entryResult(entry)) msg="This maneuver stays "+(after==="sat"?"SAT":"UNSAT")+".";
+  else msg="This maneuver becomes "+(after==="sat"?"SAT":"UNSAT")+".";
+  openConfirm("Remove attempt "+(i+1)+"?", msg, function(){
+    entry.attempts.splice(i,1);
+    save(); renderGrade(); toast("Attempt "+(i+1)+" removed");
+  });
+}
+
+function openConfirm(title,body,onOk,okLabel){
+  var wrap=el("div","sheet"), inner=el("div","inner");
+  var h=el("div"); h.style.cssText="font-family:var(--display);font-weight:800;font-size:21px;line-height:1.2;color:var(--ink)"; h.textContent=title;
+  var p=el("div"); p.style.cssText="margin-top:9px;font-size:14.5px;line-height:1.45;color:var(--ink-2)"; p.textContent=body;
+  var row=el("div","row"); row.style.cssText="margin-top:16px;gap:10px";
+  var cancel=el("button","ghost sp","Cancel");
+  var ok=el("button","danger sp",okLabel||"Delete");
+  row.appendChild(cancel); row.appendChild(ok);
+  inner.appendChild(h); inner.appendChild(p); inner.appendChild(row);
+  wrap.appendChild(inner); document.body.appendChild(wrap);
+  function close(){ if(wrap.parentNode) wrap.parentNode.removeChild(wrap); }
+  cancel.addEventListener("click",close);
+  wrap.addEventListener("click",function(ev){ if(ev.target===wrap) close(); });
+  ok.addEventListener("click",function(){ close(); onOk(); });
 }
 
 /* ---------- jump sheet: switch maneuvers, or add one mid-flight ---------- */
@@ -1069,42 +1156,34 @@ document.querySelectorAll("#v-grade [data-grade]").forEach(function(btn){
     c.lastGraded=c.idx;
     save();
     if(g==="unsat"){ renderWhy(); show("why"); }
-    else advance();
+    else renderGrade();
   });
 });
 
-$("repeatBtn").addEventListener("click",function(){
-  var e=S.current.entries[S.current.idx];
-  if(!e.attempts.length){ toast("Grade this attempt first"); return; }
-  renderGrade(); toast("Another attempt at this maneuver");
+$("prevBtn").addEventListener("click",function(){
+  var c=S.current; if(c.idx>0){ c.idx--; save(); renderGrade(); }
+});
+$("nextBtn").addEventListener("click",function(){
+  var c=S.current;
+  if(c.idx<c.entries.length-1){ c.idx++; save(); renderGrade(); }
+  else toast("Last maneuver \u00b7 use End & close out");
 });
 $("skipBtn").addEventListener("click",function(){
   var c=S.current, e=c.entries[c.idx];
-  e.skipped=true; e.attempts=[]; c.lastGraded=c.idx; save(); advance();
-});
-$("undoBtn").addEventListener("click",function(){
-  var c=S.current, e=c.entries[c.idx];
-  if(e.attempts.length){ e.attempts.pop(); }
-  else if(e.skipped){ e.skipped=false; }
-  else if(typeof c.lastGraded==="number" && c.entries[c.lastGraded]){
-    c.idx=c.lastGraded;
-    var p=c.entries[c.idx];
-    if(p.attempts.length) p.attempts.pop();
-    p.skipped=false;
-  }
-  else if(c.idx>0){ c.idx--; var q=c.entries[c.idx]; if(q.attempts.length) q.attempts.pop(); q.skipped=false; }
-  save(); renderGrade(); toast("Undone");
+  if(e.skipped){ e.skipped=false; save(); renderGrade(); toast("No longer marked not flown"); return; }
+  e.skipped=true; e.attempts=[]; c.lastGraded=c.idx; save(); renderGrade(); toast("Marked not flown");
 });
 $("endEarly").addEventListener("click",function(){ renderClose(); show("close"); });
-$("noteBtn").addEventListener("click",function(){ openNote(S.current.entries[S.current.idx]); });
 
 /* note sheet — the phone keyboard's mic key does the dictation */
-function openNote(entry){
+function openNote(entry,idx){
+  var target=(typeof idx==="number" && entry.attempts[idx]) ? entry.attempts[idx] : null;
   var wrap=el("div","sheet");
   var inner=el("div","inner");
-  var lab=el("label","fl","NOTE · TAP THE MIC ON YOUR KEYBOARD TO DICTATE"); lab.setAttribute("for","noteInput");
+  var lab=el("label","fl",(target?("ATTEMPT "+(idx+1)+" NOTE"):"NOTE")+" \u00b7 TAP THE MIC ON YOUR KEYBOARD TO DICTATE");
+  lab.setAttribute("for","noteInput");
   var ta=document.createElement("textarea"); ta.id="noteInput"; ta.rows=3;
-  ta.value = entry.note || (lastAttempt(entry)&&lastAttempt(entry).note) || "";
+  ta.value = target ? (target.note||"") : (entry.note||"");
   ta.placeholder="Rollout about 20 degrees past the 180.";
   var row=el("div","row"); row.style.marginTop="12px"; row.style.gap="10px";
   var cancel=el("button","ghost sp","Cancel");
@@ -1119,8 +1198,7 @@ function openNote(entry){
   wrap.addEventListener("click",function(ev){ if(ev.target===wrap) close(); });
   ok.addEventListener("click",function(){
     var v=ta.value.trim();
-    var la=lastAttempt(entry);
-    if(la) la.note=v; else entry.note=v;
+    if(target) target.note=v; else entry.note=v;
     save(); close();
     if(!$("v-grade").hidden) renderGrade();
     if(!$("v-why").hidden) renderWhy();
@@ -1171,8 +1249,8 @@ function matchLimit(t,why){
   return "";
 }
 $("whyBack").addEventListener("click",function(){ renderGrade(); show("grade"); });
-$("whyNote").addEventListener("click",function(){ openNote(S.current.entries[S.current.idx]); });
-$("whyDone").addEventListener("click",function(){ advance(); });
+$("whyNote").addEventListener("click",function(){ var e=S.current.entries[S.current.idx]; openNote(e,e.attempts.length-1); });
+$("whyDone").addEventListener("click",function(){ renderGrade(); show("grade"); });
 
 /* ---------- CLOSE OUT ---------- */
 function renderClose(){
@@ -1209,8 +1287,30 @@ $("closeBack").addEventListener("click",function(){
   renderGrade(); show("grade");
 });
 $("buildBtn").addEventListener("click",function(){
-  S.current.summary=$("f-summary").value.trim();
-  save(); renderDebrief(); show("debrief");
+  var c=S.current;
+  c.summary=$("f-summary").value.trim();
+  /* anything never graded is still undecided — say so rather than quietly
+     recording "not flown" against a maneuver that was simply missed */
+  var un=[];
+  for(var i=0;i<c.entries.length;i++){
+    var e=c.entries[i];
+    if(!e.skipped && !e.attempts.length){
+      var t=taskById(c.libKey,e.taskId);
+      un.push({i:i,name:t?t.name:"\u2014"});
+    }
+  }
+  function go(){ save(); renderDebrief(); show("debrief"); }
+  if(!un.length){ go(); return; }
+  var names=[]; for(var k=0;k<un.length;k++) names.push(un[k].name);
+  openConfirm(
+    un.length+(un.length===1?" maneuver was never graded":" maneuvers were never graded"),
+    names.join(", ")+". Mark "+(un.length===1?"it":"them")+" not flown and build the debrief?",
+    function(){
+      for(var k=0;k<un.length;k++){ c.entries[un[k].i].skipped=true; }
+      go();
+    },
+    "Mark not flown"
+  );
 });
 
 /* ---------- DEBRIEF ---------- */

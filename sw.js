@@ -1,7 +1,7 @@
 /* Maneuver Debrief — offline service worker.
    VERSION is injected at build time from a hash of index.html, so every
    rebuild invalidates the old cache automatically. Nothing to bump by hand. */
-var VERSION = "52bd21bd62c7";
+var VERSION = "d3a08cf53ba5";
 var CACHE   = "debrief-" + VERSION;
 
 var SHELL = [
