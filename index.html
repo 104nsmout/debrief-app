@@ -165,10 +165,15 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 .bar span.now{background:var(--ink)}
 .bar span.bad{background:var(--warn)}
 .grades{display:flex;flex-direction:column;gap:12px;margin-top:auto;flex:none}
-.grade{border:0;border-radius:16px;min-height:clamp(128px,19vh,176px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:14px}
-.grade{border-radius:20px}
-.grade .big{font-family:var(--display);font-weight:800;font-size:46px;text-transform:uppercase;letter-spacing:1.2px;line-height:1}
-.grade .sub{font-size:13.5px;font-weight:500}
+.grade{border:0;border-radius:20px;box-sizing:border-box;min-height:clamp(128px,19vh,176px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:14px;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:box-shadow .18s ease,color .18s ease,transform .09s ease-out}
+.grade:active{transform:scale(.985)}
+/* large uppercase wants negative tracking; the +1.2px here is eyebrow spacing
+   and reads as amateur above about 24px */
+.grade .big{font-family:var(--display);font-weight:800;font-size:46px;text-transform:uppercase;letter-spacing:-.6px;line-height:1}
+.grade .sub{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
 .grade.sat{background:var(--sat-grad);color:var(--on-sat)}
 .grade.sat .sub{color:#143007;opacity:.75}
 .grade.unsat{background:var(--warn);color:var(--on-warn)}
@@ -213,12 +218,22 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 #v-grade.graded .grades{flex-direction:row;gap:10px;margin-top:0}
 #v-grade.graded .grade{flex:1 1 0;min-height:96px;border-radius:20px;padding:10px}
 #v-grade.graded .grade .big{font-size:27px}
-#v-grade.graded .grade .sub{font-size:11.5px}
+#v-grade.graded .grade .sub{font-size:10.5px;letter-spacing:.8px}
 /* the grade you chose stays bright; the other recedes but stays pressable */
-.grade.dim{background:#171717;color:#9A9A9A}
+/* the recessive state is painted with an inset fill rather than a background
+   swap, because a gradient cannot cross-fade — and a hairline keeps it reading
+   as an inactive object instead of a hole in the page */
+.grade.dim{color:#9A9A9A;box-shadow:inset 0 0 0 1px var(--line),inset 0 0 0 999px #171717}
 .grade.dim .sub{color:#858585;opacity:1}
 .grade .tick{display:none}
 .grade.picked .tick{display:block;margin-bottom:2px}
+.grade.picked .tick path{stroke-dasharray:24;stroke-dashoffset:24;animation:tickin .22s ease-out forwards}
+@keyframes tickin{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){
+  .grade{transition:none}
+  .grade:active{transform:none}
+  .grade.picked .tick path{animation:none;stroke-dashoffset:0}
+}
 /* area headers double as select-all for their section */
 .areahead{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;min-height:44px}
 .areahead .cnt{flex:none;font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--ink-2)}
@@ -448,9 +463,10 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
   </div>
 
   <div class="row" style="margin-top:10px;flex:none;gap:10px">
-    <button class="ghost" id="whyNote" style="flex:none">Add note</button>
-    <button class="primary sp" id="whyDone" style="min-height:58px"><span class="big" style="font-size:22px">Done</span></button>
+    <button class="ghost sp" id="whyClear">Clear grade</button>
+    <button class="ghost sp" id="whyNote">Add note</button>
   </div>
+  <button class="primary" id="whyDone" style="min-height:58px;margin-top:10px;flex:none"><span class="big" style="font-size:22px">Done</span></button>
 </section>
 
 <!-- CLOSE OUT -->
@@ -1035,7 +1051,7 @@ function renderGrade(){
   satB.classList.toggle("dim", r==="unsat");
   unsB.classList.toggle("picked", r==="unsat");
   unsB.classList.toggle("dim", r==="sat");
-  satB.querySelector(".sub").textContent = (r==="sat") ? "graded satisfactory" : "tap to grade";
+  satB.querySelector(".sub").textContent = (r==="sat") ? "tap again to clear" : "tap to grade";
   var nw=(e.why||[]).length;
   unsB.querySelector(".sub").textContent = (r==="unsat")
     ? (nw ? nw+(nw===1?" standard not met":" standards not met") : "no standards recorded")
@@ -1229,14 +1245,30 @@ document.querySelectorAll("#v-grade [data-grade]").forEach(function(btn){
     var c=S.current, e=c.entries[c.idx];
     var g=btn.getAttribute("data-grade");
     var was=e.result;
-    e.skipped=false;
-    e.result=g;
+
+    /* UNSAT never toggles. It always opens the standards page, so an
+       unsatisfactory grade can never be recorded without its reason in front
+       of you — clearing one lives on that page. */
+    if(g==="unsat"){
+      e.skipped=false; e.result="unsat";
+      c.lastGraded=c.idx; save();
+      renderWhy(); show("why");
+      return;
+    }
+
+    /* SAT toggles: pressing it again clears the grade, and an ungraded
+       maneuver is resolved as not flown at close-out. Notes survive. */
+    if(was==="sat"){
+      e.result=null; e.skipped=false;
+      save(); renderGrade(); toast("Grade cleared");
+      return;
+    }
+
+    e.skipped=false; e.result="sat";
     /* standards recorded against an unsat make no sense once it reads sat */
-    if(g==="sat" && was==="unsat" && (e.why||[]).length){ e.why=[]; toast("Standards cleared"); }
+    if(was==="unsat" && (e.why||[]).length){ e.why=[]; toast("Standards cleared"); }
     c.lastGraded=c.idx;
-    save();
-    if(g==="unsat"){ renderWhy(); show("why"); }
-    else renderGrade();
+    save(); renderGrade();
   });
 });
 
@@ -1328,6 +1360,11 @@ function matchLimit(t,why){
 }
 $("whyBack").addEventListener("click",function(){ renderGrade(); show("grade"); });
 $("whyNote").addEventListener("click",function(){ openNote(S.current.entries[S.current.idx]); });
+$("whyClear").addEventListener("click",function(){
+  var e=S.current.entries[S.current.idx];
+  e.result=null; e.why=[]; e.skipped=false;
+  save(); renderGrade(); show("grade"); toast("Grade cleared");
+});
 $("whyDone").addEventListener("click",function(){ renderGrade(); show("grade"); });
 
 /* ---------- Hobbs and instruction time ----------
