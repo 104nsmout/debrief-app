@@ -214,10 +214,11 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 #v-grade.graded .grade{flex:1 1 0;min-height:96px;border-radius:20px;padding:10px}
 #v-grade.graded .grade .big{font-size:27px}
 #v-grade.graded .grade .sub{font-size:11.5px}
-#v-grade.graded .grade.sat{background:#27330F;color:#9DBF4C}
-#v-grade.graded .grade.sat .sub{color:#9DBF4C;opacity:.9}
-#v-grade.graded .grade.unsat{background:#3A2415;color:#C97440}
-#v-grade.graded .grade.unsat .sub{opacity:.9}
+/* the grade you chose stays bright; the other recedes but stays pressable */
+.grade.dim{background:#171717;color:#9A9A9A}
+.grade.dim .sub{color:#858585;opacity:1}
+.grade .tick{display:none}
+.grade.picked .tick{display:block;margin-bottom:2px}
 /* area headers double as select-all for their section */
 .areahead{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;min-height:44px}
 .areahead .cnt{flex:none;font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--ink-2)}
@@ -404,19 +405,23 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
   <div class="nextup" id="nextUp" hidden></div>
 
   <div class="attwrap" id="attWrap">
-    <div class="eyebrow" id="attemptsHead" style="margin-bottom:8px" hidden>ATTEMPTS &middot; SWIPE A ROW TO DELETE</div>
+    <div class="eyebrow" id="attemptsHead" style="margin-bottom:8px" hidden>NOTES &middot; SWIPE A ROW TO DELETE</div>
     <div id="attemptList"></div>
   </div>
 
   <div class="grades">
-    <button class="grade unsat" data-grade="unsat"><span class="big">Unsat</span><span class="sub">what broke &rarr;</span></button>
-    <button class="grade sat" data-grade="sat"><span class="big">Sat</span><span class="sub">records attempt 1</span></button>
+    <button class="grade unsat" data-grade="unsat">
+      <svg class="tick" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+      <span class="big">Unsat</span><span class="sub">standards not met &rarr;</span></button>
+    <button class="grade sat" data-grade="sat">
+      <svg class="tick" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+      <span class="big">Sat</span><span class="sub">tap to grade</span></button>
   </div>
 
   <div class="nav">
     <button id="prevBtn" type="button">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Previous</button>
-    <button id="skipBtn" type="button" class="muted">Not flown</button>
+    <button id="noteBtn" type="button">Add note</button>
     <button id="nextBtn" type="button" class="strong">Next
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
   </div>
@@ -433,7 +438,7 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
   </div>
 
   <div style="margin-top:14px;flex:none">
-    <h1 class="d" style="font-size:44px;color:var(--ink)">What broke?</h1>
+    <h1 class="d" style="font-size:40px;color:var(--ink)">Standards not met</h1>
     <div class="muted" style="font-size:13px;margin-top:4px">Tap one, or more than one. The limits are the ACS values for this task.</div>
   </div>
 
@@ -524,7 +529,7 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 (function(){
 "use strict";
 
-/* ---------- task libraries: name, ACS tolerance chips, and the "what broke" options ---------- */
+/* ---------- task libraries: name, ACS tolerance chips, and the standards-not-met options ---------- */
 var CAUSE = ["Procedure","Safety or clearing"];
 function T(id,name,tol,why){ return {id:id,name:name,tol:tol,why:why.concat(CAUSE)}; }
 
@@ -698,6 +703,7 @@ function load(){
     var raw=localStorage.getItem(KEY);
     if(raw){ var p=JSON.parse(raw); if(p&&typeof p==="object"){ S.current=p.current||null; S.flights=Array.isArray(p.flights)?p.flights:[]; S.lastLib=p.lastLib||null; S.bag=Array.isArray(p.bag)?p.bag:null; S.lastQuote=(typeof p.lastQuote==="number")?p.lastQuote:null; } }
   }catch(e){}
+  try{ migrateAll(); }catch(e){}
 }
 
 /* ---------- helpers ---------- */
@@ -766,25 +772,40 @@ function show(v){
 /* entry = one maneuver in this flight */
 function entryResult(e){
   if(e.skipped) return "no";
-  if(!e.attempts.length) return null;
-  var anyUnsat=false;
-  for(var i=0;i<e.attempts.length;i++){ if(e.attempts[i].result==="unsat") anyUnsat=true; }
-  return anyUnsat ? "unsat" : "sat";
+  return e.result || null;
 }
-function lastAttempt(e){ return e.attempts.length? e.attempts[e.attempts.length-1] : null; }
-function allWhy(e){
-  var seen={},out=[];
-  for(var i=0;i<e.attempts.length;i++){
-    var w=e.attempts[i].why||[];
-    for(var j=0;j<w.length;j++){ if(!seen[w[j]]){ seen[w[j]]=1; out.push(w[j]); } }
+function allWhy(e){ return e.why || []; }
+function allNotes(e){ return e.notes || []; }
+
+/* Flights recorded under the old attempt model are rewritten in place the
+   first time they are loaded: the grade it computed becomes the grade, every
+   attempt note becomes a note, causes merge. */
+function migrateEntry(e){
+  if(!e || !e.attempts) return e;
+  var r=null, why=[], seen={}, notes=[], i, j, a, w;
+  if(e.attempts.length){
+    r="sat";
+    for(i=0;i<e.attempts.length;i++){ if(e.attempts[i].result==="unsat") r="unsat"; }
   }
-  return out;
+  for(i=0;i<e.attempts.length;i++){
+    a=e.attempts[i];
+    w=a.why||[];
+    for(j=0;j<w.length;j++){ if(!seen[w[j]]){ seen[w[j]]=1; why.push(w[j]); } }
+    if(a.note) notes.push(a.note);
+  }
+  if(e.note) notes.push(e.note);
+  e.result=r; e.why=why; e.notes=notes;
+  delete e.attempts; delete e.note;
+  return e;
 }
-function allNotes(e){
-  var out=[];
-  for(var i=0;i<e.attempts.length;i++){ if(e.attempts[i].note) out.push(e.attempts[i].note); }
-  if(e.note) out.push(e.note);
-  return out;
+function migrateFlight(f){
+  if(!f || !f.entries) return f;
+  for(var i=0;i<f.entries.length;i++) migrateEntry(f.entries[i]);
+  return f;
+}
+function migrateAll(){
+  migrateFlight(S.current);
+  for(var i=0;i<S.flights.length;i++) migrateFlight(S.flights[i]);
 }
 
 /* ---------- quote of the launch ----------
@@ -954,7 +975,7 @@ $("startBtn").addEventListener("click",function(){
   var ids=pickedIds();
   if(!ids.length){ toast("Pick at least one maneuver"); return; }
   var entries=[];
-  for(var i=0;i<ids.length;i++){ entries.push({ taskId:ids[i], attempts:[], skipped:false, note:"" }); }
+  for(var i=0;i<ids.length;i++){ entries.push({ taskId:ids[i], result:null, why:[], notes:[], skipped:false }); }
   S.lastLib=$("f-course").value;
   S.current={
     id:String(Date.now()),
@@ -974,21 +995,14 @@ function renderGrade(){
   var c=S.current; if(!c) return;
   if(c.idx>=c.entries.length){ renderClose(); show("close"); return; }
   var e=c.entries[c.idx], t=taskById(c.libKey,e.taskId), r=entryResult(e);
-  var n=e.attempts.length;
 
   $("gradeCount").textContent="MANEUVER "+(c.idx+1)+" OF "+c.entries.length;
-  fitName($("gradeName"), t?t.name:"\u2014", n?38:46);
+  fitName($("gradeName"), t?t.name:"\u2014", r?40:46);
 
-  /* the eyebrow reports the state of the whole maneuver, not the next attempt */
   var lab=$("attemptLabel");
-  if(e.skipped){ lab.textContent="MARKED NOT FLOWN"; lab.style.color="var(--ink-2)"; }
-  else if(!n){ lab.textContent="NOT YET GRADED"; lab.style.color="var(--go)"; }
-  else {
-    var la=lastAttempt(e);
-    var tail=(r==="unsat" && la && la.result==="sat") ? " \u00b7 LAST ONE HELD" : "";
-    lab.textContent=(r==="sat"?"SAT":"UNSAT")+" \u00b7 "+n+(n===1?" ATTEMPT":" ATTEMPTS")+tail;
-    lab.style.color=(r==="sat")?"var(--sat)":"var(--warn)";
-  }
+  if(r==="sat"){ lab.textContent="SATISFACTORY"; lab.style.color="var(--sat)"; }
+  else if(r==="unsat"){ lab.textContent="UNSATISFACTORY"; lab.style.color="var(--warn)"; }
+  else { lab.textContent="NOT YET GRADED"; lab.style.color="var(--go)"; }
 
   var tol=$("gradeTol"); tol.innerHTML="";
   if(t) for(var i=0;i<t.tol.length;i++){ tol.appendChild(el("span","chip",t.tol[i])); }
@@ -1007,65 +1021,52 @@ function renderGrade(){
   if(c.idx+1<c.entries.length){
     var nt=taskById(c.libKey,c.entries[c.idx+1].taskId);
     nu.textContent="NEXT UP \u00b7 "+((nt?nt.name:"\u2014").toUpperCase());
-    nu.hidden=false;
-  } else { nu.textContent="LAST MANEUVER IN THE QUEUE"; nu.hidden=false; }
+  } else nu.textContent="LAST MANEUVER IN THE QUEUE";
+  nu.hidden=false;
 
-  drawAttempts(e);
+  drawNotes(e);
 
-  /* graded: the buttons recede and record the NEXT attempt */
-  $("v-grade").classList.toggle("graded", n>0);
-  var ssub=document.querySelector("#v-grade .grade.sat .sub");
-  var usub=document.querySelector("#v-grade .grade.unsat .sub");
-  ssub.textContent="records attempt "+(n+1);
-  usub.textContent=n ? ("records attempt "+(n+1)) : "what broke \u2192";
+  /* the chosen grade stays bright, the other recedes — both stay pressable,
+     so changing your mind is one tap and needs no separate undo */
+  $("v-grade").classList.toggle("graded", !!r);
+  var satB=document.querySelector("#v-grade .grade.sat");
+  var unsB=document.querySelector("#v-grade .grade.unsat");
+  satB.classList.toggle("picked", r==="sat");
+  satB.classList.toggle("dim", r==="unsat");
+  unsB.classList.toggle("picked", r==="unsat");
+  unsB.classList.toggle("dim", r==="sat");
+  satB.querySelector(".sub").textContent = (r==="sat") ? "graded satisfactory" : "tap to grade";
+  var nw=(e.why||[]).length;
+  unsB.querySelector(".sub").textContent = (r==="unsat")
+    ? (nw ? nw+(nw===1?" standard not met":" standards not met") : "no standards recorded")
+    : "standards not met \u2192";
 
-  var sk=$("skipBtn");
-  sk.hidden=(n>0);
-  sk.textContent=e.skipped?"Un-mark":"Not flown";
-  document.querySelector("#v-grade .nav").classList.toggle("two", n>0);
   $("prevBtn").disabled=(c.idx===0);
 }
 
-/* one row per attempt, each carrying its own note */
-function drawAttempts(e){
+/* one row per note; deleting one changes no grade, so it needs no warning */
+function drawNotes(e){
   var host=$("attemptList"); host.innerHTML="";
-  $("attemptsHead").hidden=!e.attempts.length;
-  for(var i=0;i<e.attempts.length;i++){
-    (function(a,i){
+  var notes=e.notes||[];
+  $("attemptsHead").hidden=!notes.length;
+  for(var i=0;i<notes.length;i++){
+    (function(txt,i){
       var wrap=el("div","swipe att");
       var del=el("button","sw-del","Delete");
       var inner=el("div","sw-in");
-      var top=el("div","row");
-      var lb=el("span","mono muted","ATTEMPT "+(i+1));
-      lb.style.cssText="font-size:11.5px;font-weight:600;letter-spacing:1px";
-      var tg=el("span","tag "+a.result, a.result==="sat"?"SAT":"UNSAT");
-      top.appendChild(lb); top.appendChild(tg);
-      inner.appendChild(top);
-      if(a.why && a.why.length) inner.appendChild(el("span","attwhy",a.why.join(", ")));
-      var note=el("button","attnote"+(a.note?"":" empty"), a.note||"Tap to add a note");
-      note.type="button";
-      note.addEventListener("click",function(){ openNote(e,i); });
-      inner.appendChild(note);
-      del.addEventListener("click",function(){ confirmDeleteAttempt(e,i); });
+      var lb=el("span","mono muted","NOTE "+(i+1));
+      lb.style.cssText="display:block;font-size:11.5px;font-weight:600;letter-spacing:1px";
+      inner.appendChild(lb);
+      var b=el("button","attnote",txt); b.type="button";
+      b.addEventListener("click",function(){ openNote(e,i); });
+      inner.appendChild(b);
+      del.addEventListener("click",function(){
+        e.notes.splice(i,1); save(); renderGrade(); toast("Note "+(i+1)+" removed");
+      });
       wrap.appendChild(del); wrap.appendChild(inner);
-      host.appendChild(wrap);
-      attachSwipe(wrap);
-    })(e.attempts[i],i);
+      host.appendChild(wrap); attachSwipe(wrap);
+    })(notes[i],i);
   }
-}
-
-/* deleting an attempt can change the maneuver's grade, so say so first */
-function confirmDeleteAttempt(entry,i){
-  var left=entry.attempts.slice(); left.splice(i,1);
-  var after=entryResult({skipped:entry.skipped,attempts:left});
-  var msg;
-  if(!left.length) msg="This maneuver goes back to ungraded.";
-  else if(after===entryResult(entry)) msg="This maneuver stays "+(after==="sat"?"SAT":"UNSAT")+".";
-  else msg="This maneuver becomes "+(after==="sat"?"SAT":"UNSAT")+".";
-  openConfirm("Remove attempt "+(i+1)+"?", msg, function(){
-    entry.attempts.splice(i,1);
-    save(); renderGrade(); toast("Attempt "+(i+1)+" removed");
-  });
 }
 
 function openConfirm(title,body,onOk,okLabel){
@@ -1194,7 +1195,7 @@ function openJump(){
           var plus=el("span","mono","ADD"); plus.style.cssText="font-size:10px;font-weight:600;color:var(--go);letter-spacing:.8px";
           b.appendChild(sp); b.appendChild(plus);
           b.addEventListener("click",function(){
-            c.entries.push({ taskId:t.id, attempts:[], skipped:false, note:"" });
+            c.entries.push({ taskId:t.id, result:null, why:[], notes:[], skipped:false });
             c.idx=c.entries.length-1; save(); close(); renderGrade(); show("grade");
             toast(t.name+" added");
           });
@@ -1227,8 +1228,11 @@ document.querySelectorAll("#v-grade [data-grade]").forEach(function(btn){
   btn.addEventListener("click",function(){
     var c=S.current, e=c.entries[c.idx];
     var g=btn.getAttribute("data-grade");
+    var was=e.result;
     e.skipped=false;
-    e.attempts.push({ result:g, why:[], note:"", at:new Date().toISOString() });
+    e.result=g;
+    /* standards recorded against an unsat make no sense once it reads sat */
+    if(g==="sat" && was==="unsat" && (e.why||[]).length){ e.why=[]; toast("Standards cleared"); }
     c.lastGraded=c.idx;
     save();
     if(g==="unsat"){ renderWhy(); show("why"); }
@@ -1244,23 +1248,20 @@ $("nextBtn").addEventListener("click",function(){
   if(c.idx<c.entries.length-1){ c.idx++; save(); renderGrade(); }
   else toast("Last maneuver \u00b7 use End & close out");
 });
-$("skipBtn").addEventListener("click",function(){
-  var c=S.current, e=c.entries[c.idx];
-  if(e.skipped){ e.skipped=false; save(); renderGrade(); toast("No longer marked not flown"); return; }
-  e.skipped=true; e.attempts=[]; c.lastGraded=c.idx; save(); renderGrade(); toast("Marked not flown");
-});
+$("noteBtn").addEventListener("click",function(){ openNote(S.current.entries[S.current.idx]); });
 $("endEarly").addEventListener("click",function(){ renderClose(); show("close"); });
 
 /* note sheet — the phone keyboard's mic key does the dictation */
 function openNote(entry,idx){
-  var target=(typeof idx==="number" && entry.attempts[idx]) ? entry.attempts[idx] : null;
+  var adding=(typeof idx!=="number");
+  if(!entry.notes) entry.notes=[];
   var wrap=el("div","sheet");
   var inner=el("div","inner");
-  var lab=el("label","fl",(target?("ATTEMPT "+(idx+1)+" NOTE"):"NOTE")+" \u00b7 TAP THE MIC ON YOUR KEYBOARD TO DICTATE");
+  var lab=el("label","fl",(adding?"NEW NOTE":"NOTE "+(idx+1))+" \u00b7 TAP THE MIC ON YOUR KEYBOARD TO DICTATE");
   lab.setAttribute("for","noteInput");
   var ta=document.createElement("textarea"); ta.id="noteInput"; ta.rows=3;
-  ta.value = target ? (target.note||"") : (entry.note||"");
-  ta.placeholder="Rollout about 20 degrees past the 180.";
+  ta.value = adding ? "" : (entry.notes[idx]||"");
+  ta.placeholder="Second attempt satisfactory.";
   var row=el("div","row"); row.style.marginTop="12px"; row.style.gap="10px";
   var cancel=el("button","ghost sp","Cancel");
   var ok=el("button","primary sp","");
@@ -1274,10 +1275,11 @@ function openNote(entry,idx){
   wrap.addEventListener("click",function(ev){ if(ev.target===wrap) close(); });
   ok.addEventListener("click",function(){
     var v=ta.value.trim();
-    if(target) target.note=v; else entry.note=v;
+    if(adding){ if(v) entry.notes.push(v); }
+    else if(v) entry.notes[idx]=v;
+    else entry.notes.splice(idx,1);
     save(); close();
     if(!$("v-grade").hidden) renderGrade();
-    if(!$("v-why").hidden) renderWhy();
     toast(v?"Note saved":"Note cleared");
   });
 }
@@ -1286,22 +1288,22 @@ function openNote(entry,idx){
 function renderWhy(){
   libTheme();
   var c=S.current, e=c.entries[c.idx], t=taskById(c.libKey,e.taskId);
-  var att=lastAttempt(e);
-  $("whyMeta").textContent=(t?t.name:"")+" · attempt "+e.attempts.length;
+  if(!e.why) e.why=[];
+  $("whyMeta").textContent=(t?t.name:"");
   var grid=$("whyGrid"); grid.innerHTML="";
   if(!t) return;
   for(var i=0;i<t.why.length;i++){
     (function(w){
       var b=el("button","why");
-      var on = att && att.why.indexOf(w)>=0;
+      var on = e.why.indexOf(w)>=0;
       b.setAttribute("aria-pressed", on?"true":"false");
       b.appendChild(el("span","n",w));
       var lim=matchLimit(t,w);
       if(lim) b.appendChild(el("span","lim",lim));
       b.addEventListener("click",function(){
-        var k=att.why.indexOf(w);
-        if(k>=0) att.why.splice(k,1); else att.why.push(w);
-        b.setAttribute("aria-pressed", att.why.indexOf(w)>=0?"true":"false");
+        var k=e.why.indexOf(w);
+        if(k>=0) e.why.splice(k,1); else e.why.push(w);
+        b.setAttribute("aria-pressed", e.why.indexOf(w)>=0?"true":"false");
         save();
       });
       grid.appendChild(b);
@@ -1325,7 +1327,7 @@ function matchLimit(t,why){
   return "";
 }
 $("whyBack").addEventListener("click",function(){ renderGrade(); show("grade"); });
-$("whyNote").addEventListener("click",function(){ var e=S.current.entries[S.current.idx]; openNote(e,e.attempts.length-1); });
+$("whyNote").addEventListener("click",function(){ openNote(S.current.entries[S.current.idx]); });
 $("whyDone").addEventListener("click",function(){ renderGrade(); show("grade"); });
 
 /* ---------- Hobbs and instruction time ----------
@@ -1372,9 +1374,8 @@ function renderClose(){
       var sp=el("span","sp");
       var n=el("span",null,t?t.name:"—"); n.style.display="block"; n.style.fontWeight="600"; n.style.fontSize="15px";
       var detail=[];
-      if(e.attempts.length) detail.push(e.attempts.length+(e.attempts.length===1?" attempt":" attempts"));
       var w=allWhy(e); if(w.length) detail.push(w.join(", "));
-      if(r==="unsat" && e.attempts.length>1 && lastAttempt(e).result==="sat") detail.push("last attempt sat");
+      var nn=allNotes(e).length; if(nn) detail.push(nn+(nn===1?" note":" notes"));
       if(r==="no") detail.push("not flown");
       var s=el("span","muted",detail.join(" · ")); s.style.display="block"; s.style.fontSize="13px"; s.style.marginTop="2px";
       sp.appendChild(n); sp.appendChild(s);
@@ -1420,20 +1421,37 @@ $("buildBtn").addEventListener("click",function(){
   var un=[];
   for(var i=0;i<c.entries.length;i++){
     var e=c.entries[i];
-    if(!e.skipped && !e.attempts.length){
+    if(!e.skipped && !e.result){
       var t=taskById(c.libKey,e.taskId);
       un.push({i:i,name:t?t.name:"\u2014"});
     }
   }
   function go(){ save(); renderDebrief(); show("debrief"); }
-  if(!un.length){ go(); return; }
+  /* an unsatisfactory maneuver with no standards recorded is the one thing
+     the deferred workflow can lose; stop before the debrief is built */
+  function standardsGate(next){
+    var miss=[];
+    for(var m=0;m<c.entries.length;m++){
+      var en=c.entries[m];
+      if(en.result==="unsat" && !(en.why||[]).length){
+        var tt=taskById(c.libKey,en.taskId);
+        miss.push(tt?tt.name:"\u2014");
+      }
+    }
+    if(!miss.length){ next(); return; }
+    openConfirm(
+      miss.length+(miss.length===1?" unsatisfactory maneuver has":" unsatisfactory maneuvers have")+" no standards recorded",
+      miss.join(", ")+". Go back and record them, or build the debrief without them?",
+      next, "Build anyway");
+  }
+  if(!un.length){ standardsGate(go); return; }
   var names=[]; for(var k=0;k<un.length;k++) names.push(un[k].name);
   openConfirm(
     un.length+(un.length===1?" maneuver was never graded":" maneuvers were never graded"),
     names.join(", ")+". Mark "+(un.length===1?"it":"them")+" not flown and build the debrief?",
     function(){
       for(var k=0;k<un.length;k++){ c.entries[un[k].i].skipped=true; }
-      go();
+      standardsGate(go);
     },
     "Mark not flown"
   );
@@ -1476,7 +1494,8 @@ function renderDebrief(){
     var tr=el("tr");
     var td1=el("td");
     var nm=el("strong",null,t?t.name:"—"); td1.appendChild(nm);
-    var att=el("div","muted", e.attempts.length? (e.attempts.length+(e.attempts.length===1?" attempt":" attempts")) : "not flown");
+    var nn=allNotes(e).length;
+    var att=el("div","muted", r ? (nn? nn+(nn===1?" note":" notes") : "graded") : "not flown");
     att.style.fontSize="11px"; td1.appendChild(att);
     var td2=el("td"); td2.style.whiteSpace="nowrap";
     var tg=el("span","mono tag-"+r, r==="sat"?"SAT":r==="unsat"?"UNSAT":"N/O");
@@ -1485,38 +1504,25 @@ function renderDebrief(){
     td2.appendChild(tg);
     var td3=el("td");
     var bits=[];
-    var w=allWhy(e); if(w.length) bits.push(w.join(", "));
+    var w=allWhy(e);
+    if(w.length) bits.push("Standards not met: "+w.join(", "));
     if(t && r==="unsat"){ bits.push("limit: "+t.tol.join(" · ")); }
-    if(r==="unsat" && e.attempts.length>1 && lastAttempt(e).result==="sat") bits.push("last attempt inside tolerance");
-    var notes=allNotes(e); if(notes.length) bits.push("“"+notes.join("” · “")+"”");
     if(r==="sat") bits.unshift("inside tolerance");
-    td3.textContent=bits.join(" · ") || "—";
-    td3.style.fontSize="12px";
+    if(!r) bits=["not flown"];
+    var line=el("div",null,bits.join(" · ") || "—");
+    line.style.fontSize="12px";
+    td3.appendChild(line);
+    /* notes carry the credit for a re-fly, so they get contrast of their own
+       rather than being folded into the grey observed line */
+    var notes=allNotes(e);
+    for(var nn=0;nn<notes.length;nn++){
+      var nd=el("div",null,notes[nn]);
+      nd.style.cssText="margin-top:5px;font-size:12.5px;color:var(--ink);border-left:2px solid var(--go);padding-left:8px";
+      td3.appendChild(nd);
+    }
     tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tb.appendChild(tr);
   }
   tbl.appendChild(tb); host.appendChild(tbl);
-
-  /* attempt by attempt — only where it says something */
-  var multi=[];
-  for(var k=0;k<c.entries.length;k++){ if(c.entries[k].attempts.length>1) multi.push(c.entries[k]); }
-  if(multi.length){
-    host.appendChild(el("h2",null,"Attempt by attempt"));
-    var wrap2=el("div"); wrap2.style.display="flex"; wrap2.style.flexDirection="column"; wrap2.style.gap="8px"; wrap2.style.marginTop="8px";
-    for(var m=0;m<multi.length;m++){
-      var e2=multi[m], t2=taskById(c.libKey,e2.taskId);
-      var row=el("div","row");
-      var nm2=el("span",null,t2?t2.name:"—"); nm2.style.width="132px"; nm2.style.fontWeight="600"; nm2.style.fontSize="12.5px";
-      var dots=el("span","dots");
-      for(var d=0;d<e2.attempts.length;d++){
-        var s=el("span"); if(e2.attempts[d].result==="unsat") s.className="bad"; dots.appendChild(s);
-      }
-      var tail=el("span","muted", lastAttempt(e2).result==="sat" ? "last one held it" : "still outside");
-      tail.style.fontSize="11.5px";
-      row.appendChild(nm2); row.appendChild(dots); row.appendChild(tail);
-      wrap2.appendChild(row);
-    }
-    host.appendChild(wrap2);
-  }
 
   /* homework from the unsat causes */
   var todo=buildTodo(c);
@@ -1575,10 +1581,8 @@ function debriefText(){
   for(var i=0;i<c.entries.length;i++){
     var e=c.entries[i], t=taskById(c.libKey,e.taskId), r=entryResult(e);
     var line="• "+(t?t.name:"—")+" — "+(r==="sat"?"SAT":r==="unsat"?"UNSAT":"NOT FLOWN");
-    if(e.attempts.length) line+=" ("+e.attempts.length+(e.attempts.length===1?" attempt":" attempts")+")";
-    var w=allWhy(e); if(w.length) line+=" — "+w.join(", ");
+    var w=allWhy(e); if(w.length) line+=" — standards not met: "+w.join(", ");
     if(r==="unsat"&&t) line+=" [limit: "+t.tol.join(" · ")+"]";
-    if(r==="unsat"&&e.attempts.length>1&&lastAttempt(e).result==="sat") line+=" — last attempt inside tolerance";
     L.push(line);
     var notes=allNotes(e);
     for(var n=0;n<notes.length;n++){ L.push("    note: "+notes[n]); }
@@ -1837,13 +1841,11 @@ function debriefImageCanvas(cb){
 
       /* what was observed */
       var bits = [];
-      var w = allWhy(e); if (w.length) bits.push(w.join(", "));
+      var w = allWhy(e);
+      if (w.length) bits.push("Standards not met: " + w.join(", "));
       if (tk && r === "unsat") bits.push("limit: " + tk.tol.join(" · "));
-      if (r === "unsat" && e.attempts.length > 1 && lastAttempt(e).result === "sat") bits.push("last attempt inside tolerance");
-      var notes = allNotes(e); if (notes.length) bits.push("“" + notes.join("” · “") + "”");
       if (r === "sat") bits.unshift("inside tolerance");
       if (r !== "sat" && r !== "unsat") bits = ["not flown this lesson"];
-      if (e.attempts.length > 1) bits.push(e.attempts.length + " attempts");
 
       var obs = bits.join("  ·  ") || "—";
       var oLines = wrap(obs, "400 12.5px " + M, inner);
@@ -1851,7 +1853,22 @@ function debriefImageCanvas(cb){
         ctx.font = "400 12.5px " + M; ctx.fillStyle = INK2;
         for (var o = 0; o < oLines.length; o++) ctx.fillText(oLines[o], x, y + 12.5 + o * 17);
       }
-      y += 12.5 + (oLines.length - 1) * 17 + 14;
+      y += 12.5 + (oLines.length - 1) * 17 + 8;
+
+      /* notes get their own weight — they carry the credit for a good re-fly,
+         and grey text under an orange tag never gets read */
+      var notes = allNotes(e);
+      for (var nn = 0; nn < notes.length; nn++){
+        var nLines2 = wrap(notes[nn], "400 13px " + F, inner - 12);
+        if (ctx){
+          ctx.fillStyle = GO;
+          ctx.fillRect(x, y + 2, 2, nLines2.length * 18 - 4);
+          ctx.font = "400 13px " + F; ctx.fillStyle = INK;
+          for (var q2 = 0; q2 < nLines2.length; q2++) ctx.fillText(nLines2[q2], x + 12, y + 13 + q2 * 18);
+        }
+        y += nLines2.length * 18 + 4;
+      }
+      y += 8;
 
       if (k < c.entries.length - 1){
         if (ctx){ ctx.fillStyle = "#1A1A1A"; ctx.fillRect(x, y - 7, inner, 1); }
