@@ -185,7 +185,7 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;flex:none}
 .stat{border-radius:10px;padding:9px 10px}
 .stat .n{font-family:var(--mono);font-size:25px;font-weight:600;line-height:1.1}
-.stat .l{font-size:11px;font-weight:600;letter-spacing:.5px}
+.stat .l{font-size:10px;font-weight:600;letter-spacing:.2px;line-height:1.2}
 .stat.sat{background:var(--sat);color:var(--on-sat)}
 .stat.sat .l{color:rgba(7,19,10,.7)}
 .stat.unsat{background:var(--warn);color:var(--on-warn)}
@@ -357,7 +357,10 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 
   <div class="scroll" style="margin-top:8px">
     <div class="field"><label class="fl" for="f-student">STUDENT</label><input type="text" id="f-student" autocomplete="off" placeholder="Name"></div>
-    <div class="field"><label class="fl" for="f-aircraft">AIRCRAFT</label><input type="text" id="f-aircraft" autocomplete="off" placeholder="C172S · N7214G"></div>
+    <div class="row" style="gap:10px;align-items:flex-end">
+      <div class="field sp"><label class="fl" for="f-aircraft">AIRCRAFT</label><input type="text" id="f-aircraft" autocomplete="off" placeholder="C172S · N7214G"></div>
+      <div class="field" style="flex:0 0 124px"><label class="fl" for="f-hobbs-start">HOBBS START</label><input type="text" id="f-hobbs-start" inputmode="decimal" autocomplete="off" placeholder="1234.5"></div>
+    </div>
     <div class="field">
       <label class="fl" for="f-course">TASK LIBRARY</label>
       <select id="f-course">
@@ -465,6 +468,21 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 
   <div class="scroll" style="margin-top:10px">
     <div class="card" id="closeList"></div>
+    <div class="card" id="timesCard" style="margin-top:12px;padding:13px 14px">
+      <div class="row" style="gap:10px;align-items:flex-end">
+        <div class="field sp"><label class="fl" for="f-hobbs-start2">HOBBS START</label><input type="text" id="f-hobbs-start2" inputmode="decimal" autocomplete="off" placeholder="1234.5"></div>
+        <div class="field sp"><label class="fl" for="f-hobbs-end">HOBBS END</label><input type="text" id="f-hobbs-end" inputmode="decimal" autocomplete="off" placeholder="1236.6"></div>
+      </div>
+      <div class="fl" style="margin-top:13px">ADDED INSTRUCTION TIME</div>
+      <div class="row" style="gap:7px;margin-top:7px;flex-wrap:wrap">
+        <button class="ghost" type="button" data-add="0.1">+0.1</button>
+        <button class="ghost" type="button" data-add="0.2">+0.2</button>
+        <button class="ghost" type="button" data-add="0.3">+0.3</button>
+        <button class="ghost" type="button" data-add="0.5">+0.5</button>
+        <button class="ghost" type="button" data-add="clear">Clear</button>
+      </div>
+      <div id="timeSum" class="mono" style="margin-top:13px;font-size:13.5px;line-height:1.5;color:var(--go)"></div>
+    </div>
     <div class="field" style="margin-top:12px">
       <label class="fl" for="f-summary">YOUR SUMMARY · THE STUDENT READS THIS FIRST</label>
       <textarea id="f-summary" rows="4" placeholder="Two sentences: the theme of the flight and what to do before the next one."></textarea>
@@ -944,7 +962,8 @@ $("startBtn").addEventListener("click",function(){
     student:$("f-student").value.trim(),
     aircraft:$("f-aircraft").value.trim(),
     libKey:$("f-course").value,
-    entries:entries, idx:0, started:false, done:false, summary:""
+    entries:entries, idx:0, started:false, done:false, summary:"",
+    hobbsStart:$("f-hobbs-start").value.trim(), hobbsEnd:"", addTime:0
   };
   S.current.started=true; save(); renderGrade(); show("grade");
 });
@@ -1065,6 +1084,61 @@ function openConfirm(title,body,onOk,okLabel){
   ok.addEventListener("click",function(){ close(); onOk(); });
 }
 
+/* reachable mid-flight: the Hobbs is usually read at startup, not while the
+   queue is being built on the ground */
+function openTimes(){
+  var c=S.current; if(!c) return;
+  var wrap=el("div","sheet"), inner=el("div","inner");
+  var h=el("div"); h.style.cssText="font-family:var(--display);font-weight:800;font-size:21px;color:var(--ink)";
+  h.textContent="Times";
+  inner.appendChild(h);
+  var sum=el("div","mono"); sum.style.cssText="margin-top:10px;font-size:13.5px;line-height:1.5;color:var(--go)";
+
+  function paint(){
+    var line=timeLine(c), warn=hobbsWarning(c);
+    sum.innerHTML="";
+    sum.appendChild(el("div",null,line||"No times recorded."));
+    if(warn){ var w=el("div",null,warn); w.style.color="var(--warn)"; w.style.marginTop="4px"; sum.appendChild(w); }
+    if($("timeSum")) paintTimes();
+  }
+  function field(id,label,get,set){
+    var f=el("div","field"); f.style.marginTop="12px";
+    var l=el("label","fl",label); l.setAttribute("for",id);
+    var i=document.createElement("input");
+    i.type="text"; i.id=id; i.setAttribute("inputmode","decimal"); i.autocomplete="off";
+    i.value=get()||"";
+    i.addEventListener("input",function(){ set(i.value.trim()); save(); paint(); });
+    f.appendChild(l); f.appendChild(i);
+    return f;
+  }
+  inner.appendChild(field("t-hs","HOBBS START",function(){return c.hobbsStart;},function(v){c.hobbsStart=v;}));
+  inner.appendChild(field("t-he","HOBBS END",function(){return c.hobbsEnd;},function(v){c.hobbsEnd=v;}));
+
+  var al=el("div","fl","ADDED INSTRUCTION TIME"); al.style.marginTop="13px";
+  inner.appendChild(al);
+  var chips=el("div","row"); chips.style.cssText="gap:7px;margin-top:7px;flex-wrap:wrap";
+  ["0.1","0.2","0.3","0.5","clear"].forEach(function(v){
+    var b=el("button","ghost", v==="clear"?"Clear":("+"+v));
+    b.type="button";
+    b.addEventListener("click",function(){
+      c.addTime = (v==="clear") ? 0 : r1(addedTime(c)+parseFloat(v));
+      save(); paint();
+    });
+    chips.appendChild(b);
+  });
+  inner.appendChild(chips);
+  inner.appendChild(sum);
+
+  var foot=el("div","row"); foot.style.cssText="margin-top:16px;gap:10px";
+  var done=el("button","ghost sp","Done");
+  foot.appendChild(done); inner.appendChild(foot);
+  wrap.appendChild(inner); document.body.appendChild(wrap);
+  function close(){ if(wrap.parentNode) wrap.parentNode.removeChild(wrap); }
+  done.addEventListener("click",close);
+  wrap.addEventListener("click",function(ev){ if(ev.target===wrap) close(); });
+  paint();
+}
+
 /* ---------- jump sheet: switch maneuvers, or add one mid-flight ---------- */
 function openJump(){
   var c=S.current; if(!c) return;
@@ -1136,9 +1210,11 @@ function openJump(){
   var foot=el("div","row"); foot.style.cssText="flex:none;margin-top:12px;gap:10px";
   var addBtn=el("button","ghost sp","Add a maneuver");
   addBtn.onclick=drawAdd;
+  var timeBtn=el("button","ghost","Times");
+  timeBtn.addEventListener("click",function(){ close(); openTimes(); });
   var cancel=el("button","ghost","Close");
   cancel.addEventListener("click",close);
-  foot.appendChild(addBtn); foot.appendChild(cancel);
+  foot.appendChild(addBtn); foot.appendChild(timeBtn); foot.appendChild(cancel);
   inner.appendChild(foot);
 
   drawQueue();
@@ -1252,6 +1328,34 @@ $("whyBack").addEventListener("click",function(){ renderGrade(); show("grade"); 
 $("whyNote").addEventListener("click",function(){ var e=S.current.entries[S.current.idx]; openNote(e,e.attempts.length-1); });
 $("whyDone").addEventListener("click",function(){ renderGrade(); show("grade"); });
 
+/* ---------- Hobbs and instruction time ----------
+   The aircraft figure and the added time are kept and shown apart. A single
+   combined number on a debrief gets transcribed into a logbook's flight-time
+   column, and added ground time does not belong there. */
+function tnum(v){ var n=parseFloat(v); return isFinite(n)?n:null; }
+function r1(n){ return Math.round(n*10)/10; }
+function hobbsUsed(c){
+  var a=tnum(c.hobbsStart), b=tnum(c.hobbsEnd);
+  if(a===null||b===null||b<a) return null;
+  return r1(b-a);
+}
+function addedTime(c){ var n=tnum(c.addTime); return n&&n>0 ? r1(n) : 0; }
+function timeLine(c){
+  if(!c) return "";
+  var h=hobbsUsed(c), add=addedTime(c), p=[];
+  if(h===null && !add) return "";
+  if(h!==null) p.push(h.toFixed(1)+" Hobbs");
+  if(add) p.push("+"+add.toFixed(1));
+  p.push(((h===null?0:h)+add).toFixed(1)+" total instruction");
+  return p.join("  \u00b7  ");
+}
+function hobbsWarning(c){
+  var a=tnum(c.hobbsStart), b=tnum(c.hobbsEnd);
+  if(a!==null && b!==null && b<a) return "Hobbs end is before Hobbs start.";
+  if(a===null && b!==null) return "No Hobbs start recorded.";
+  return "";
+}
+
 /* ---------- CLOSE OUT ---------- */
 function renderClose(){
   libTheme();
@@ -1281,7 +1385,29 @@ function renderClose(){
   }
   $("cSat").textContent=String(sat); $("cUnsat").textContent=String(uns); $("cNo").textContent=String(no);
   $("f-summary").value=c.summary||"";
+  $("f-hobbs-start2").value=c.hobbsStart||"";
+  $("f-hobbs-end").value=c.hobbsEnd||"";
+  paintTimes();
 }
+
+function paintTimes(){
+  var c=S.current; if(!c) return;
+  var box=$("timeSum"); if(!box) return;
+  var line=timeLine(c), warn=hobbsWarning(c);
+  box.innerHTML="";
+  if(line){ var a=el("div",null,line); box.appendChild(a); }
+  else box.appendChild(el("div",null,"No times recorded."));
+  if(warn){ var w=el("div",null,warn); w.style.color="var(--warn)"; w.style.marginTop="4px"; box.appendChild(w); }
+}
+$("f-hobbs-start2").addEventListener("input",function(){ S.current.hobbsStart=this.value.trim(); save(); paintTimes(); });
+$("f-hobbs-end").addEventListener("input",function(){ S.current.hobbsEnd=this.value.trim(); save(); paintTimes(); });
+document.querySelectorAll("#timesCard [data-add]").forEach(function(b){
+  b.addEventListener("click",function(){
+    var c=S.current, v=b.getAttribute("data-add");
+    c.addTime = (v==="clear") ? 0 : r1(addedTime(c)+parseFloat(v));
+    save(); paintTimes();
+  });
+});
 $("closeBack").addEventListener("click",function(){
   var c=S.current; if(c.idx>=c.entries.length) c.idx=c.entries.length-1;
   renderGrade(); show("grade");
@@ -1322,8 +1448,15 @@ function renderDebrief(){
   var head=el("div","rephead"); head.style.borderBottom="2px solid var(--go)"; head.style.paddingBottom="9px";
   var h=el("h1","d","Flight Debrief · "+(c.student||"Student")); h.style.fontSize="26px"; h.style.color="var(--ink)";
   var meta=el("div","mono muted", fmtDate(c.date)+" · "+(c.aircraft||"—")+" · "+lib.label);
+  var tl=timeLine(c);
   meta.style.fontSize="11.5px"; meta.style.marginTop="5px";
-  head.appendChild(h); head.appendChild(meta); host.appendChild(head);
+  head.appendChild(h); head.appendChild(meta);
+  if(tl){
+    var tm=el("div","mono",tl);
+    tm.style.cssText="font-size:12px;margin-top:4px;color:var(--go)";
+    head.appendChild(tm);
+  }
+  host.appendChild(head);
 
   if(c.summary){
     var sw=el("div","panel"); sw.style.marginTop="12px"; sw.style.background="var(--surface-2)"; sw.style.borderRadius="8px"; sw.style.padding="11px 13px";
@@ -1436,6 +1569,7 @@ function debriefText(){
   var c=S.current, lib=LIB[c.libKey], L=[];
   L.push("FLIGHT DEBRIEF — "+(c.student||"Student"));
   L.push(fmtDate(c.date)+" · "+(c.aircraft||"—")+" · "+lib.label+" ("+lib.acs+")");
+  var tl=timeLine(c); if(tl) L.push(tl);
   if(c.summary){ L.push(""); L.push("SUMMARY"); L.push(c.summary); }
   L.push(""); L.push("SCORECARD");
   for(var i=0;i<c.entries.length;i++){
@@ -1615,6 +1749,17 @@ function debriefImageCanvas(cb){
       ctx.fillText(lib.label, x, y + 12);
     }
     y += 12 + 16;
+
+    /* the receipt half of the debrief: what was done and how long it took */
+    var tline = timeLine(c);
+    if (tline){
+      y -= 9;
+      if (ctx){
+        ctx.font = "600 12px " + M; ctx.fillStyle = GO;
+        ctx.fillText(tline, x, y + 12);
+      }
+      y += 12 + 13;
+    }
 
     /* accent rule */
     if (ctx){ ctx.fillStyle = GO; ctx.fillRect(x, y, inner, 2.5); }
