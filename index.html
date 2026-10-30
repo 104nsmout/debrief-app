@@ -153,7 +153,7 @@ input[type=text],textarea,select{width:100%;box-sizing:border-box;background:var
 textarea{resize:vertical;line-height:1.45}
 label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1px;color:var(--ink-2);margin-bottom:5px}
 .field+.field{margin-top:12px}
-.pick{display:flex;align-items:center;gap:12px;padding:13px 12px;background:none;border:0;width:100%;text-align:left;color:inherit}
+.pick{display:flex;align-items:center;gap:12px;padding:13px 12px;background:none;border:0;width:100%;box-sizing:border-box;text-align:left;color:inherit}
 .pick input{flex:none;width:26px;height:26px;margin:0;accent-color:var(--go)}
 .areahead{background:var(--surface-2);padding:7px 12px;font-family:var(--display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.3px;color:var(--go)}
 .seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;background:var(--sunk);border-radius:10px;padding:4px}
@@ -197,7 +197,7 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 .stat.sat .l{color:rgba(7,19,10,.7)}
 .stat.unsat{background:var(--warn);color:var(--on-warn)}
 .stat.no{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
-.rowitem{display:flex;align-items:center;gap:10px;padding:10px 11px;background:none;border:0;width:100%;text-align:left;color:inherit}
+.rowitem{display:flex;align-items:center;gap:10px;padding:10px 11px;background:none;border:0;width:100%;box-sizing:border-box;text-align:left;color:inherit}
 
 /* --- grade screen --- */
 .nextup{flex:none;margin-top:12px;font-family:var(--mono);font-size:11.5px;letter-spacing:1.1px;color:var(--ink-2)}
@@ -237,7 +237,7 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
   .grade.picked .tick path{animation:none;stroke-dashoffset:0}
 }
 /* area headers double as select-all for their section */
-.areahead{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;min-height:44px}
+.areahead{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;text-align:left;border:0;min-height:44px}
 .areahead .cnt{flex:none;font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--ink-2)}
 .areahead .cnt.on{color:var(--go)}
 
@@ -441,9 +441,19 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
     <div class="field">
       <label class="fl" for="f-course">TASK LIBRARY</label>
       <select id="f-course">
-        <option value="ppl">Private Pilot — Airplane (ACS-6C)</option>
-        <option value="instrument">Instrument Rating — Airplane (ACS-8C)</option>
-        <option value="commercial">Commercial — Airplane (ACS-7B)</option>
+        <optgroup label="Certificates &amp; ratings">
+          <option value="ppl">Private Pilot — Airplane (ACS-6C)</option>
+          <option value="instrument">Instrument Rating — Airplane (ACS-8C)</option>
+          <option value="commercial">Commercial — Airplane (ACS-7B)</option>
+        </optgroup>
+        <optgroup label="Currency">
+          <option value="ipc">Instrument Proficiency Check (§ 61.57(d))</option>
+          <option value="review">Flight Review (§ 61.56)</option>
+        </optgroup>
+        <optgroup label="Instructor">
+          <option value="cfi">Flight Instructor — Airplane (ACS-25)</option>
+          <option value="cfii">Flight Instructor Instrument (8081-9E)</option>
+        </optgroup>
       </select>
     </div>
 
@@ -714,6 +724,257 @@ function taskById(libKey,id){
   return null;
 }
 
+/* ---------- instructor and currency libraries ----------
+   Built after LIB, and after taskById, so each one can reuse task definitions
+   already verified against the Private, Commercial and Instrument ACS instead
+   of restating their limits. Area and task names are verbatim from the FAA
+   document named in each label. ASES/AMES and AMEL/AMES tasks are omitted:
+   these are ASEL libraries.
+
+   Three builders, and which one a task gets is the honest answer to "where
+   does this number come from":
+     DT()  reuses a verified task's tolerance, and adds instructional causes
+     GT()  a ground or oral task, which has no numeric tolerance to show
+     DEMO() an in-flight demonstration with no counterpart anywhere already
+          verified, so it shows what is being asked for rather than a number */
+var TEACH  = ["Explanation while flying","Division of attention","Common errors not covered"];
+var GROUND = ["Instructional knowledge","Depth of knowledge","Explanation clarity","Common errors not covered"];
+
+function AREA(name,tasks){ return {name:name,tasks:tasks}; }
+function GT(id,name){ return {id:id,name:name,tol:["—"],why:GROUND.slice()}; }
+function DEMO(id,name,why){ return {id:id,name:name,tol:["Demonstrate + explain"],
+                                  why:(why||[]).concat(TEACH).concat(CAUSE)}; }
+function DT(libKey,id,name){
+  var t=taskById(libKey,id);
+  if(!t) return GT(id,name||id);
+  return {id:id,name:name||t.name,tol:t.tol,why:t.why.concat(TEACH)};
+}
+/* a verified task carried over unchanged — same limits, same causes */
+function RT(libKey,id,name){
+  var t=taskById(libKey,id);
+  if(!t) return GT(id,name||id);
+  return name ? {id:id,name:name,tol:t.tol,why:t.why} : t;
+}
+
+/* ---- Instrument Proficiency Check ----
+   § 61.57(d) requires the areas of operation and tasks of the instrument
+   rating ACS, so every task here is the verified instrument task unchanged. */
+LIB.ipc = {
+  label:"Instrument Proficiency Check", acs:"FAA-S-ACS-8C tasks",
+  far:"§ 61.57(d) Instrument proficiency check",
+  areas:[
+    AREA("ATC Clearances & Holding", [RT("instrument","clear"), RT("instrument","hold")]),
+    AREA("Flight by Reference to Instruments",
+      [RT("instrument","ifr"), RT("instrument","partial"), RT("instrument","ua")]),
+    AREA("Navigation Systems", [RT("instrument","intercept"), RT("instrument","dep")]),
+    AREA("Instrument Approaches",
+      [RT("instrument","nonprec"), RT("instrument","prec"), RT("instrument","missed"),
+       RT("instrument","circle"), RT("instrument","ldgapp")]),
+    AREA("Emergency Operations", [RT("instrument","nocomm"), RT("instrument","ppapp")]),
+    AREA("Postflight Procedures", [GT("ipcpost","Checking Instruments & Equipment")])
+  ]
+};
+
+/* ---- Flight Review ----
+   § 61.56 prescribes no task list: one hour of ground on the § 91 general
+   operating and flight rules, and one hour of flight on the maneuvers and
+   procedures necessary to safely exercise private pilot privileges, both at
+   the instructor's discretion. This is therefore a suggested plan, which is
+   what the acs line says, built from verified private pilot tasks. */
+LIB.review = {
+  label:"Flight Review", acs:"§ 61.56 — instructor's discretion",
+  far:"§ 61.56 Flight review",
+  areas:[
+    AREA("Ground · § 91 Operating & Flight Rules", [
+      GT("fr-cert","Certificate, Currency & Medical Requirements"),
+      GT("fr-aw","Airworthiness & Required Equipment"),
+      GT("fr-as","Airspace, Charts & Operating Rules"),
+      GT("fr-wx","Weather Information & Go / No-Go"),
+      GT("fr-adm","Risk Management & Aeronautical Decision Making"),
+      GT("fr-rwy","Airport Operations & Runway Incursion Avoidance")
+    ]),
+    AREA("Flight · Private Pilot Privileges", [
+      RT("ppl","tpat"), RT("ppl","nto"), RT("ppl","nldg"), RT("ppl","shldg"),
+      RT("ppl","ga"), RT("ppl","steep"), RT("ppl","slow"), RT("ppl","postall"),
+      RT("ppl","ponstall"), RT("ppl","grm"), RT("ppl","divert"),
+      RT("ppl","bisl"), RT("ppl","biturns"), RT("ppl","emldg"), RT("ppl","malf")
+    ])
+  ]
+};
+
+/* ---- Flight Instructor — Airplane (FAA-S-ACS-25) ----
+   All 14 areas of operation. Of the 85 tasks, the 16 that apply only to
+   seaplanes or multiengine airplanes are omitted, leaving 69. Flight
+   maneuvers reuse the Commercial tolerance where the maneuver is a commercial
+   one and the Private tolerance where it is a private one; the ACS-25 skill
+   elements themselves were not transcribed, so no limit here is new. */
+LIB.cfi = {
+  label:"Flight Instructor — Airplane", acs:"FAA-S-ACS-25",
+  far:"§ 61.187 Flight instructor flight proficiency",
+  areas:[
+    AREA("I · Fundamentals of Instructing", [
+      GT("foi-hb","Effects of Human Behavior & Communication"),
+      GT("foi-lp","Learning Process"),
+      GT("foi-cd","Course Development, Lesson Plans & Classroom Techniques"),
+      GT("foi-se","Student Evaluation, Assessment & Testing"),
+      GT("foi-et","Effective Teaching in a Professional Environment"),
+      GT("foi-rm","Effective Teaching — Risk Management & Accident Prevention")
+    ]),
+    AREA("II · Technical Subject Areas", [
+      GT("ts-hf","Human Factors"),
+      GT("ts-vs","Visual Scanning & Collision Avoidance"),
+      GT("ts-ri","Runway Incursion Avoidance"),
+      GT("ts-pf","Principles of Flight"),
+      GT("ts-sys","Aircraft Flight Controls & Operation of Systems"),
+      GT("ts-perf","Performance & Limitations"),
+      GT("ts-nas","National Airspace System"),
+      GT("ts-nav","Navigation Systems & Radar Services"),
+      GT("ts-xc","Navigation & Cross-Country Flight Planning"),
+      GT("ts-cfr","14 CFR & Publications"),
+      GT("ts-end","Endorsements & Logbook Entries"),
+      GT("ts-night","Night Operations"),
+      GT("ts-ox","High Altitude Operations — Supplemental Oxygen"),
+      GT("ts-press","High Altitude Operations — Pressurization")
+    ]),
+    AREA("III · Preflight Preparation", [
+      GT("pp-qual","Pilot Qualifications"),
+      GT("pp-aw","Airworthiness Requirements"),
+      GT("pp-wx","Weather Information")
+    ]),
+    AREA("IV · Preflight Lesson on a Maneuver", [
+      GT("ml","Maneuver Lesson")
+    ]),
+    AREA("V · Preflight Procedures", [
+      GT("pf-assess","Preflight Assessment"),
+      GT("pf-deck","Flight Deck Management"),
+      GT("pf-start","Engine Starting"),
+      GT("pf-taxi","Taxiing, Airport Signs & Lighting"),
+      GT("pf-btc","Before Takeoff Check")
+    ]),
+    AREA("VI · Airport Operations", [
+      GT("ao-comm","Communications, Light Signals & Runway Lighting"),
+      DT("ppl","tpat")
+    ]),
+    AREA("VII · Takeoffs, Landings & Go-Arounds", [
+      DT("commercial","nto"), DT("commercial","nldg"),
+      DT("commercial","sfto"), DT("commercial","sfldg"),
+      DT("commercial","shto","Short-Field Takeoff & Max Performance Climb"),
+      DT("commercial","shldg"),
+      DT("ppl","slip","Slip to a Landing"),
+      DT("commercial","ga"),
+      DT("commercial","po180","Power-Off 180° Accuracy Approach & Landing")
+    ]),
+    AREA("VIII · Fundamentals of Flight", [
+      DEMO("fof-sl","Straight-and-Level Flight",["Altitude","Heading","Trim"]),
+      DEMO("fof-lt","Level Turns",["Altitude","Bank","Coordination","Rollout"]),
+      DEMO("fof-cl","Straight Climbs & Climbing Turns",["Pitch","Airspeed","Coordination"]),
+      DEMO("fof-de","Straight Descents & Descending Turns",["Pitch","Airspeed","Coordination"])
+    ]),
+    AREA("IX · Performance & Ground Reference", [
+      DT("commercial","steep"), DT("commercial","spiral"),
+      DT("commercial","chandelle"), DT("commercial","lazy"),
+      DT("ppl","grm"), DT("commercial","pylons")
+    ]),
+    AREA("X · Slow Flight, Stalls & Spins", [
+      DT("commercial","slow"),
+      DEMO("fc-demo","Flight Characteristics at Various Configurations & Airspeeds",
+         ["Airspeed","Configuration sequence","Altitude"]),
+      DT("commercial","postall"), DT("commercial","ponstall"), DT("commercial","accel"),
+      DEMO("xc-stall","Cross-Controlled Stall Demonstration",
+         ["Entry technique","Recognition","Recovery technique","Altitude loss"]),
+      DEMO("et-stall","Elevator Trim Stall Demonstration",
+         ["Entry technique","Recognition","Recovery technique","Altitude loss"]),
+      DEMO("sec-stall","Secondary Stall Demonstration",
+         ["Entry technique","Recognition","Recovery technique","Altitude loss"]),
+      DEMO("spins","Spin Awareness & Spins",
+         ["Entry technique","Recognition","Recovery technique","Altitude loss"])
+    ]),
+    AREA("XI · Basic Instrument Maneuvers", [
+      DT("ppl","bisl"), DT("ppl","biclimb"), DT("ppl","bidesc"),
+      DT("ppl","biturns"), DT("ppl","biua")
+    ]),
+    AREA("XII · Emergency Operations", [
+      DT("commercial","emdesc"),
+      DT("commercial","emldg","Emergency Approach & Landing (Simulated)"),
+      DT("commercial","malf"),
+      GT("em-gear","Emergency Equipment & Survival Gear")
+    ]),
+    AREA("XIV · Postflight Procedures", [
+      GT("cfi-post","After Landing, Parking & Securing")
+    ])
+  ]
+};
+
+/* ---- Flight Instructor Instrument (FAA-S-8081-9E) ----
+   All 10 areas. The two multiengine tasks in Area IX are omitted, leaving 28.
+   Flight tasks reuse the verified Instrument ACS tolerances; the 8081-9E
+   standards themselves were not transcribed, so no limit here is new. */
+LIB.cfii = {
+  label:"Flight Instructor Instrument", acs:"FAA-S-8081-9E",
+  far:"§ 61.187 Flight instructor flight proficiency",
+  areas:[
+    AREA("I · Fundamentals of Instructing", [
+      GT("cii-lp","Learning Process"),
+      GT("cii-hb","Human Behavior & Effective Communication"),
+      GT("cii-tp","Teaching Process"),
+      GT("cii-tm","Teaching Methods"),
+      GT("cii-ce","Critique & Evaluation"),
+      GT("cii-char","Flight Instructor Characteristics & Responsibilities"),
+      GT("cii-plan","Planning Instructional Activity")
+    ]),
+    AREA("II · Technical Subject Areas", [
+      GT("cii-inst","Aircraft Flight Instruments & Navigation Equipment"),
+      GT("cii-aero","Aeromedical Factors"),
+      GT("cii-reg","Regulations & Publications Related to IFR Operations"),
+      GT("cii-log","Logbook Entries Related to Instrument Instruction")
+    ]),
+    AREA("III · Preflight Preparation", [
+      GT("cii-wx","Weather Information"),
+      GT("cii-xc","Cross-Country Flight Planning"),
+      GT("cii-deck","Instrument Flight Deck Check")
+    ]),
+    AREA("IV · Preflight Lesson on a Maneuver", [
+      GT("cii-ml","Maneuver Lesson")
+    ]),
+    AREA("V · ATC Clearances & Procedures", [
+      DT("instrument","clear","Air Traffic Control Clearances"),
+      DT("instrument","dep","Departure, En Route & Arrival Procedures")
+    ]),
+    AREA("VI · Flight by Reference to Instruments", [
+      DT("instrument","ifr","Straight-and-Level Flight"),
+      DEMO("cii-turns","Turns",["Altitude","Rollout heading","Turn rate","Scan breakdown"]),
+      DEMO("cii-cas","Change of Airspeed — Level & Turning Flight",
+         ["Altitude","Airspeed","Heading","Scan breakdown","Trim"]),
+      DEMO("cii-caclimb","Constant Airspeed Climbs & Descents",
+         ["Altitude","Airspeed","Heading","Level-off","Scan breakdown"]),
+      DEMO("cii-crclimb","Constant Rate Climbs & Descents",
+         ["Vertical speed","Altitude","Airspeed","Level-off","Scan breakdown"]),
+      DEMO("cii-timed","Timed Turns to Magnetic Compass Headings",
+         ["Timing","Rollout heading","Turn rate","Scan breakdown"]),
+      DEMO("cii-steep","Steep Turns",["Altitude","Bank angle","Airspeed","Rollout heading"]),
+      DT("instrument","ua","Recovery From Unusual Flight Attitudes")
+    ]),
+    AREA("VII · Navigation Aids", [
+      DT("instrument","intercept","Intercepting & Tracking Navigation Systems, DME Arcs"),
+      DT("instrument","hold","Holding Procedures")
+    ]),
+    AREA("VIII · Instrument Approach Procedures", [
+      DT("instrument","nonprec","Nonprecision Instrument Approach"),
+      DT("instrument","prec","Precision Instrument Approach"),
+      DT("instrument","missed","Missed Approach"),
+      DT("instrument","circle","Circling Approach"),
+      DT("instrument","ldgapp","Landing From a Straight-In Approach")
+    ]),
+    AREA("IX · Emergency Operations", [
+      DT("instrument","nocomm","Loss of Communications"),
+      DT("instrument","ppapp","Approach With Loss of Primary Flight Instruments")
+    ]),
+    AREA("X · Postflight Procedures", [
+      GT("cii-post","Checking Instruments & Equipment")
+    ])
+  ]
+};
+
 var QUOTES=[
 {t:"When performance is measured, performance improves.",a:"Pearson's Law",n:"Popularized by Thomas S. Monson"},
 {t:"What gets measured gets managed.",a:"Peter Drucker",n:"Commonly attributed; disputed"},
@@ -761,8 +1022,11 @@ function load(){
 
 /* ---------- helpers ---------- */
 /* the accent follows the certificate being trained; grade colors never move */
+var LIBTHEME={instrument:"instrument", ipc:"instrument", cfii:"instrument",
+              commercial:"commercial", cfi:"commercial"};
 function applyLib(key){
-  if(key==="instrument"||key==="commercial") document.documentElement.setAttribute("data-lib",key);
+  var t=LIBTHEME[key];
+  if(t) document.documentElement.setAttribute("data-lib",t);
   else document.documentElement.removeAttribute("data-lib");
 }
 function libTheme(){ applyLib((S.current && S.current.libKey) || S.lastLib || "ppl"); }
@@ -1009,8 +1273,15 @@ function renderPicker(){
           cb.addEventListener("change",function(){ picked[t.id]=cb.checked; paintCnt(area,cnt); updateCount(); });
           var sp=el("span","sp");
           var n=el("span",null,t.name); n.style.display="block"; n.style.fontWeight="600"; n.style.fontSize="16px";
-          var s=el("span","mono muted",t.tol.join(" \u00b7 ")); s.style.display="block"; s.style.fontSize="13px"; s.style.marginTop="2px";
-          sp.appendChild(n); sp.appendChild(s);
+          sp.appendChild(n);
+          /* ground and oral tasks have no limit to print; a column of bare
+             em dashes is just noise to scroll past */
+          var lim=t.tol.join(" \u00b7 ");
+          if(lim && lim!=="\u2014"){
+            var s=el("span","mono muted",lim); s.style.display="block";
+            s.style.fontSize="13px"; s.style.marginTop="2px";
+            sp.appendChild(s);
+          }
           wrap.appendChild(cb); wrap.appendChild(sp);
           host.appendChild(wrap);
         })(area.tasks[i]);
@@ -1071,7 +1342,11 @@ function renderGrade(){
   else { lab.textContent="NOT YET GRADED"; lab.style.color="var(--go)"; }
 
   var tol=$("gradeTol"); tol.innerHTML="";
-  if(t) for(var i=0;i<t.tol.length;i++){ tol.appendChild(el("span","chip",t.tol[i])); }
+  /* a ground or oral task has no limit to print; one orphan em dash in a
+     chip reads as a rendering fault rather than as "no numeric tolerance" */
+  if(t && !(t.tol.length===1 && t.tol[0]==="\u2014")){
+    for(var i=0;i<t.tol.length;i++){ tol.appendChild(el("span","chip",t.tol[i])); }
+  }
 
   var bar=$("gradeBar"); bar.innerHTML="";
   bar.style.gridTemplateColumns="repeat("+c.entries.length+",minmax(0,1fr))";
