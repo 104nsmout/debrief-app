@@ -284,6 +284,12 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
    overflow:hidden. Rounding the stacked layers too put two antialiased
    curves on the same pixels and the reveal colour bled between them. */
 .jrow + .jrow{margin-top:2px}
+/* the close-out list swipes the same way; only one element rounds, and the
+   wrapper carries no fill, or it shows as a sliver around the inner layer */
+.swipe.crow{position:relative;overflow:hidden;border-radius:10px;background:transparent}
+.crow + .crow{margin-top:2px}
+.crow .rowitem{border-bottom:0}
+.crow.gone .rowitem{opacity:.45}
 .jrow.gone .jr{opacity:.45}
 .dropall{width:100%;box-sizing:border-box;margin-bottom:10px;flex:none}
 
@@ -1845,6 +1851,15 @@ function hobbsWarning(c){
 }
 
 /* ---------- CLOSE OUT ---------- */
+/* renderClose repaints the summary box from state, so anything typed and not
+   yet committed would be lost on a redraw. Committing first also means the
+   summary survives backing out to the grade screen and coming back. */
+function closeCommit(){
+  var c=S.current, box=$("f-summary");
+  if(c && box) c.summary=box.value;
+}
+function closeChanged(){ closeCommit(); save(); renderClose(); }
+
 function renderClose(){
   libTheme();
   var c=S.current; if(!c) return;
@@ -1866,8 +1881,34 @@ function renderClose(){
       var s=el("span","muted",detail.join(" · ")); s.style.display="block"; s.style.fontSize="13px"; s.style.marginTop="2px";
       sp.appendChild(n); sp.appendChild(s);
       b.appendChild(tg); b.appendChild(sp);
-      b.addEventListener("click",function(){ c.idx=i; save(); renderGrade(); show("grade"); });
-      list.appendChild(b);
+      b.addEventListener("click",function(){
+        /* tapping a dropped row puts it back, rather than sending you to
+           grade a maneuver that is no longer part of the lesson */
+        if(!isFlown(e)){ e.skipped=false; closeChanged(); return; }
+        closeCommit(); c.idx=i; save(); renderGrade(); show("grade");
+      });
+
+      var wrap=el("div","swipe crow"+(isFlown(e)?"":" gone"));
+      var del=el("button","sw-del"); del.type="button";
+      del.textContent=isFlown(e)?"Drop":"Restore";
+      var inner=el("div","sw-in"); inner.appendChild(b);
+      wrap.appendChild(del); wrap.appendChild(inner);
+      del.addEventListener("click",function(){
+        if(!isFlown(e)){ e.skipped=false; closeChanged(); return; }
+        /* this is the last screen before the debrief exists, so dropping a
+           graded maneuver here is the one that silently rewrites the record */
+        if(e.result){
+          openConfirm("Drop a graded maneuver?",
+            (t?t.name:"This maneuver")+" is graded "+(e.result==="sat"?"satisfactory":"unsatisfactory")+
+            ". Dropping it keeps the grade but leaves it off the debrief, named in the not-flown line instead.",
+            function(){ e.skipped=true; closeChanged(); toast("Marked not flown"); },
+            "Drop");
+          return;
+        }
+        e.skipped=true; closeChanged();
+      });
+      attachSwipe(wrap);
+      list.appendChild(wrap);
     })(c.entries[i],i);
   }
   $("cSat").textContent=String(sat); $("cUnsat").textContent=String(uns); $("cNo").textContent=String(no);
@@ -2538,16 +2579,102 @@ if(S.current && !S.current.done){
   /* keep the in-progress flight one tap away, but open on Home */
   show("home");
 } else show("home");
-})();
+})();/*__APP_SCOPE_END__*/
 </script>
 
 <script>
-/* Offline: cache the shell on first visit so later launches need no signal. */
-if ("serviceWorker" in navigator) {
+/* Offline, and — just as important — updates.
+
+   A browser only re-fetches sw.js when the page NAVIGATES. An installed iOS
+   web app resumed from the app switcher never navigates: it is the same
+   document still in memory. So a registration that is never asked to update
+   again can leave a phone on an old build indefinitely, which is exactly what
+   happened in the field. Two things fix it: ask for the check explicitly when
+   the app comes back to the foreground, and say so on screen when a new build
+   is ready instead of letting it land silently on some future cold start. */
+(function () {
+  if (!("serviceWorker" in navigator)) return;
+
+  /* controllerchange also fires the first time a worker claims a page that
+     had none, which is not an update — only a page that already had a
+     controller is being updated under its feet. */
+  var hadController = !!navigator.serviceWorker.controller;
+  var reg = null, shown = false, pending = false, last = 0;
+
+  /* The bar lives inside the home view, so it is simply not on screen during
+     a lesson: an update can never cover the grade buttons or be fat-fingered
+     at 4,500 feet. It waits on the home screen, between flights. */
+  function bar() {
+    pending = true;
+    if (shown) return;
+    var anchor = document.getElementById("quoteBox");
+    if (!anchor || !anchor.parentNode) return;   /* retried after load */
+    shown = true;
+
+    var box = document.createElement("div");
+    box.id = "updBar";
+    box.style.cssText = "display:flex;align-items:center;gap:12px;margin-bottom:13px;"
+      + "padding:12px 14px;border-radius:12px;background:var(--surface-2);"
+      + "border-left:3px solid var(--go)";
+
+    var sp = document.createElement("div");
+    sp.style.cssText = "flex:1 1 auto;min-width:0";
+    var t = document.createElement("div");
+    t.textContent = "New version ready";
+    t.style.cssText = "font-family:var(--display);font-weight:700;font-size:15px;color:var(--ink)";
+    var s = document.createElement("div");
+    s.textContent = "Your flights and debriefs are kept.";
+    s.style.cssText = "font-size:12.5px;color:var(--ink-2);margin-top:2px";
+    sp.appendChild(t); sp.appendChild(s);
+
+    var go = document.createElement("button");
+    go.type = "button"; go.className = "ghost";
+    go.textContent = "Reload";
+    go.style.cssText = "flex:none;color:var(--go);border-color:var(--go)";
+    go.addEventListener("click", function () { location.reload(); });
+
+    box.appendChild(sp); box.appendChild(go);
+    anchor.parentNode.insertBefore(box, anchor);
+  }
+
+  function watch(r) {
+    if (r.waiting && hadController) bar();
+    r.addEventListener("updatefound", function () {
+      var w = r.installing;
+      if (!w) return;
+      w.addEventListener("statechange", function () {
+        if (w.state === "installed" && hadController) bar();
+      });
+    });
+  }
+
+  function check() {
+    var now = Date.now();
+    if (!reg || now - last < 20000) return;   /* not on every app switch */
+    last = now;
+    try { reg.update(); } catch (e) {}
+  }
+
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./sw.js").catch(function () {});
+    navigator.serviceWorker.register("./sw.js").then(function (r) {
+      reg = r; last = Date.now();
+      watch(r);
+      if (pending) bar();                      /* fired before the DOM was up */
+    }).catch(function () {});
   });
-}
+
+  /* the resumed-from-the-app-switcher case, where no navigation happens */
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") check();
+  });
+  window.addEventListener("focus", check);
+
+  /* sw.js calls skipWaiting, so a new worker claims the page without ever
+     resting in `waiting` — this is the signal that actually arrives. */
+  navigator.serviceWorker.addEventListener("controllerchange", function () {
+    if (hadController) bar();
+  });
+})();
 </script>
 
 </body>
