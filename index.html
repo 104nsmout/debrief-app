@@ -329,6 +329,11 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 .rep th:last-child,.rep td:last-child{padding-right:0}
 .rep td{padding:8px 10px 8px 0;border-bottom:1px solid var(--line);vertical-align:top}
 .rep td:first-child{width:38%}
+/* a note row continues the maneuver above it, so the rule between them goes;
+   the note row carries the boundary instead */
+.rep tr.hasnote td{border-bottom:0;padding-bottom:2px}
+.rep td.notes{padding:0 0 9px 0}
+.rep td.notes:first-child{width:auto}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--go);color:var(--on-go);
   padding:11px 16px;border-radius:11px;font-size:14px;font-weight:600;z-index:40;box-shadow:0 6px 20px rgba(0,0,0,.25)}
 @media (prefers-reduced-motion:no-preference){.toast{animation:pop .18s ease-out}}
@@ -366,6 +371,8 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
   .rep .tag-sat{color:#1F3A5F!important;font-weight:700}
   .rep .tag-no{color:#6B6B6B!important}
   tr,.row{break-inside:avoid}
+  /* each maneuver is its own tbody, so the pair never splits across a page */
+  .rep tbody{break-inside:avoid}
 }
 </style>
 </head>
@@ -2015,7 +2022,6 @@ function renderDebrief(){
   var thead=el("thead"), trh=el("tr");
   ["Maneuver","Result","What was observed"].forEach(function(x){ trh.appendChild(el("th",null,x)); });
   thead.appendChild(trh); tbl.appendChild(thead);
-  var tb=el("tbody");
   for(var i=0;i<c.entries.length;i++){
     var e=c.entries[i], t=taskById(c.libKey,e.taskId), r=entryResult(e);
     /* a maneuver that was never flown is a footnote below, not a row here */
@@ -2041,17 +2047,35 @@ function renderDebrief(){
     var line=el("div",null,bits.join(" · ") || "—");
     line.style.fontSize="12px";
     td3.appendChild(line);
-    /* notes carry the credit for a re-fly, so they get contrast of their own
-       rather than being folded into the grey observed line */
+    tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+
+    /* one tbody per maneuver: it is the only grouping a table offers that a
+       page break will respect, so the notes cannot be orphaned from the
+       maneuver they belong to */
+    var grp=el("tbody");
+    grp.appendChild(tr);
+
+    /* Notes are prose, and prose wants width. Held in the third column they
+       wrapped at about 40% of the page and dragged the whole row taller with
+       them; across the full width they take roughly half the lines. They keep
+       the accent bar, which is what separates the instructor's words from the
+       generated observation line. */
     var notes=allNotes(e);
-    for(var nn=0;nn<notes.length;nn++){
-      var nd=el("div",null,notes[nn]);
-      nd.style.cssText="margin-top:5px;font-size:12.5px;color:var(--ink);border-left:2px solid var(--go);padding-left:8px";
-      td3.appendChild(nd);
+    if(notes.length){
+      tr.className="hasnote";
+      var ntr=el("tr"), ntd=el("td");
+      ntd.className="notes"; ntd.colSpan=3;
+      for(var q=0;q<notes.length;q++){
+        var nd=el("div",null,notes[q]);
+        nd.style.cssText="margin-top:5px;font-size:12.5px;color:var(--ink);"
+          + "border-left:2px solid var(--go);padding-left:9px";
+        ntd.appendChild(nd);
+      }
+      ntr.appendChild(ntd); grp.appendChild(ntr);
     }
-    tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tb.appendChild(tr);
+    tbl.appendChild(grp);
   }
-  tbl.appendChild(tb); host.appendChild(tbl);
+  host.appendChild(tbl);
 
   /* one quiet line rather than eight more rows: the student sees what was
      flown, and the record still shows what the lesson had planned */
