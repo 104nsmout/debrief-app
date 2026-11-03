@@ -13,6 +13,42 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./icons/icon-180.png">
 <link rel="icon" href="./icons/icon-192.png">
+
+<!-- Error monitoring. Config first, loader async: a cockpit launch with no
+     signal must not wait on a CDN, and must not fail because of one. -->
+<script>
+window.sentryOnLoad = function () {
+  if (!window.Sentry || !Sentry.init) return;
+  Sentry.init({
+    dsn: "https://38bc1ab8b365d4b955ec9314f5478b09@o4512370166333440.ingest.us.sentry.io/4512370211291136",
+    release: "debrief-2026-11-03-2239",
+    environment: "production",
+    /* neither tracing nor replay is enabled on the project, and both would
+       carry student data off the device; pinned off here as well */
+    tracesSampleRate: 0,
+    replaysSessionSampleRate: 0,
+    replaysOnErrorSampleRate: 0,
+    sendDefaultPii: false,
+    /* UI breadcrumbs capture the text of whatever was clicked. In this app
+       that is maneuver names, and on the home screen, student names. */
+    beforeBreadcrumb: function (b) {
+      if (!b) return null;
+      if (b.category === "ui.click" || b.category === "ui.input") return null;
+      return b;
+    },
+    beforeSend: function (ev) {
+      try {
+        delete ev.extra;
+        if (ev.contexts) { delete ev.contexts.state; delete ev.contexts.response; }
+        if (ev.request) { delete ev.request.cookies; delete ev.request.data; }
+        delete ev.user;
+      } catch (e) {}
+      return ev;
+    }
+  });
+};
+</script>
+<script src="https://js.sentry-cdn.com/38bc1ab8b365d4b955ec9314f5478b09.min.js" crossorigin="anonymous" async></script>
 <title>Maneuver Debrief</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>

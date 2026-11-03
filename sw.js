@@ -1,7 +1,7 @@
 /* Maneuver Debrief — offline service worker.
    VERSION is injected at build time from a hash of index.html, so every
    rebuild invalidates the old cache automatically. Nothing to bump by hand. */
-var VERSION = "87e1f6e86de0";
+var VERSION = "0364bbd78f06";
 var CACHE   = "debrief-" + VERSION;
 
 var SHELL = [
@@ -14,7 +14,10 @@ var SHELL = [
   "./icons/icon-512-maskable.png"
 ];
 
-var FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com"];
+/* Third-party scripts and fonts the shell pulls. Cached the same way the
+   app is, so a launch with no signal behaves exactly like one with. Only
+   GETs reach here, so Sentry's own event POSTs are never intercepted. */
+var CDN_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com", "js.sentry-cdn.com"];
 
 self.addEventListener("install", function (e) {
   e.waitUntil(
@@ -72,7 +75,7 @@ self.addEventListener("fetch", function (e) {
     return;
   }
 
-  if (FONT_HOSTS.indexOf(url.hostname) !== -1) {
+  if (CDN_HOSTS.indexOf(url.hostname) !== -1) {
     e.respondWith(staleWhileRevalidate(req));
     return;
   }
