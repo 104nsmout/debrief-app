@@ -2029,9 +2029,13 @@ function renderDebrief(){
     var tr=el("tr");
     var td1=el("td");
     var nm=el("strong",null,t?t.name:"—"); td1.appendChild(nm);
-    var nn=allNotes(e).length;
-    var att=el("div","muted", r ? (nn? nn+(nn===1?" note":" notes") : "graded") : "not flown");
-    att.style.fontSize="11px"; td1.appendChild(att);
+    /* no subtitle for a graded maneuver: "graded" repeats the chip, and a note
+       count repeats the note printed directly beneath it. An ungraded row is
+       the one case the chip does not explain on its own. */
+    if(!r){
+      var att=el("div","muted","not graded");
+      att.style.fontSize="11px"; td1.appendChild(att);
+    }
     var td2=el("td"); td2.style.whiteSpace="nowrap";
     var tg=el("span","mono tag-"+r, r==="sat"?"SAT":r==="unsat"?"UNSAT":"N/O");
     tg.style.fontSize="11px"; tg.style.fontWeight="600";
