@@ -309,6 +309,26 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 #resumeWrap .sw-in{border-radius:14px}
 #resumeWrap .resume{margin-bottom:0}
 
+/* the account row sits under the recents: present, not shouting */
+.acct{display:flex;align-items:center;gap:11px;width:100%;box-sizing:border-box;
+  margin-top:13px;padding:13px 14px;border-radius:12px;background:var(--surface);
+  border:1px solid var(--line);text-align:left;color:inherit;cursor:pointer}
+.acct .ic{width:30px;height:30px;border-radius:8px;flex:none;display:flex;
+  align-items:center;justify-content:center;background:var(--go-soft)}
+.acct .sp{flex:1 1 auto;min-width:0}
+.acct .t{display:block;font-weight:600;font-size:14.5px;line-height:1.25}
+.acct .s{display:block;font-family:var(--mono);font-size:11px;color:var(--ink-2);
+  margin-top:2px;letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct .cv{flex:none;color:var(--ink-2);font-family:var(--mono);font-size:15px}
+
+.authbox{display:flex;flex-direction:column;gap:11px;margin-top:4px}
+.authbox label{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1px;
+  color:var(--ink-2);text-transform:uppercase}
+.authbox .msg{font-size:13.5px;line-height:1.45;color:var(--ink-2)}
+.authbox .msg.bad{color:var(--warn)}
+.authbox input{font-family:var(--body)}
+.authbox input.code{font-family:var(--mono);font-size:22px;letter-spacing:6px;text-align:center}
+
 /* queue rows swipe like every other list in the app. The sheet's own
    background already matches .sw-in, so only the row chrome needs resetting. */
 /* no warn fill on the wrapper: .sw-del already paints the reveal, and a
@@ -483,7 +503,23 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
       <span class="eyebrow" id="recentCount"></span>
     </div>
     <div class="card" id="recentList"></div>
+    
+  
   </div>
+  <button class="acct" id="acctBtn" type="button">
+      <span class="ic">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--go)"
+             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 17.6V6.4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v11.2"/>
+          <path d="M3 17.6h18"/><path d="M9 9.5l3 3 3-3"/><path d="M12 4.6v7.9"/>
+        </svg>
+      </span>
+      <span class="sp">
+        <span class="t" id="acctTitle">Back up your flights</span>
+        <span class="s" id="acctSub">Not signed in &middot; records live on this phone only</span>
+      </span>
+      <span class="cv">&rsaquo;</span>
+    </button>
 </section>
 
 <!-- SETUP -->
@@ -777,6 +813,237 @@ var LIB = {
     ]
   }
 };
+
+
+/* ---------- account ----------
+   Supabase, over plain fetch. The publishable key is designed to sit in
+   client JavaScript: every table it can reach is governed by row-level
+   security, so it grants nothing beyond "ask, as whoever is signed in".
+
+   Sign-in is a six-digit code, not a magic link. On iOS a link tapped in Mail
+   opens Safari, which is a different origin store from the installed app: the
+   link would sign in a browser tab while the app stayed signed out, with
+   nothing on screen to explain it. A code signs in the app you are holding. */
+var SB_URL = "https://ljcdicnunebyylyinysl.supabase.co";
+var SB_KEY = "sb_publishable_vj7sWkgNU51LnZ0TmxTY0A_Q8H6gXaz";
+var AKEY   = "debrief.auth.v1";
+
+var A = { token:null, refresh:null, expires:0, email:null };
+
+function authLoad(){
+  try{
+    var raw = localStorage.getItem(AKEY);
+    if(raw) A = JSON.parse(raw);
+  }catch(e){}
+  if(!A || typeof A !== "object") A = { token:null, refresh:null, expires:0, email:null };
+}
+function authSave(){ try{ localStorage.setItem(AKEY, JSON.stringify(A)); }catch(e){} }
+function authClear(){ A = { token:null, refresh:null, expires:0, email:null }; authSave(); }
+function signedIn(){ return !!(A && A.token); }
+
+function sbFetch(path, opts){
+  opts = opts || {};
+  var h = opts.headers || {};
+  h["apikey"] = SB_KEY;
+  h["Content-Type"] = "application/json";
+  if(A && A.token) h["Authorization"] = "Bearer " + A.token;
+  opts.headers = h;
+  return fetch(SB_URL + path, opts);
+}
+
+/* the shape Supabase returns from both verify and refresh */
+function authStore(j, email){
+  A.token   = j.access_token;
+  A.refresh = j.refresh_token;
+  /* a minute of slack, so a request never goes out on a token that expires
+     while it is in flight */
+  A.expires = Date.now() + ((j.expires_in || 3600) - 60) * 1000;
+  A.email   = (j.user && j.user.email) || email || A.email;
+  authSave();
+}
+
+function sendCode(email){
+  return sbFetch("/auth/v1/otp", {
+    method:"POST",
+    body: JSON.stringify({ email: email, create_user: true })
+  }).then(function(r){
+    if(r.ok) return true;
+    return r.json().catch(function(){ return {}; }).then(function(j){
+      throw new Error(j.msg || j.error_description || j.message || ("Sign-in failed (" + r.status + ")"));
+    });
+  });
+}
+
+function verifyCode(email, code){
+  return sbFetch("/auth/v1/verify", {
+    method:"POST",
+    body: JSON.stringify({ email: email, token: code, type: "email" })
+  }).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(j){
+      if(!r.ok || !j.access_token){
+        throw new Error(j.msg || j.error_description || j.message || "That code didn't work.");
+      }
+      authStore(j, email);
+      return true;
+    });
+  });
+}
+
+/* Called before anything that needs a live token. Returns false when the
+   session is gone for good, so the caller can fall back to local-only rather
+   than throwing in the middle of a lesson. */
+function authReady(){
+  if(!A || !A.token) return Promise.resolve(false);
+  if(Date.now() < A.expires) return Promise.resolve(true);
+  if(!A.refresh){ authClear(); return Promise.resolve(false); }
+  return sbFetch("/auth/v1/token?grant_type=refresh_token", {
+    method:"POST",
+    body: JSON.stringify({ refresh_token: A.refresh })
+  }).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(j){
+      if(!r.ok || !j.access_token){
+        /* refused, not merely offline: the session is genuinely over */
+        if(r.status >= 400 && r.status < 500){ authClear(); return false; }
+        return false;
+      }
+      authStore(j);
+      return true;
+    });
+  }).catch(function(){
+    /* no signal. The token is stale but the session is not dead, so keep it
+       and let the next attempt online sort it out. */
+    return false;
+  });
+}
+
+/* A magic link is still worth supporting even though the app asks for a code.
+   On a desktop browser a tapped link is the nicer path, and Supabase's own
+   default email template sends one. The link returns here with the tokens in
+   the URL fragment; take them, store them, and scrub the address bar so the
+   tokens are not left sitting in history. (On an installed iOS app the link
+   opens Safari instead, which is why the code exists at all.) */
+function authFromHash(){
+  var h = location.hash || "";
+  if(h.indexOf("access_token=") < 0) return false;
+  var q = {}, parts = h.replace(/^#/, "").split("&"), i, kv;
+  for(i=0;i<parts.length;i++){
+    kv = parts[i].split("=");
+    if(kv.length === 2) q[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1]);
+  }
+  if(!q.access_token) return false;
+  authStore({ access_token: q.access_token, refresh_token: q.refresh_token,
+              expires_in: parseInt(q.expires_in, 10) || 3600 });
+  try{ history.replaceState(null, "", location.pathname + location.search); }
+  catch(e){ location.hash = ""; }
+  return true;
+}
+
+function paintAcct(){
+  var t = $("acctTitle"), sb = $("acctSub");
+  if(!t || !sb) return;
+  if(signedIn()){
+    t.textContent = "Signed in";
+    sb.textContent = A.email || "account active";
+  } else {
+    t.textContent = "Back up your flights";
+    sb.textContent = "Not signed in · records live on this phone only";
+  }
+}
+
+function openAccount(){
+  if(signedIn()){
+    openConfirm("Sign out?",
+      (A.email ? A.email + " will be signed out on this phone. " : "") +
+      "Your flights stay on this device either way — nothing is deleted.",
+      function(){ authClear(); paintAcct(); toast("Signed out"); },
+      "Sign out");
+    return;
+  }
+
+  var wrap=el("div","sheet"), inner=el("div","inner");
+  var head=el("div"); head.style.cssText="padding:16px 16px 0";
+  var h=el("div","d"); h.style.cssText="font-size:22px;color:var(--ink)";
+  h.textContent="Back up your flights";
+  head.appendChild(h);
+
+  var body=el("div","authbox"); body.style.cssText="padding:12px 16px 18px";
+  var blurb=el("div","msg",
+    "Sign in and your flights are kept off this phone as well as on it. "
+    + "Grading never needs an account, and never needs a signal.");
+  var lab=el("label"); lab.textContent="Email"; lab.setAttribute("for","authEmail");
+  var mail=document.createElement("input");
+  mail.type="email"; mail.id="authEmail"; mail.autocomplete="email";
+  mail.inputMode="email"; mail.placeholder="you@example.com";
+  var err=el("div","msg bad"); err.hidden=true;
+  var go=el("button","primary"); go.type="button"; go.textContent="Email me a code";
+  go.style.cssText="min-height:50px";
+  var cancel=el("button","ghost"); cancel.type="button"; cancel.textContent="Not now";
+
+  body.appendChild(blurb); body.appendChild(lab); body.appendChild(mail);
+  body.appendChild(err); body.appendChild(go); body.appendChild(cancel);
+  inner.appendChild(head); inner.appendChild(body);
+  wrap.appendChild(inner); document.body.appendChild(wrap);
+
+  function close(){ if(wrap.parentNode) wrap.parentNode.removeChild(wrap); }
+  function fail(m){ err.textContent=m; err.hidden=false; }
+  cancel.addEventListener("click", close);
+  wrap.addEventListener("click", function(ev){ if(ev.target===wrap) close(); });
+
+  go.addEventListener("click", function(){
+    var email=(mail.value||"").trim();
+    if(!email || email.indexOf("@")<0){ fail("That doesn't look like an email address."); return; }
+    err.hidden=true; go.disabled=true; go.textContent="Sending…";
+    sendCode(email).then(function(){
+      askCode(email);
+    }).catch(function(e){
+      go.disabled=false; go.textContent="Email me a code";
+      fail(e && e.message ? e.message : "Couldn't send the code. Check your signal.");
+    });
+  });
+
+  /* second step, in the same sheet */
+  function askCode(email){
+    h.textContent="Check your email";
+    body.innerHTML="";
+    var b2=el("div","msg","We sent a six-digit code to " + email + ". It expires shortly.");
+    var l2=el("label"); l2.textContent="Code"; l2.setAttribute("for","authCode");
+    var code=document.createElement("input");
+    code.type="text"; code.id="authCode"; code.className="code";
+    code.inputMode="numeric"; code.autocomplete="one-time-code";
+    code.maxLength=6; code.placeholder="000000";
+    var e2=el("div","msg bad"); e2.hidden=true;
+    var ok=el("button","primary"); ok.type="button"; ok.textContent="Sign in";
+    ok.style.cssText="min-height:50px";
+    var again=el("button","ghost"); again.type="button"; again.textContent="Send another code";
+    b2.appendChild(document.createTextNode(""));
+    body.appendChild(b2); body.appendChild(l2); body.appendChild(code);
+    body.appendChild(e2); body.appendChild(ok); body.appendChild(again);
+    code.focus();
+
+    function bad(m){ e2.textContent=m; e2.hidden=false; }
+    ok.addEventListener("click", function(){
+      var v=(code.value||"").replace(/\D/g,"");
+      if(v.length!==6){ bad("Enter the six digits from the email."); return; }
+      e2.hidden=true; ok.disabled=true; ok.textContent="Signing in…";
+      verifyCode(email, v).then(function(){
+        close(); paintAcct(); toast("Signed in");
+      }).catch(function(e){
+        ok.disabled=false; ok.textContent="Sign in";
+        bad(e && e.message ? e.message : "That code didn't work.");
+      });
+    });
+    again.addEventListener("click", function(){
+      again.disabled=true; again.textContent="Sending…";
+      sendCode(email).then(function(){
+        again.textContent="Sent";
+        setTimeout(function(){ again.disabled=false; again.textContent="Send another code"; }, 4000);
+      }).catch(function(){
+        again.disabled=false; again.textContent="Send another code";
+        bad("Couldn't send another code right now.");
+      });
+    });
+  }
+}
 
 /* ---------- the live queue ----------
    A maneuver marked not flown stays in the record but leaves the lesson:
@@ -1111,6 +1378,8 @@ function load(){
     if(raw){ var p=JSON.parse(raw); if(p&&typeof p==="object"){ S.current=p.current||null; S.flights=Array.isArray(p.flights)?p.flights:[]; S.lastLib=p.lastLib||null; S.bag=Array.isArray(p.bag)?p.bag:null; S.lastQuote=(typeof p.lastQuote==="number")?p.lastQuote:null; } }
   }catch(e){}
   try{ migrateAll(); }catch(e){}
+  try{ authLoad(); }catch(e){}
+  try{ if(authFromHash()) setTimeout(function(){ toast("Signed in"); }, 600); }catch(e){}
 }
 
 /* ---------- helpers ---------- */
@@ -1269,6 +1538,7 @@ function renderHome(){
     }
   } else { rb.hidden=true; }
 
+  paintAcct();
   var list=$("recentList"); list.innerHTML="";
   var done=S.flights.slice(0,5);
   $("recentWrap").hidden = done.length===0;
@@ -1307,6 +1577,13 @@ function renderHome(){
   }
 }
 $("newFlightBtn").addEventListener("click",function(){ renderPicker(); show("setup"); });
+$("acctBtn").addEventListener("click", openAccount);
+/* a hash-only change is a same-document navigation: no reload, so load()
+   never runs. Catch the tokens here too. */
+window.addEventListener("hashchange", function(){
+  try{ if(authFromHash()){ paintAcct(); toast("Signed in"); } }catch(e){}
+});
+
 $("resumeBtn").addEventListener("click",function(){
   var c=S.current; if(!c) return;
   renderGrade(); show("grade");
