@@ -916,28 +916,6 @@ function authReady(){
   });
 }
 
-/* A magic link is still worth supporting even though the app asks for a code.
-   On a desktop browser a tapped link is the nicer path, and Supabase's own
-   default email template sends one. The link returns here with the tokens in
-   the URL fragment; take them, store them, and scrub the address bar so the
-   tokens are not left sitting in history. (On an installed iOS app the link
-   opens Safari instead, which is why the code exists at all.) */
-function authFromHash(){
-  var h = location.hash || "";
-  if(h.indexOf("access_token=") < 0) return false;
-  var q = {}, parts = h.replace(/^#/, "").split("&"), i, kv;
-  for(i=0;i<parts.length;i++){
-    kv = parts[i].split("=");
-    if(kv.length === 2) q[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1]);
-  }
-  if(!q.access_token) return false;
-  authStore({ access_token: q.access_token, refresh_token: q.refresh_token,
-              expires_in: parseInt(q.expires_in, 10) || 3600 });
-  try{ history.replaceState(null, "", location.pathname + location.search); }
-  catch(e){ location.hash = ""; }
-  return true;
-}
-
 function paintAcct(){
   var t = $("acctTitle"), sb = $("acctSub");
   if(!t || !sb) return;
@@ -1379,7 +1357,6 @@ function load(){
   }catch(e){}
   try{ migrateAll(); }catch(e){}
   try{ authLoad(); }catch(e){}
-  try{ if(authFromHash()) setTimeout(function(){ toast("Signed in"); }, 600); }catch(e){}
 }
 
 /* ---------- helpers ---------- */
@@ -1578,11 +1555,6 @@ function renderHome(){
 }
 $("newFlightBtn").addEventListener("click",function(){ renderPicker(); show("setup"); });
 $("acctBtn").addEventListener("click", openAccount);
-/* a hash-only change is a same-document navigation: no reload, so load()
-   never runs. Catch the tokens here too. */
-window.addEventListener("hashchange", function(){
-  try{ if(authFromHash()){ paintAcct(); toast("Signed in"); } }catch(e){}
-});
 
 $("resumeBtn").addEventListener("click",function(){
   var c=S.current; if(!c) return;
