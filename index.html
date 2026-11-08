@@ -1224,6 +1224,76 @@ var SYL = {
       L(28,4,"Mock checkride",{clear:"M",hold:"M",ifr:"M",partial:"M",ua:"M",intercept:"M",dep:"M",
                                nonprec:"M",prec:"M",missed:"M",circle:"M",ldgapp:"M",nocomm:"M",ppapp:"M"})
     ]
+  },
+
+  comm61: {
+    label:"Commercial Pilot \u2014 Part 61", lib:"commercial", version:"1.0",
+    note:"A conventional sequence, not an FAA-approved course. Reorder, repeat or skip freely.",
+    lessons:[
+      /* A commercial candidate already holds a private certificate, so the
+         carried-over maneuvers start at Practiced -- the work is re-flying them
+         to the tighter commercial tolerance, not learning them. Only the six
+         maneuvers that are new at this certificate start at Introduced:
+         power-off 180, steep spiral, chandelles, lazy eights, eights on pylons
+         and accelerated stalls.
+
+         The shape of the course is set by 61.129(a), which is prescriptive
+         about the complex/TAA time, the day and night cross-countries over
+         100 NM, the night landings at a towered airport and the preparation
+         within the two calendar months before the test. Instrument and complex
+         time are logging requirements rather than gradeable ACS tasks, so those
+         lessons are titled for them and tagged with the real tasks flown. */
+
+      /* ---- Stage 1 - airwork to commercial standards ---- */
+      L(1,1,"Commercial standards: slow flight and stalls",{slow:"P",postall:"P",ponstall:"P"}),
+      L(2,1,"Accelerated stalls and steep turns",{accel:"I",steep:"P"}),
+      L(3,1,"Chandelles introduced",{chandelle:"I",steep:"P"}),
+      L(4,1,"Lazy eights introduced",{lazy:"I",chandelle:"P"}),
+      L(5,1,"Steep spirals and emergency descent",{spiral:"I",emdesc:"P"}),
+      L(6,1,"Eights on pylons introduced",{pylons:"I",spiral:"P"}),
+      L(7,1,"Commercial maneuvers practice",{chandelle:"P",lazy:"P",pylons:"P",spiral:"P"}),
+      L(8,1,"Stage 1 check",{slow:"P",postall:"P",ponstall:"P",accel:"P",steep:"P",
+                             chandelle:"P",lazy:"P",spiral:"P",pylons:"P"}),
+
+      /* ---- Stage 2 - performance landings and the complex airplane ---- */
+      L(9,2,"Power-off 180 introduced",{po180:"I",tpat:"P",nldg:"P"}),
+      L(10,2,"Power-off 180 practice",{po180:"P",ga:"P"}),
+      L(11,2,"Complex airplane checkout - systems",{malf:"P",nto:"P",nldg:"P"}),  /* Practiced, not Introduced: a commercial candidate has handled
+         malfunctions since private. What is new here is this airplane's
+         gear and prop, not the ACS task. */
+      L(12,2,"Complex airplane - airwork",{steep:"P",slow:"P",malf:"P"}),
+      L(13,2,"Performance takeoffs and landings, complex",{sfto:"P",sfldg:"P",shto:"P",shldg:"P"}),
+      L(14,2,"Accuracy landings to tolerance",{po180:"P",shldg:"P",sfldg:"P",ga:"P"}),
+      L(15,2,"Emergency operations",{emldg:"P",emdesc:"P",malf:"P"}),
+      L(16,2,"Stage 2 check",{po180:"P",shto:"P",shldg:"P",sfto:"P",sfldg:"P",ga:"P",
+                              emldg:"P",malf:"P"}),
+
+      /* ---- Stage 3 - cross-country and night ---- */
+      L(17,3,"Day cross-country",{pilotage:"P",navsys:"P",divert:"P"}),
+      L(18,3,"Long day cross-country, over 100 NM",{pilotage:"P",navsys:"P",divert:"P",lost:"P"}),
+      L(19,3,"Night cross-country, over 100 NM",{pilotage:"P",navsys:"P",nto:"P",nldg:"P"}),
+      L(20,3,"Night landings at a towered airport",{tpat:"P",nto:"P",nldg:"P",ga:"P"}),
+      L(21,3,"Cross-country with instrument work",{navsys:"P",pilotage:"P",divert:"P"}),
+      L(22,3,"Preparation for the long solo cross-country",{pilotage:"P",navsys:"P",divert:"P",lost:"P"}),
+      L(23,3,"Cross-country in the complex airplane",{navsys:"P",pilotage:"P",malf:"P"}),
+      L(24,3,"Stage 3 check",{pilotage:"M",navsys:"M",divert:"M",lost:"M",nto:"P",nldg:"P"}),
+
+      /* ---- Stage 4 - checkride preparation ---- */
+      L(25,4,"Commercial maneuvers to ACS",{chandelle:"M",lazy:"M",spiral:"M",pylons:"M"}),
+      L(26,4,"Slow flight, stalls and steep turns to ACS",{slow:"M",postall:"M",ponstall:"M",
+                                                           accel:"M",steep:"M"}),
+      L(27,4,"Takeoffs and landings to ACS",{sfto:"M",sfldg:"M",shto:"M",shldg:"M",
+                                             po180:"M",ga:"M"}),
+      L(28,4,"Emergencies and navigation to ACS",{emldg:"M",emdesc:"M",malf:"M",
+                                                  pilotage:"M",navsys:"M"}),
+      L(29,4,"Checkride preparation, within 2 calendar months",{steep:"M",chandelle:"M",lazy:"M",
+                                                                po180:"M",emldg:"M"}),
+      L(30,4,"Mock checkride",{tpat:"M",nto:"M",nldg:"M",sfto:"M",sfldg:"M",shto:"M",shldg:"M",
+                               po180:"M",ga:"M",steep:"M",spiral:"M",chandelle:"M",lazy:"M",
+                               pylons:"M",pilotage:"M",navsys:"M",divert:"M",lost:"M",
+                               slow:"M",postall:"M",ponstall:"M",accel:"M",
+                               emdesc:"M",emldg:"M",malf:"M"})
+    ]
   }
 };
 
