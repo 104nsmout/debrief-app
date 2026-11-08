@@ -169,6 +169,17 @@ h1,h2{margin:0;text-wrap:balance}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .eyebrow{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:1px;color:var(--ink-2)}
 .muted{color:var(--ink-2)}
+.lvl{display:inline-block;margin-left:8px;font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:.8px;padding:2px 6px;border-radius:5px;vertical-align:1px}
+.lvl.lI{color:var(--ink-2);box-shadow:inset 0 0 0 1px var(--line)}
+.lvl.lP{color:var(--go);background:var(--go-soft)}
+.lvl.lM{color:var(--on-go);background:var(--go)}
+.lvlline{margin-top:11px;color:var(--ink-2)}
+.lvlline.lI{color:var(--ink-2)}
+.lvlline.lP{color:var(--go)}
+.lvlline.lM{color:var(--go)}
+.sylnote{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);margin-top:7px;
+  line-height:1.5;white-space:pre-line}
 .row{display:flex;align-items:center;gap:10px;min-width:0}
 .sp{flex-grow:1;min-width:0}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;flex:none}
@@ -308,26 +319,6 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 #resumeWrap{flex:none;border-radius:14px;margin-bottom:13px}
 #resumeWrap .sw-in{border-radius:14px}
 #resumeWrap .resume{margin-bottom:0}
-
-/* the account row sits under the recents: present, not shouting */
-.acct{display:flex;align-items:center;gap:11px;width:100%;box-sizing:border-box;
-  margin-top:13px;padding:13px 14px;border-radius:12px;background:var(--surface);
-  border:1px solid var(--line);text-align:left;color:inherit;cursor:pointer}
-.acct .ic{width:30px;height:30px;border-radius:8px;flex:none;display:flex;
-  align-items:center;justify-content:center;background:var(--go-soft)}
-.acct .sp{flex:1 1 auto;min-width:0}
-.acct .t{display:block;font-weight:600;font-size:14.5px;line-height:1.25}
-.acct .s{display:block;font-family:var(--mono);font-size:11px;color:var(--ink-2);
-  margin-top:2px;letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.acct .cv{flex:none;color:var(--ink-2);font-family:var(--mono);font-size:15px}
-
-.authbox{display:flex;flex-direction:column;gap:11px;margin-top:4px}
-.authbox label{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1px;
-  color:var(--ink-2);text-transform:uppercase}
-.authbox .msg{font-size:13.5px;line-height:1.45;color:var(--ink-2)}
-.authbox .msg.bad{color:var(--warn)}
-.authbox input{font-family:var(--body)}
-.authbox input.code{font-family:var(--mono);font-size:22px;letter-spacing:6px;text-align:center}
 
 /* queue rows swipe like every other list in the app. The sheet's own
    background already matches .sw-in, so only the row chrome needs resetting. */
@@ -503,23 +494,7 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
       <span class="eyebrow" id="recentCount"></span>
     </div>
     <div class="card" id="recentList"></div>
-    
-  
   </div>
-  <button class="acct" id="acctBtn" type="button">
-      <span class="ic">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--go)"
-             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M20 17.6V6.4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v11.2"/>
-          <path d="M3 17.6h18"/><path d="M9 9.5l3 3 3-3"/><path d="M12 4.6v7.9"/>
-        </svg>
-      </span>
-      <span class="sp">
-        <span class="t" id="acctTitle">Back up your flights</span>
-        <span class="s" id="acctSub">Not signed in &middot; records live on this phone only</span>
-      </span>
-      <span class="cv">&rsaquo;</span>
-    </button>
 </section>
 
 <!-- SETUP -->
@@ -555,6 +530,11 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
         </optgroup>
       </select>
     </div>
+    <div class="field" id="lessonField" hidden>
+      <label class="fl" for="f-lesson">LESSON</label>
+      <select id="f-lesson"></select>
+      <div class="sylnote" id="sylNote"></div>
+    </div>
 
     <div class="row" style="margin-top:18px;align-items:baseline">
       <span class="eyebrow sp">MANEUVER QUEUE · <span id="pickCount" style="color:var(--warn)">0</span></span>
@@ -586,6 +566,7 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
     <div class="eyebrow" style="color:var(--go)" id="attemptLabel">NOT YET GRADED</div>
     <h1 class="d" style="font-size:46px;margin-top:5px;color:var(--ink)" id="gradeName">&mdash;</h1>
   </div>
+  <div class="eyebrow lvlline" id="gradeLvl" hidden></div>
   <div class="chips" style="margin-top:12px;flex:none" id="gradeTol"></div>
   <div class="nextup" id="nextUp" hidden></div>
 
@@ -813,215 +794,6 @@ var LIB = {
     ]
   }
 };
-
-
-/* ---------- account ----------
-   Supabase, over plain fetch. The publishable key is designed to sit in
-   client JavaScript: every table it can reach is governed by row-level
-   security, so it grants nothing beyond "ask, as whoever is signed in".
-
-   Sign-in is a six-digit code, not a magic link. On iOS a link tapped in Mail
-   opens Safari, which is a different origin store from the installed app: the
-   link would sign in a browser tab while the app stayed signed out, with
-   nothing on screen to explain it. A code signs in the app you are holding. */
-var SB_URL = "https://ljcdicnunebyylyinysl.supabase.co";
-var SB_KEY = "sb_publishable_vj7sWkgNU51LnZ0TmxTY0A_Q8H6gXaz";
-var AKEY   = "debrief.auth.v1";
-
-var A = { token:null, refresh:null, expires:0, email:null };
-
-function authLoad(){
-  try{
-    var raw = localStorage.getItem(AKEY);
-    if(raw) A = JSON.parse(raw);
-  }catch(e){}
-  if(!A || typeof A !== "object") A = { token:null, refresh:null, expires:0, email:null };
-}
-function authSave(){ try{ localStorage.setItem(AKEY, JSON.stringify(A)); }catch(e){} }
-function authClear(){ A = { token:null, refresh:null, expires:0, email:null }; authSave(); }
-function signedIn(){ return !!(A && A.token); }
-
-function sbFetch(path, opts){
-  opts = opts || {};
-  var h = opts.headers || {};
-  h["apikey"] = SB_KEY;
-  h["Content-Type"] = "application/json";
-  if(A && A.token) h["Authorization"] = "Bearer " + A.token;
-  opts.headers = h;
-  return fetch(SB_URL + path, opts);
-}
-
-/* the shape Supabase returns from both verify and refresh */
-function authStore(j, email){
-  A.token   = j.access_token;
-  A.refresh = j.refresh_token;
-  /* a minute of slack, so a request never goes out on a token that expires
-     while it is in flight */
-  A.expires = Date.now() + ((j.expires_in || 3600) - 60) * 1000;
-  A.email   = (j.user && j.user.email) || email || A.email;
-  authSave();
-}
-
-function sendCode(email){
-  return sbFetch("/auth/v1/otp", {
-    method:"POST",
-    body: JSON.stringify({ email: email, create_user: true })
-  }).then(function(r){
-    if(r.ok) return true;
-    return r.json().catch(function(){ return {}; }).then(function(j){
-      throw new Error(j.msg || j.error_description || j.message || ("Sign-in failed (" + r.status + ")"));
-    });
-  });
-}
-
-function verifyCode(email, code){
-  return sbFetch("/auth/v1/verify", {
-    method:"POST",
-    body: JSON.stringify({ email: email, token: code, type: "email" })
-  }).then(function(r){
-    return r.json().catch(function(){ return {}; }).then(function(j){
-      if(!r.ok || !j.access_token){
-        throw new Error(j.msg || j.error_description || j.message || "That code didn't work.");
-      }
-      authStore(j, email);
-      return true;
-    });
-  });
-}
-
-/* Called before anything that needs a live token. Returns false when the
-   session is gone for good, so the caller can fall back to local-only rather
-   than throwing in the middle of a lesson. */
-function authReady(){
-  if(!A || !A.token) return Promise.resolve(false);
-  if(Date.now() < A.expires) return Promise.resolve(true);
-  if(!A.refresh){ authClear(); return Promise.resolve(false); }
-  return sbFetch("/auth/v1/token?grant_type=refresh_token", {
-    method:"POST",
-    body: JSON.stringify({ refresh_token: A.refresh })
-  }).then(function(r){
-    return r.json().catch(function(){ return {}; }).then(function(j){
-      if(!r.ok || !j.access_token){
-        /* refused, not merely offline: the session is genuinely over */
-        if(r.status >= 400 && r.status < 500){ authClear(); return false; }
-        return false;
-      }
-      authStore(j);
-      return true;
-    });
-  }).catch(function(){
-    /* no signal. The token is stale but the session is not dead, so keep it
-       and let the next attempt online sort it out. */
-    return false;
-  });
-}
-
-function paintAcct(){
-  var t = $("acctTitle"), sb = $("acctSub");
-  if(!t || !sb) return;
-  if(signedIn()){
-    t.textContent = "Signed in";
-    sb.textContent = A.email || "account active";
-  } else {
-    t.textContent = "Back up your flights";
-    sb.textContent = "Not signed in · records live on this phone only";
-  }
-}
-
-function openAccount(){
-  if(signedIn()){
-    openConfirm("Sign out?",
-      (A.email ? A.email + " will be signed out on this phone. " : "") +
-      "Your flights stay on this device either way — nothing is deleted.",
-      function(){ authClear(); paintAcct(); toast("Signed out"); },
-      "Sign out");
-    return;
-  }
-
-  var wrap=el("div","sheet"), inner=el("div","inner");
-  var head=el("div"); head.style.cssText="padding:16px 16px 0";
-  var h=el("div","d"); h.style.cssText="font-size:22px;color:var(--ink)";
-  h.textContent="Back up your flights";
-  head.appendChild(h);
-
-  var body=el("div","authbox"); body.style.cssText="padding:12px 16px 18px";
-  var blurb=el("div","msg",
-    "Sign in and your flights are kept off this phone as well as on it. "
-    + "Grading never needs an account, and never needs a signal.");
-  var lab=el("label"); lab.textContent="Email"; lab.setAttribute("for","authEmail");
-  var mail=document.createElement("input");
-  mail.type="email"; mail.id="authEmail"; mail.autocomplete="email";
-  mail.inputMode="email"; mail.placeholder="you@example.com";
-  var err=el("div","msg bad"); err.hidden=true;
-  var go=el("button","primary"); go.type="button"; go.textContent="Email me a code";
-  go.style.cssText="min-height:50px";
-  var cancel=el("button","ghost"); cancel.type="button"; cancel.textContent="Not now";
-
-  body.appendChild(blurb); body.appendChild(lab); body.appendChild(mail);
-  body.appendChild(err); body.appendChild(go); body.appendChild(cancel);
-  inner.appendChild(head); inner.appendChild(body);
-  wrap.appendChild(inner); document.body.appendChild(wrap);
-
-  function close(){ if(wrap.parentNode) wrap.parentNode.removeChild(wrap); }
-  function fail(m){ err.textContent=m; err.hidden=false; }
-  cancel.addEventListener("click", close);
-  wrap.addEventListener("click", function(ev){ if(ev.target===wrap) close(); });
-
-  go.addEventListener("click", function(){
-    var email=(mail.value||"").trim();
-    if(!email || email.indexOf("@")<0){ fail("That doesn't look like an email address."); return; }
-    err.hidden=true; go.disabled=true; go.textContent="Sending…";
-    sendCode(email).then(function(){
-      askCode(email);
-    }).catch(function(e){
-      go.disabled=false; go.textContent="Email me a code";
-      fail(e && e.message ? e.message : "Couldn't send the code. Check your signal.");
-    });
-  });
-
-  /* second step, in the same sheet */
-  function askCode(email){
-    h.textContent="Check your email";
-    body.innerHTML="";
-    var b2=el("div","msg","We sent a six-digit code to " + email + ". It expires shortly.");
-    var l2=el("label"); l2.textContent="Code"; l2.setAttribute("for","authCode");
-    var code=document.createElement("input");
-    code.type="text"; code.id="authCode"; code.className="code";
-    code.inputMode="numeric"; code.autocomplete="one-time-code";
-    code.maxLength=6; code.placeholder="000000";
-    var e2=el("div","msg bad"); e2.hidden=true;
-    var ok=el("button","primary"); ok.type="button"; ok.textContent="Sign in";
-    ok.style.cssText="min-height:50px";
-    var again=el("button","ghost"); again.type="button"; again.textContent="Send another code";
-    b2.appendChild(document.createTextNode(""));
-    body.appendChild(b2); body.appendChild(l2); body.appendChild(code);
-    body.appendChild(e2); body.appendChild(ok); body.appendChild(again);
-    code.focus();
-
-    function bad(m){ e2.textContent=m; e2.hidden=false; }
-    ok.addEventListener("click", function(){
-      var v=(code.value||"").replace(/\D/g,"");
-      if(v.length!==6){ bad("Enter the six digits from the email."); return; }
-      e2.hidden=true; ok.disabled=true; ok.textContent="Signing in…";
-      verifyCode(email, v).then(function(){
-        close(); paintAcct(); toast("Signed in");
-      }).catch(function(e){
-        ok.disabled=false; ok.textContent="Sign in";
-        bad(e && e.message ? e.message : "That code didn't work.");
-      });
-    });
-    again.addEventListener("click", function(){
-      again.disabled=true; again.textContent="Sending…";
-      sendCode(email).then(function(){
-        again.textContent="Sent";
-        setTimeout(function(){ again.disabled=false; again.textContent="Send another code"; }, 4000);
-      }).catch(function(){
-        again.disabled=false; again.textContent="Send another code";
-        bad("Couldn't send another code right now.");
-      });
-    });
-  }
-}
 
 /* ---------- the live queue ----------
    A maneuver marked not flown stays in the record but leaves the lesson:
@@ -1346,17 +1118,146 @@ var QUOTES=[
 {t:"A good landing is one you can walk away from.",a:"Aviation proverb"}
 ];
 
+/* ---------- Part 61 syllabi ----------
+   A lesson is a list of task ids drawn from its library, each tagged with the
+   level expected AT THAT LESSON:
+       I = Introduced    instructor demonstrates, student follows along
+       P = Practiced     student flies it, coaching expected
+       M = Meets ACS     student flies it unprompted, to the published limit
+   The tolerance shown never changes \u2014 it is always the ACS number already in
+   LIB. The level changes what SAT and UNSAT mean, which is the whole point:
+   on lesson 7 "unsatisfactory" should mean "could not hold it even with
+   coaching", not "is not checkride ready".
+
+   Part 61 requires no approved syllabus, so this sequence is conventional
+   rather than authoritative, and the instructor is expected to edit, reorder
+   and skip. A Part 141 school's approved syllabus replaces it wholesale and is
+   never authored here. */
+function L(n,stage,title,tasks){ return {n:n,stage:stage,title:title,tasks:tasks}; }
+
+var SYL = {
+  ppl61: {
+    label:"Private Pilot \u2014 Part 61", lib:"ppl", version:"1.0",
+    note:"A conventional sequence, not an FAA-approved course. Reorder, repeat or skip freely.",
+    lessons:[
+      /* ---- Stage 1 - presolo ---- */
+      L(1,1,"Introductory flight",{nto:"I",tpat:"I",nldg:"I"}),
+      L(2,1,"Effects of controls, four fundamentals",{nto:"I",tpat:"I",nldg:"I",slow:"I"}),
+      L(3,1,"Climbs, descents, turns to headings",{bisl:"I",biclimb:"I",bidesc:"I",biturns:"I"}),
+      L(4,1,"Slow flight and stall recognition",{slow:"P",postall:"I",ponstall:"I"}),
+      L(5,1,"Traffic pattern and normal landings",{tpat:"P",nto:"P",nldg:"P",ga:"I"}),
+      L(6,1,"Landing practice and go-arounds",{nldg:"P",ga:"P",tpat:"P"}),
+      L(7,1,"Steep turns and ground reference",{steep:"I",grm:"I"}),
+      L(8,1,"Emergency procedures introduced",{emldg:"I",emdesc:"I",malf:"I"}),
+      L(9,1,"Stall series and slow flight review",{slow:"P",postall:"P",ponstall:"P"}),
+      L(10,1,"Crosswind landings and forward slips",{nldg:"P",slip:"I",ga:"P",tpat:"P"}),
+      L(11,1,"Pattern polish, presolo review",{tpat:"M",nto:"P",nldg:"P",ga:"P"}),
+      L(12,1,"Presolo check",{tpat:"M",nto:"M",nldg:"M",ga:"M",slow:"P",postall:"P",ponstall:"P",emldg:"P"}),
+      /* ---- Stage 2 - solo and performance maneuvers ---- */
+      L(13,2,"First supervised solo",{nto:"M",tpat:"M",nldg:"M"}),
+      L(14,2,"Soft and short field introduced",{sfto:"I",sfldg:"I",shto:"I",shldg:"I"}),
+      L(15,2,"Short and soft field practice",{sfto:"P",sfldg:"P",shto:"P",shldg:"P"}),
+      L(16,2,"Maneuver review",{steep:"P",grm:"P",slow:"P"}),
+      L(17,2,"Local solo practice",{nto:"M",tpat:"M",nldg:"M"}),
+      L(18,2,"Performance takeoffs and landings polish",{sfto:"P",sfldg:"P",shto:"P",shldg:"P",slip:"P"}),
+      L(19,2,"Emergency operations",{emldg:"P",emdesc:"P",malf:"P"}),
+      L(20,2,"Basic attitude instrument flying",{bisl:"P",biclimb:"P",bidesc:"P",biturns:"P",biua:"I"}),
+      L(21,2,"Instrument flying and unusual attitudes",{bisl:"P",biturns:"P",biua:"P",malf:"P"}),
+      L(22,2,"Stage 2 check",{steep:"P",grm:"P",slow:"P",postall:"P",ponstall:"P",sfldg:"P",shldg:"P",emldg:"P"}),
+      /* ---- Stage 3 - cross-country ---- */
+      L(23,3,"Cross-country planning, first dual XC",{pilotage:"I",navsys:"I",divert:"I"}),
+      L(24,3,"Dual cross-country, pilotage and DR",{pilotage:"P",navsys:"P"}),
+      L(25,3,"Diversion and lost procedures",{divert:"P",lost:"I",navsys:"P"}),
+      L(26,3,"Night cross-country",{nto:"P",nldg:"P",pilotage:"P",navsys:"P"}),
+      L(27,3,"Night takeoffs and landings",{tpat:"M",nldg:"M",ga:"P"}),
+      L(28,3,"Long dual cross-country",{pilotage:"P",navsys:"P",divert:"P",lost:"P"}),
+      L(29,3,"Short solo cross-country",{pilotage:"P",navsys:"P"}),
+      L(30,3,"Long solo cross-country",{pilotage:"M",navsys:"M",divert:"P"}),
+      L(31,3,"Instrument cross-country under the hood",{bisl:"P",biclimb:"P",bidesc:"P",biturns:"P",navsys:"P"}),
+      L(32,3,"Stage 3 check",{pilotage:"M",navsys:"M",divert:"M",lost:"M",emldg:"P"}),
+      /* ---- Stage 4 - checkride preparation ---- */
+      L(33,4,"Maneuvers to ACS",{steep:"M",grm:"M",slow:"M",postall:"M",ponstall:"M"}),
+      L(34,4,"Landings to ACS",{nldg:"M",sfldg:"M",shldg:"M",slip:"M",ga:"M"}),
+      L(35,4,"Takeoffs and emergencies to ACS",{nto:"M",sfto:"M",shto:"M",emldg:"M",emdesc:"M",malf:"M"}),
+      L(36,4,"Mock checkride",{tpat:"M",nto:"M",nldg:"M",sfldg:"M",shldg:"M",slip:"M",ga:"M",
+                               steep:"M",grm:"M",slow:"M",postall:"M",ponstall:"M",
+                               pilotage:"M",navsys:"M",divert:"M",lost:"M",
+                               bisl:"M",biturns:"M",biua:"M",emldg:"M",emdesc:"M",malf:"M"})
+    ]
+  },
+
+  ifr61: {
+    label:"Instrument Rating \u2014 Part 61", lib:"instrument", version:"1.0",
+    note:"A conventional sequence, not an FAA-approved course. Reorder, repeat or skip freely.",
+    lessons:[
+      /* ---- Stage 1 - basic attitude instrument flying ---- */
+      L(1,1,"Instrument cockpit, basic attitude flying",{ifr:"I"}),
+      L(2,1,"Full panel basic maneuvers",{ifr:"P"}),
+      L(3,1,"Unusual attitude recoveries",{ifr:"P",ua:"I"}),
+      L(4,1,"Partial panel introduced",{partial:"I",ifr:"P"}),
+      L(5,1,"Partial panel and unusual attitudes",{partial:"P",ua:"P"}),
+      L(6,1,"Basic instrument polish",{ifr:"P",partial:"P",ua:"P"}),
+      L(7,1,"Stage 1 check",{ifr:"M",partial:"P",ua:"P"}),
+      /* ---- Stage 2 - navigation, clearances and holding ---- */
+      L(8,2,"Intercepting and tracking introduced",{intercept:"I",ifr:"P"}),
+      L(9,2,"Tracking and DME arcs",{intercept:"P",ifr:"P"}),
+      L(10,2,"Holding introduced",{hold:"I",intercept:"P"}),
+      L(11,2,"Holding practice",{hold:"P",clear:"I"}),
+      L(12,2,"ATC clearances",{clear:"P",dep:"I",hold:"P"}),
+      L(13,2,"Departures, en route and arrivals",{dep:"P",clear:"P",intercept:"P"}),
+      L(14,2,"Stage 2 check",{intercept:"M",hold:"M",clear:"P",dep:"P"}),
+      /* ---- Stage 3 - approaches ---- */
+      L(15,3,"Nonprecision approach introduced",{nonprec:"I",clear:"P"}),
+      L(16,3,"Nonprecision practice, missed approach",{nonprec:"P",missed:"I"}),
+      L(17,3,"Precision approach introduced",{prec:"I",nonprec:"P"}),
+      L(18,3,"Precision practice, landing from an approach",{prec:"P",missed:"P",ldgapp:"I"}),
+      L(19,3,"Approach series",{nonprec:"P",prec:"P",missed:"P",ldgapp:"P"}),
+      L(20,3,"Circling approach",{circle:"I",nonprec:"P",ldgapp:"P"}),
+      L(21,3,"Approach with loss of primary instruments",{ppapp:"I",partial:"P",nonprec:"P"}),
+      L(22,3,"Partial panel approach practice",{ppapp:"P",partial:"P"}),
+      L(23,3,"Loss of communications",{nocomm:"I",clear:"P",hold:"P"}),
+      L(24,3,"Stage 3 check",{nonprec:"M",prec:"M",missed:"M",ldgapp:"P",circle:"P"}),
+      /* ---- Stage 4 - cross-country and checkride preparation ---- */
+      L(25,4,"IFR cross-country",{dep:"M",clear:"M",nonprec:"P",prec:"P",hold:"P"}),
+      L(26,4,"Long IFR cross-country",{dep:"M",clear:"M",nonprec:"M",prec:"M",missed:"M",ldgapp:"M"}),
+      L(27,4,"Checkride polish",{ifr:"M",partial:"M",ua:"M",hold:"M",intercept:"M"}),
+      L(28,4,"Mock checkride",{clear:"M",hold:"M",ifr:"M",partial:"M",ua:"M",intercept:"M",dep:"M",
+                               nonprec:"M",prec:"M",missed:"M",circle:"M",ldgapp:"M",nocomm:"M",ppapp:"M"})
+    ]
+  }
+};
+
+function sylForLib(libKey){
+  for(var k in SYL){ if(SYL.hasOwnProperty(k) && SYL[k].lib===libKey) return k; }
+  return null;
+}
+function lessonOf(sylId,n){
+  var s=SYL[sylId]; if(!s) return null;
+  for(var i=0;i<s.lessons.length;i++){ if(s.lessons[i].n===n) return s.lessons[i]; }
+  return null;
+}
+function lvlName(c){ return c==="I"?"Introduced":c==="P"?"Practiced":c==="M"?"ACS standard":""; }
+function lvlShort(c){ return c==="I"?"INTRO":c==="P"?"PRACTICE":c==="M"?"ACS":""; }
+function lvlHint(c){
+  return c==="I" ? "demonstrated \u00b7 student follows along"
+       : c==="P" ? "student flies it \u00b7 coaching expected"
+       : c==="M" ? "unprompted \u00b7 to the limit below" : "";
+}
+
 /* ---------- storage ---------- */
 var KEY="debrief.v1";
-var S={ current:null, flights:[], lastLib:null, bag:null, lastQuote:null };
+var S={ current:null, flights:[], lastLib:null, bag:null, lastQuote:null, students:{} };
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
 function load(){
   try{
     var raw=localStorage.getItem(KEY);
-    if(raw){ var p=JSON.parse(raw); if(p&&typeof p==="object"){ S.current=p.current||null; S.flights=Array.isArray(p.flights)?p.flights:[]; S.lastLib=p.lastLib||null; S.bag=Array.isArray(p.bag)?p.bag:null; S.lastQuote=(typeof p.lastQuote==="number")?p.lastQuote:null; } }
+    if(raw){ var p=JSON.parse(raw); if(p&&typeof p==="object"){ S.current=p.current||null; S.flights=Array.isArray(p.flights)?p.flights:[]; S.lastLib=p.lastLib||null; S.bag=Array.isArray(p.bag)?p.bag:null; S.lastQuote=(typeof p.lastQuote==="number")?p.lastQuote:null;
+      /* the course is a property of the STUDENT, not of the flight: it has been
+         "instrument" for the same student for twenty lessons and will be for
+         twenty more, so asking every flight was asking the wrong question */
+      S.students=(p.students&&typeof p.students==="object")?p.students:{}; } }
   }catch(e){}
   try{ migrateAll(); }catch(e){}
-  try{ authLoad(); }catch(e){}
 }
 
 /* ---------- helpers ---------- */
@@ -1515,7 +1416,6 @@ function renderHome(){
     }
   } else { rb.hidden=true; }
 
-  paintAcct();
   var list=$("recentList"); list.innerHTML="";
   var done=S.flights.slice(0,5);
   $("recentWrap").hidden = done.length===0;
@@ -1554,8 +1454,6 @@ function renderHome(){
   }
 }
 $("newFlightBtn").addEventListener("click",function(){ renderPicker(); show("setup"); });
-$("acctBtn").addEventListener("click", openAccount);
-
 $("resumeBtn").addEventListener("click",function(){
   var c=S.current; if(!c) return;
   renderGrade(); show("grade");
@@ -1618,6 +1516,11 @@ function renderPicker(){
           cb.addEventListener("change",function(){ picked[t.id]=cb.checked; paintCnt(area,cnt); updateCount(); });
           var sp=el("span","sp");
           var n=el("span",null,t.name); n.style.display="block"; n.style.fontWeight="600"; n.style.fontSize="16px";
+          /* when a lesson is selected, say what THIS lesson expects of each
+             task; tasks outside the lesson stay listed and unbadged so they can
+             still be added */
+          var _lv=curLevels(), _lc=_lv?_lv[t.id]:null;
+          if(_lc) n.appendChild(el("span","lvl l"+_lc, lvlShort(_lc)));
           sp.appendChild(n);
           /* ground and oral tasks have no limit to print; a column of bare
              em dashes is just noise to scroll past */
@@ -1644,7 +1547,156 @@ function pickedIds(){
   return out;
 }
 function updateCount(){ $("pickCount").textContent=String(pickedIds().length); }
-$("f-course").addEventListener("change",function(){ picked={}; applyLib($("f-course").value); renderPicker(); });
+/* ---------- lesson selection ----------
+   activeSyl is the syllabus matching the chosen library; activeLesson is the
+   lesson number, or null for the freeform path the app has always had. */
+var activeSyl=null, activeLesson=null;
+/* Was the lesson chosen by hand, or filled in for us from the student's
+   history? It decides who wins when both have an opinion. Clicking "Start
+   grading" blurs the student field, which fires change, which re-runs
+   resolveStudent -- without this flag that re-applies the "next lesson"
+   default and silently overrides the lesson the instructor just picked. */
+var lessonUserSet=false;
+
+function curLevels(){
+  if(!activeSyl || activeLesson===null) return null;
+  var les=lessonOf(activeSyl,activeLesson);
+  return les ? les.tasks : null;
+}
+
+function fillLessons(keep){
+  var libKey=$("f-course").value, sel=$("f-lesson"), wrap=$("lessonField");
+  var sid=sylForLib(libKey);
+  /* rebuilding a <select> resets its value, so remember what was chosen */
+  var prev = keep ? sel.value : "";
+  sel.innerHTML="";
+  /* no-lesson first and selected by default: an IPC is not a lesson, a flight
+     review is not a lesson, and neither is going out to shoot landings */
+  var o0=document.createElement("option");
+  o0.value=""; o0.textContent="No lesson \u2014 I'll pick the maneuvers";
+  sel.appendChild(o0);
+  activeSyl=sid;
+  if(!sid){ wrap.hidden=true; activeLesson=null; return; }
+  wrap.hidden=false;
+  var s=SYL[sid], st=-1, grp=null, i;
+  for(i=0;i<s.lessons.length;i++){
+    var ls=s.lessons[i];
+    if(ls.stage!==st){
+      st=ls.stage;
+      grp=document.createElement("optgroup"); grp.label="Stage "+st;
+      sel.appendChild(grp);
+    }
+    var o=document.createElement("option");
+    o.value=String(ls.n);
+    o.textContent="Lesson "+ls.n+" \u00b7 "+ls.title;
+    grp.appendChild(o);
+  }
+  if(prev && lessonOf(sid, parseInt(prev,10))) sel.value=prev;
+}
+
+function paintSylNote(){
+  var el2=$("sylNote"); if(!el2) return;
+  if(!activeSyl || activeLesson===null){
+    el2.textContent = activeSyl ? "Free choice \u2014 nothing is sequenced." : "";
+    return;
+  }
+  var s=SYL[activeSyl], les=lessonOf(activeSyl,activeLesson);
+  var n=0, k; if(les){ for(k in les.tasks){ if(les.tasks.hasOwnProperty(k)) n++; } }
+  el2.textContent = s.label+" \u00b7 v"+s.version+" \u00b7 "+n+" maneuver"+(n===1?"":"s")
+                  + "\n" + s.note;
+}
+
+/* selecting a lesson queues exactly its maneuvers; everything stays editable,
+   both here and from the jump sheet once the flight is under way */
+function applyLesson(){
+  var v=$("f-lesson").value;
+  activeLesson = (v==="") ? null : parseInt(v,10);
+  var lv=curLevels();
+  if(lv){
+    picked={};
+    var libKey=$("f-course").value, k;
+    for(k in lv){ if(lv.hasOwnProperty(k) && taskById(libKey,k)) picked[k]=true; }
+  }
+  paintSylNote();
+  renderPicker();
+  /* A lesson's maneuvers can sit well down a twenty-five task library. Queueing
+     four of them and leaving the instructor staring at an unchecked Area III
+     reads as "nothing happened", so bring the first one into view. */
+  if(lv) scrollToFirstPick();
+}
+
+function scrollToFirstPick(){
+  var host=$("taskPicker"); if(!host) return;
+  var box=host.querySelector("input:checked"); if(!box) return;
+  var row=box.parentNode;
+  /* land on the area header when the first queued task opens a section, so the
+     maneuver arrives with its Area of Operation above it rather than alone */
+  var prev=row.previousElementSibling;
+  var target=(prev && prev.className && prev.className.indexOf("areahead")>=0) ? prev : row;
+  var r=target.getBoundingClientRect();
+  if(r.top>=0 && r.bottom<=window.innerHeight) return;   /* already on screen */
+  /* The setup screen's .scroll is overflow-y:auto but grows to fit its content,
+     so scrollHeight === clientHeight and it never scrolls: the DOCUMENT is what
+     moves here. Nudging the container's scrollTop is a silent no-op, so hand the
+     job to scrollIntoView and let the browser find the real scroller. */
+  try{ target.scrollIntoView({block:"start", behavior:"auto"}); }
+  catch(e){ target.scrollIntoView(true); }
+}
+
+/* the student carries the course, and the next lesson is almost always the one
+   after their last: both are defaults, never locks */
+function resolveStudent(){
+  var name=$("f-student").value.trim();
+  var rec=(name && S.students) ? S.students[name] : null;
+  var beforeLesson=$("f-lesson").value;
+  var libChanged=false;
+  if(rec && rec.lib && LIB[rec.lib] && rec.lib!==$("f-course").value){
+    $("f-course").value=rec.lib; applyLib(rec.lib); picked={}; libChanged=true;
+  }
+  /* typing the student's name LAST must not throw away a lesson already picked
+     by hand. Only a change of library discards it, because lesson 19 of the
+     private syllabus has nothing to do with lesson 19 of the instrument one. */
+  if(libChanged) lessonUserSet=false;
+  fillLessons(lessonUserSet);
+  /* a hand-picked lesson outranks the suggested next one */
+  if(!lessonUserSet && rec && activeSyl && rec.syl===activeSyl && typeof rec.lastLesson==="number"){
+    var s=SYL[activeSyl], last=s.lessons[s.lessons.length-1].n, nx=rec.lastLesson+1;
+    if(nx>last) nx=last;
+    if(lessonOf(activeSyl,nx)) $("f-lesson").value=String(nx);
+  }
+  /* A blur on the student field fires change, and that change lands between the
+     mousedown and the click of whatever the instructor just tapped. Rebuilding
+     the picker here destroys the element mid-gesture, the browser then has no
+     surviving target to deliver the click to, and the first tap after typing a
+     name is swallowed with no feedback at all. So re-render ONLY when the course
+     or the lesson genuinely moved. */
+  if(!libChanged && $("f-lesson").value===beforeLesson){
+    activeLesson = (beforeLesson==="") ? null : parseInt(beforeLesson,10);
+    paintSylNote();
+    return;
+  }
+  applyLesson();
+}
+
+/* resolving as they type means the course and lesson are already settled before
+   the instructor's next tap, so the blur-time resolve above has nothing left to
+   do and nothing gets rebuilt under their finger */
+var _stuTimer=null;
+$("f-student").addEventListener("input",function(){
+  if(_stuTimer) clearTimeout(_stuTimer);
+  _stuTimer=setTimeout(function(){ _stuTimer=null; resolveStudent(); },220);
+});
+$("f-student").addEventListener("change",function(){
+  if(_stuTimer){ clearTimeout(_stuTimer); _stuTimer=null; }
+  resolveStudent();
+});
+$("f-lesson").addEventListener("change",function(){ lessonUserSet=true; applyLesson(); });
+
+$("f-course").addEventListener("change",function(){
+  picked={}; applyLib($("f-course").value);
+  lessonUserSet=false;
+  fillLessons(false); applyLesson();
+});
 $("clearPicks").addEventListener("click",function(){ picked={}; renderPicker(); });
 $("allPicks").addEventListener("click",function(){
   var lib=LIB[$("f-course").value];
@@ -1659,15 +1711,43 @@ $("startBtn").addEventListener("click",function(){
   var entries=[];
   for(var i=0;i<ids.length;i++){ entries.push({ taskId:ids[i], result:null, why:[], notes:[], skipped:false }); }
   S.lastLib=$("f-course").value;
+  var _nm=$("f-student").value.trim();
+  var _lv=curLevels(), _levels=null, _q;
+  /* snapshot only the levels for maneuvers actually queued. Stored ON the
+     flight, with the syllabus version beside it, so revising a syllabus later
+     can never restate what this student was held to today. */
+  if(_lv){
+    _levels={};
+    for(_q=0;_q<ids.length;_q++){ if(_lv[ids[_q]]) _levels[ids[_q]]=_lv[ids[_q]]; }
+  }
   S.current={
     id:String(Date.now()),
     date:new Date().toISOString(),
-    student:$("f-student").value.trim(),
+    student:_nm,
     aircraft:$("f-aircraft").value.trim(),
     libKey:$("f-course").value,
+    /* nullable, all four: a flight need not belong to a syllabus at all */
+    sylId:(activeLesson!==null)?activeSyl:null,
+    sylVer:(activeLesson!==null && SYL[activeSyl])?SYL[activeSyl].version:null,
+    lessonN:activeLesson,
+    levels:_levels,
     entries:entries, idx:0, started:false, done:false, summary:"",
     hobbsStart:$("f-hobbs-start").value.trim(), hobbsEnd:"", addTime:0
   };
+  /* remember the course for this student; only advance lastLesson when a lesson
+     was actually flown, so a freeform flight never moves their place */
+  if(_nm){
+    var _prev=S.students[_nm]||{};
+    S.students[_nm]={
+      lib:$("f-course").value,
+      syl:(activeLesson!==null)?activeSyl:(_prev.syl||null),
+      lastLesson:(activeLesson!==null)?activeLesson:
+                 (typeof _prev.lastLesson==="number"?_prev.lastLesson:null)
+    };
+  }
+  /* the next flight starts from fresh defaults rather than inheriting this
+     one's hand-picked lesson */
+  lessonUserSet=false;
   S.current.started=true; save(); renderGrade(); show("grade");
 });
 
@@ -1688,6 +1768,17 @@ function renderGrade(){
   if(r==="sat"){ lab.textContent="SATISFACTORY"; lab.style.color="var(--sat)"; }
   else if(r==="unsat"){ lab.textContent="UNSATISFACTORY"; lab.style.color="var(--warn)"; }
   else { lab.textContent="NOT YET GRADED"; lab.style.color="var(--go)"; }
+
+  /* the level the lesson expected for THIS task, read off the flight's own
+     snapshot rather than the live syllabus, so a later revision cannot restate
+     what the student was held to on the day */
+  var lvEl=$("gradeLvl");
+  var lvc = (c.levels && t) ? c.levels[t.id] : null;
+  if(lvc){
+    lvEl.hidden=false;
+    lvEl.className="eyebrow lvlline l"+lvc;
+    lvEl.textContent=lvlName(lvc).toUpperCase()+" \u00b7 "+lvlHint(lvc);
+  } else { lvEl.hidden=true; }
 
   var tol=$("gradeTol"); tol.innerHTML="";
   /* a ground or oral task has no limit to print; one orphan em dash in a
@@ -2887,6 +2978,7 @@ function saveDebriefImage(btn){
 load();
 if(S.lastLib && LIB[S.lastLib]) $("f-course").value=S.lastLib;
 libTheme();
+fillLessons(); paintSylNote();
 renderPicker(); renderHome();
 if(S.current && !S.current.done){
   /* keep the in-progress flight one tap away, but open on Home */
