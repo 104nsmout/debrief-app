@@ -58,6 +58,8 @@ strong{color:var(--ink);font-weight:600}
 
 /* ---------------- masthead + hero ---------------- */
 .top{display:flex;align-items:center;gap:11px;padding-block:24px 0}
+.card h3 .was{color:var(--ink-3);text-decoration-thickness:2px;text-decoration-color:var(--fd);font-weight:600;margin-right:2px}
+[hidden]{display:none!important}
 /* account links: quiet text link + small primary pill */
 .nav{margin-left:auto;display:flex;align-items:center;gap:clamp(12px,3vw,22px)}
 .nav .login{color:var(--ink-2);text-decoration:none;font-weight:600;font-size:14.5px;padding:8px 2px;white-space:nowrap;transition:color .15s ease}
@@ -86,6 +88,19 @@ footer a:hover,footer a:focus-visible{color:var(--fd);border-color:var(--fd)}
 .pull p{font-size:clamp(18px,2.3vw,21px);line-height:1.45;color:var(--ink);font-weight:600;margin:0 0 10px;letter-spacing:-.2px}
 .pull cite{display:block;font-style:normal;font-family:var(--mono);font-size:11.5px;letter-spacing:.3px;color:var(--ink-3);line-height:1.6}
 @media (max-width:760px){.about-grid{grid-template-columns:1fr}.portrait{position:relative;top:0;order:-1;max-width:260px}}
+/* legal pages */
+.legal{max-width:68ch}
+.legal .eff{font-family:var(--mono);font-size:12px;letter-spacing:.6px;color:var(--ink-3);margin:0 0 26px}
+.legal h2{font-size:19px;letter-spacing:-.2px;margin:34px 0 10px;color:var(--ink)}
+.legal p{font-size:16px;line-height:1.65;margin:0 0 14px}
+.legal a{color:var(--go)}
+.legal table{width:100%;border-collapse:collapse;margin:8px 0 18px;font-size:14.5px;line-height:1.5}
+.legal th,.legal td{text-align:left;vertical-align:top;padding:10px 12px 10px 0;border-bottom:1px solid var(--line)}
+.legal th{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-2);font-weight:600}
+.legal td{color:var(--ink-2)}
+.legal td:first-child{color:var(--ink)}
+@media (max-width:560px){.legal table,.legal tbody,.legal tr,.legal td{display:block}.legal th{display:none}
+  .legal tr{padding:10px 0;border-bottom:1px solid var(--line)}.legal td{border:0;padding:2px 0}}
 /* log in */
 .auth{max-width:420px;margin:clamp(36px,7vw,72px) auto 0}
 .auth h1{font-weight:800;font-size:clamp(28px,5vw,38px);letter-spacing:-1px;line-height:1.08;margin:0 0 10px}
@@ -424,7 +439,8 @@ footer{padding-block:34px 46px;border-top:1px solid var(--line);
   <footer>
     Debrief is a training record, not a certification result. Tolerances are drawn from the FAA
     Airman Certification Standards and Practical Test Standards for each certificate.<br>
-    <a href="index.html">Home</a> &nbsp;&middot;&nbsp; <a href="about.html">About</a> &nbsp;&middot;&nbsp; cfidebrief.com
+    <a href="index.html">Home</a> &nbsp;&middot;&nbsp; <a href="about.html">About</a> &nbsp;&middot;&nbsp; cfidebrief.com<br>
+    <a href="terms.html">Terms</a> &nbsp;&middot;&nbsp; <a href="privacy.html">Privacy</a> &nbsp;&middot;&nbsp; <a href="refunds.html">Refunds</a>
   </footer>
 
 </div>

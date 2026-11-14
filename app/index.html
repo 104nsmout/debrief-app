@@ -348,6 +348,9 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 #pay .alt.quiet{color:var(--ink-2)}
 #pay .bad{margin-top:14px;padding:11px 13px;border-radius:11px;border:1px solid var(--unsat,#ff8a3d);
   color:var(--ink);font-size:14.5px;line-height:1.45}
+#gate .legal a,#pay .legal a{color:var(--go)}
+#gate .legal{margin-top:10px}
+#pay .legal{margin-top:8px}
 #pay .fine{margin-top:16px;font-size:13px;line-height:1.5;color:var(--ink-3,var(--ink-2));text-align:center}
 #pay .row{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--line);font-size:15.5px}
 #pay .row span:first-child{color:var(--ink-2)}
@@ -1252,6 +1255,14 @@ function restoreIfEmpty(){
     });
 }
 
+function legalLine(lead, pages){
+  var p = el("p","fine"); p.className = "fine legal";
+  p.innerHTML = lead + pages.map(function(x){
+    return '<a href="https://www.cfidebrief.com/' + x[0] + '" target="_blank" rel="noopener">' + x[1] + '</a>';
+  }).join(pages.length > 2 ? ", " : " and ") + ".";
+  return p;
+}
+
 /* ---------- pricing and entitlement ----------
    PRICE is whatever the `pricing` row in the database says, cached for
    offline. Amounts are in cents, as Stripe keeps them. */
@@ -1376,6 +1387,7 @@ function openPaywall(){
   var go = el("button","go","Subscribe — " + money(priceNow()) + " a year"); go.type = "button"; go.id = "payGo"; box.appendChild(go);
   var no = el("button","alt quiet","Not now"); no.type = "button"; no.id = "payNo"; box.appendChild(no);
   box.appendChild(el("p","fine","Secure checkout by Stripe. Renews yearly at " + money(priceNow()) + " until you cancel."));
+  box.appendChild(legalLine("By subscribing you agree to the ", [["terms.html","Terms"],["privacy.html","Privacy Policy"],["refunds.html","Refund Policy"]]));
   go.addEventListener("click", function(){ payGo(sh, go, er, "checkout", "Opening checkout…"); });
   no.addEventListener("click", sh.close);
   /* prices may have changed since the cache was written */
@@ -1456,6 +1468,7 @@ function openGate(){
     var er = errBox();
     var go = el("button","go","Email me a code"); go.type = "button"; box.appendChild(go);
     box.appendChild(el("p","fine","Already have an account? Same step. We email a six-digit code, so there is no password. You need a signal for this once; after that Debrief works with none."));
+    box.appendChild(legalLine("By continuing you agree to the ", [["terms.html","Terms"],["privacy.html","Privacy Policy"]]));
     function send(){
       email = (m.value || "").trim();
       if(!email || email.indexOf("@") < 1){ say(er,"That doesn't look like an email address."); return; }

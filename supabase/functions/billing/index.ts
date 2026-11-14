@@ -21,6 +21,11 @@ const STRIPE_KEY = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
 const RETURN_TO = ["https://app.cfidebrief.com/", "https://debrief-app-nine.vercel.app/"];
 const ORIGINS = RETURN_TO.map((u) => new URL(u).origin);
 
+// What Debrief is, for sales-tax purposes: "Software as a service - business
+// use". Stripe needs this on the product to work out tax, and refuses the
+// checkout without it when Managed Payments is on for the account.
+const TAX_CODE = "txcd_10103001";
+
 function cors(req: Request) {
   const o = req.headers.get("origin") ?? "";
   return {
@@ -131,7 +136,11 @@ Deno.serve(async (req) => {
     const amount = onSale ? price.sale_price_cents : price.list_price_cents;
 
     const newProduct = async () => {
-      const p = await stripe("products", { name: "Debrief", description: "Maneuver grading and student debriefs for flight instructors." });
+      const p = await stripe("products", {
+        name: "Debrief",
+        description: "Maneuver grading and student debriefs for flight instructors.",
+        tax_code: TAX_CODE,
+      });
       await db("pricing?id=eq.1", { method: "PATCH", body: JSON.stringify({ stripe_product_id: p.id }) });
       return p.id as string;
     };
@@ -149,7 +158,15 @@ Deno.serve(async (req) => {
         line_items: {
           0: {
             quantity: 1,
-            price_data: { currency: price.currency ?? "usd", product, unit_amount: amount, recurring: { interval: "year" } },
+            // inclusive: the customer pays exactly the advertised price, and
+            // any sales tax comes out of it rather than being added on top
+            price_data: {
+              currency: price.currency ?? "usd",
+              product,
+              unit_amount: amount,
+              recurring: { interval: "year" },
+              tax_behavior: "inclusive",
+            },
           },
         },
         subscription_data: { metadata: { user_id: user.id } },
@@ -163,8 +180,12 @@ Deno.serve(async (req) => {
     } catch (e) {
       // ids saved in test mode do not exist in live mode (and the reverse):
       // make the missing one again and try once more
-      if (!(e instanceof StripeError) || e.code !== "resource_missing") throw e;
-      if ((e.param ?? "").includes("product")) product = await newProduct();
+      if (!(e instanceof StripeError)) throw e;
+      if (/tax code/i.test(e.message)) {
+        // a product made before the tax code was added: put it on, once
+        await stripe(`products/${product}`, { tax_code: TAX_CODE });
+      } else if (e.code !== "resource_missing") throw e;
+      else if ((e.param ?? "").includes("product")) product = await newProduct();
       else if ((e.param ?? "").includes("customer")) customer = await newCustomer();
       else throw e;
       session = await open();
