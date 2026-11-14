@@ -320,6 +320,39 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 #resumeWrap .sw-in{border-radius:14px}
 #resumeWrap .resume{margin-bottom:0}
 
+/* subscribe + account screens: same family as the gate, one layer below it */
+#pay{position:fixed;inset:0;z-index:140;background:var(--bg,#000);overflow-y:auto;
+  -webkit-overflow-scrolling:touch;display:flex;justify-content:center;
+  padding:calc(env(safe-area-inset-top,0px) + 34px) 22px calc(env(safe-area-inset-bottom,0px) + 28px)}
+#pay .box{width:100%;max-width:420px;margin:auto 0}
+#pay .mark{font-family:var(--display);font-weight:900;letter-spacing:3px;font-size:15px;color:var(--go);text-transform:uppercase}
+#pay h1{font-family:var(--display);font-weight:800;font-size:31px;line-height:1.08;letter-spacing:-.6px;color:var(--ink);margin:14px 0 10px}
+#pay .lede{font-size:16px;line-height:1.5;color:var(--ink-2);margin:0 0 20px}
+#pay .plan{border:1.5px solid var(--line);border-radius:18px;background:var(--surface);padding:20px 20px 18px}
+#pay .tag{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;
+  color:var(--on-go);background:var(--grad);border-radius:999px;padding:5px 11px;margin-bottom:14px}
+#pay .price{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+#pay .was{font-family:var(--display);font-weight:700;font-size:26px;color:var(--ink-3,var(--ink-2));
+  text-decoration:line-through;text-decoration-thickness:2.5px;text-decoration-color:var(--unsat,#ff8a3d)}
+#pay .now{font-family:var(--display);font-weight:900;font-size:54px;line-height:1;letter-spacing:-1.5px;color:var(--ink)}
+#pay .per{font-size:16px;color:var(--ink-2)}
+#pay .terms{margin-top:10px;font-size:14px;line-height:1.5;color:var(--ink-2)}
+#pay ul{list-style:none;margin:18px 0 0;padding:0}
+#pay li{position:relative;padding:7px 0 7px 28px;font-size:15.5px;line-height:1.4;color:var(--ink)}
+#pay li::before{content:"";position:absolute;left:2px;top:13px;width:13px;height:7px;
+  border-left:2.5px solid var(--go);border-bottom:2.5px solid var(--go);transform:rotate(-45deg)}
+#pay .go{width:100%;min-height:56px;margin-top:20px;border:0;border-radius:999px;background:var(--grad);
+  color:var(--on-go);font-weight:800;font-size:17px}
+#pay .go:disabled{opacity:.55}
+#pay .alt{width:100%;min-height:46px;margin-top:8px;border:0;background:none;color:var(--go);font-weight:600;font-size:15px}
+#pay .alt.quiet{color:var(--ink-2)}
+#pay .bad{margin-top:14px;padding:11px 13px;border-radius:11px;border:1px solid var(--unsat,#ff8a3d);
+  color:var(--ink);font-size:14.5px;line-height:1.45}
+#pay .fine{margin-top:16px;font-size:13px;line-height:1.5;color:var(--ink-3,var(--ink-2));text-align:center}
+#pay .row{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--line);font-size:15.5px}
+#pay .row span:first-child{color:var(--ink-2)}
+#pay .row span:last-child{color:var(--ink);text-align:right;word-break:break-word}
+
 /* the gate: above every sheet and toast, below only the launch splash */
 #gate{position:fixed;inset:0;z-index:150;background:var(--bg,#000);overflow-y:auto;
   -webkit-overflow-scrolling:touch;display:flex;justify-content:center;
@@ -536,6 +569,8 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
       <span class="eyebrow" id="recentCount"></span>
     </div>
     <div class="card" id="recentList"></div>
+  </div>
+  <div class="stack" id="acctWrap" style="margin-top:14px">
     <button class="acct" id="acctBtn" type="button">
       <span class="ic">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--go)"
@@ -865,7 +900,8 @@ var SB_URL = "https://ljcdicnunebyylyinysl.supabase.co";
 var SB_KEY = "sb_publishable_vj7sWkgNU51LnZ0TmxTY0A_Q8H6gXaz";
 var AKEY   = "debrief.auth.v1";
 
-var A = { token:null, refresh:null, expires:0, email:null, uid:null, name:null, pending:null };
+var A = { token:null, refresh:null, expires:0, email:null, uid:null, name:null, pending:null,
+          plan:null, paidUntil:null, fc:0 };
 
 function authLoad(){
   try{
@@ -960,15 +996,17 @@ function paintAcct(){
   if(signedIn()){
     var w = unsentCount();
     t.textContent = A.name || "Signed in";
-    sb.textContent = (A.email || "account active") + " \u00b7 "
-      + (SY.hold ? "backup paused" : w ? (w + " waiting to back up") : "backed up");
+    var fl = freeLeft();
+    sb.textContent = (isPaid() ? "Subscribed" : fl ? (fl + " free flight" + (fl === 1 ? "" : "s") + " left") : "Free flights used")
+      + " \u00b7 " + (SY.hold ? "backup paused" : w ? (w + " waiting to back up") : "backed up");
   } else {
     t.textContent = "Back up your flights";
     sb.textContent = "Not signed in · records live on this phone only";
   }
 }
 
-function openAccount(){
+function openAccount(){ if(signedIn()) openAcctSheet(); else openGate(); }
+function signOutAsk(){
   if(signedIn()){
     openConfirm("Sign out?",
       (A.email ? A.email + " will be signed out on this phone. " : "") +
@@ -1113,6 +1151,7 @@ function syncNow(){
   return authReady().then(function(ok){
     /* the session is checked even when backup is on hold, so a revoked
        account is noticed either way */
+    if(ok) refreshEntitlement();
     if(!ok || SY.hold) return false;
     /* each step stands alone: a profile the server refuses must not stop
        flights being backed up, and a failed upload must not stop deletes */
@@ -1211,6 +1250,178 @@ function restoreIfEmpty(){
       SY.owner = A.uid; syncSave(); save(); renderHome();
       return S.flights.length;
     });
+}
+
+/* ---------- pricing and entitlement ----------
+   PRICE is whatever the `pricing` row in the database says, cached for
+   offline. Amounts are in cents, as Stripe keeps them. */
+var PKEY = "debrief.price.v1";
+var PRICE = { list:2500, sale:500, ends:null, label:"Founding-member price", free:3 };
+var PAID_GRACE = 7 * 864e5;   /* a renewal may post while the phone has no signal */
+
+function priceLoad(){
+  try{ var p = JSON.parse(localStorage.getItem(PKEY) || "null");
+    if(p && typeof p.list === "number") PRICE = p; }catch(e){}
+}
+function saleOn(){
+  return typeof PRICE.sale === "number" && PRICE.sale < PRICE.list
+      && (!PRICE.ends || Date.parse(PRICE.ends) > Date.now());
+}
+function priceNow(){ return saleOn() ? PRICE.sale : PRICE.list; }
+function money(c, whole){
+  var v = (c / 100).toFixed(2);
+  return "$" + (whole && c % 100 === 0 ? v.slice(0, -3) : v);
+}
+function isPaid(){
+  return A.plan === "paid" && (!A.paidUntil || Date.parse(A.paidUntil) + PAID_GRACE > Date.now());
+}
+/* deleting a debrief does not hand a free flight back: the server count
+   includes deleted rows, and the larger of the two counts wins */
+function flightsUsed(){
+  var local = S.flights.length + Object.keys(SY.arch || {}).length;
+  return Math.max(A.fc || 0, local);
+}
+function freeLeft(){ return Math.max(0, (PRICE.free || 0) - flightsUsed()); }
+function needsPay(){ return signedIn() && !isPaid() && freeLeft() === 0; }
+
+function refreshEntitlement(){
+  if(!signedIn() || !A.uid) return Promise.resolve();
+  var nop = function(){};
+  var a = sbFetch("/rest/v1/profiles?id=eq." + encodeURIComponent(A.uid) + "&select=plan,paid_until", { method:"GET" })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(rows){
+      if(rows && rows[0]){ A.plan = rows[0].plan || "free"; A.paidUntil = rows[0].paid_until || null; authSave(); }
+    });
+  var b = sbFetch("/rest/v1/pricing?id=eq.1&select=list_price_cents,sale_price_cents,sale_ends_at,sale_label,free_flights", { method:"GET" })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(rows){
+      var p = rows && rows[0];
+      if(!p || typeof p.list_price_cents !== "number") return;
+      PRICE = { list:p.list_price_cents, sale:p.sale_price_cents, ends:p.sale_ends_at || null,
+                label:p.sale_label || "", free:typeof p.free_flights === "number" ? p.free_flights : 3 };
+      try{ localStorage.setItem(PKEY, JSON.stringify(PRICE)); }catch(e){}
+    });
+  var c = sbFetch("/rest/v1/flights?select=id&limit=1", { method:"GET", headers:{ "Prefer":"count=exact" } })
+    .then(function(r){
+      var cr = r.headers && r.headers.get && r.headers.get("content-range");
+      var m = cr && /\/(\d+)$/.exec(cr);
+      if(m){ A.fc = +m[1]; authSave(); }
+    });
+  return Promise.all([a.catch(nop), b.catch(nop), c.catch(nop)]).then(function(){ paintAcct(); });
+}
+
+/* the only two things the app can ask the billing function for: a checkout
+   link, or a link to Stripe's own manage/cancel page */
+function billing(action){
+  return authReady().then(function(ok){
+    if(!ok) throw new Error("offline");
+    return sbFetch("/functions/v1/billing", { method:"POST",
+      body: JSON.stringify({ action:action, return_to: location.origin + location.pathname }) });
+  }).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(j){
+      if(!r.ok || !j.url){
+        if(j.already){ return refreshEntitlement().then(function(){ return null; }); }
+        throw new Error(j.error || "Couldn't reach checkout.");
+      }
+      return j.url;
+    });
+  });
+}
+
+function payShell(){
+  var old = $("pay"); if(old && old.parentNode) old.parentNode.removeChild(old);
+  var g = el("div"); g.id = "pay"; g.setAttribute("role","dialog"); g.setAttribute("aria-modal","true");
+  var box = el("div","box"); g.appendChild(box); document.body.appendChild(g);
+  box.appendChild(el("div","mark","Debrief"));
+  return { g:g, box:box, close:function(){ if(g.parentNode) g.parentNode.removeChild(g); } };
+}
+function payGo(sh, btn, er, action, busyText){
+  var label = btn.textContent;
+  er.hidden = true; btn.disabled = true; btn.textContent = busyText;
+  billing(action).then(function(url){
+    if(url){ location.href = url; return; }
+    sh.close(); toast("You're subscribed"); paintAcct();
+  }).catch(function(e){
+    btn.disabled = false; btn.textContent = label;
+    er.textContent = (!navigator.onLine || /offline|fetch|network|load failed/i.test(e.message || ""))
+      ? "No signal. You need one to do this." : (e.message || "Something went wrong.");
+    er.hidden = false;
+  });
+}
+
+function openPaywall(){
+  var sh = payShell(), box = sh.box, sale = saleOn();
+  box.appendChild(el("h1",null,"Keep grading."));
+  box.appendChild(el("p","lede", (PRICE.free ? "You've used your " + PRICE.free + " free flight" + (PRICE.free === 1 ? "" : "s") + ". " : "")
+    + "Subscribe to keep writing debriefs. Everything you've graded stays yours either way."));
+  var card = el("div","plan");
+  if(sale && PRICE.label) card.appendChild(el("div","tag",PRICE.label));
+  var pr = el("div","price");
+  if(sale){ var was = el("span","was",money(PRICE.list, true)); was.setAttribute("aria-label","Regular price " + money(PRICE.list, true)); pr.appendChild(was); }
+  pr.appendChild(el("span","now",money(priceNow())));
+  pr.appendChild(el("span","per","per year"));
+  card.appendChild(pr);
+  var terms = sale
+    ? "Your price stays " + money(priceNow()) + " a year for as long as you stay subscribed. "
+      + (PRICE.ends ? "Offer ends " + new Date(PRICE.ends).toLocaleDateString(undefined,{month:"long",day:"numeric"}) + ". " : "")
+      + "The regular price is " + money(PRICE.list, true) + " a year."
+    : "Billed once a year.";
+  card.appendChild(el("p","terms",terms));
+  var ul = document.createElement("ul");
+  ["Unlimited flights and debriefs","Every flight backed up to your account","Works with no signal, like always","Cancel any time"]
+    .forEach(function(t){ ul.appendChild(el("li",null,t)); });
+  card.appendChild(ul);
+  box.appendChild(card);
+  var er = el("div","bad"); er.hidden = true; er.setAttribute("role","alert"); box.appendChild(er);
+  var go = el("button","go","Subscribe — " + money(priceNow()) + " a year"); go.type = "button"; go.id = "payGo"; box.appendChild(go);
+  var no = el("button","alt quiet","Not now"); no.type = "button"; no.id = "payNo"; box.appendChild(no);
+  box.appendChild(el("p","fine","Secure checkout by Stripe. Renews yearly at " + money(priceNow()) + " until you cancel."));
+  go.addEventListener("click", function(){ payGo(sh, go, er, "checkout", "Opening checkout…"); });
+  no.addEventListener("click", sh.close);
+  /* prices may have changed since the cache was written */
+  var shown = JSON.stringify(PRICE);
+  refreshEntitlement().then(function(){
+    if(!$("pay")) return;
+    if(isPaid()){ sh.close(); toast("You're subscribed"); return; }
+    if(JSON.stringify(PRICE) !== shown) openPaywall();
+  });
+}
+
+function openAcctSheet(){
+  var sh = payShell(), box = sh.box, paid = isPaid();
+  box.appendChild(el("h1",null, A.name || "Your account"));
+  function row(k, v){ var r = el("div","row"); r.appendChild(el("span",null,k)); r.appendChild(el("span",null,v)); box.appendChild(r); }
+  row("Email", A.email || "—");
+  row("Plan", paid ? "Subscribed" : "Free");
+  if(paid && A.paidUntil) row("Renews", new Date(A.paidUntil).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}));
+  if(!paid) row("Free flights left", String(freeLeft()));
+  var er = el("div","bad"); er.hidden = true; er.setAttribute("role","alert"); box.appendChild(er);
+  var a = el("button","go", paid ? "Manage subscription" : "Subscribe — " + money(priceNow()) + " a year"); a.type = "button"; a.id = "payMain"; box.appendChild(a);
+  a.addEventListener("click", function(){
+    if(paid) payGo(sh, a, er, "portal", "Opening…"); else openPaywall();
+  });
+  var out = el("button","alt","Sign out"); out.type = "button"; out.id = "paySignOut"; box.appendChild(out);
+  out.addEventListener("click", function(){ sh.close(); signOutAsk(); });
+  var cl = el("button","alt quiet","Close"); cl.type = "button"; box.appendChild(cl);
+  cl.addEventListener("click", sh.close);
+}
+
+/* back from Stripe. The webhook usually lands within a second or two of the
+   redirect, so ask a few times before giving up quietly: the next launch
+   will pick it up regardless. */
+function afterCheckout(){
+  var m = /[?&]paid=([01])/.exec(location.search);
+  if(!m) return;
+  try{ history.replaceState(null, "", location.pathname); }catch(e){}
+  if(m[1] !== "1") return;
+  var tries = 0;
+  (function poll(){
+    refreshEntitlement().then(function(){
+      if(isPaid()){ toast("You're subscribed. Thank you."); paintAcct(); return; }
+      if(++tries < 10) setTimeout(poll, 1500);
+      else toast("Payment received. It can take a minute to show.");
+    });
+  })();
 }
 
 /* ---------- the gate ----------
@@ -1873,6 +2084,7 @@ function load(){
   try{ migrateAll(); }catch(e){}
   try{ authLoad(); }catch(e){}
   try{ syncLoad(); }catch(e){}
+  try{ priceLoad(); }catch(e){}
 }
 
 /* ---------- helpers ---------- */
@@ -2069,7 +2281,10 @@ function renderHome(){
     })(done[k]);
   }
 }
-$("newFlightBtn").addEventListener("click",function(){ renderPicker(); show("setup"); });
+$("newFlightBtn").addEventListener("click",function(){
+  if(needsPay()){ openPaywall(); return; }
+  renderPicker(); show("setup");
+});
 $("acctBtn").addEventListener("click", openAccount);
 
 $("resumeBtn").addEventListener("click",function(){
@@ -3610,6 +3825,7 @@ if(S.current && !S.current.done){
    nobody is asked for an email with the engine running. */
 if(gateNeeded() && !(S.current && !S.current.done)) openGate();
 else syncNow();
+try{ afterCheckout(); }catch(e){}
 window.addEventListener("online", function(){ syncNow(); });
 document.addEventListener("visibilitychange", function(){ if(!document.hidden) syncNow(); });
 })();/*__APP_SCOPE_END__*/

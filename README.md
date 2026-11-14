@@ -14,6 +14,13 @@ to the landing page never redeploys the app, and the reverse.
 Nothing is built on Vercel. Each folder is already the finished website;
 Vercel serves the files as they are.
 
+## Payments
+
+`supabase/functions/billing` hands the app a Stripe Checkout link;
+`supabase/functions/stripe-webhook` is what Stripe calls when someone pays.
+Both are deployed to Supabase, not Vercel. Prices live in the `pricing` table.
+See `supabase/STRIPE-SETUP.md`.
+
 ## Changing things later
 
 - Edit the landing page: change files in `site/`, commit. Only cfidebrief.com redeploys.

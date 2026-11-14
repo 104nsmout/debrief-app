@@ -58,6 +58,8 @@ strong{color:var(--ink);font-weight:600}
 
 /* ---------------- masthead + hero ---------------- */
 .top{display:flex;align-items:center;gap:11px;padding-block:24px 0}
+.card h3 .was{color:var(--ink-3);text-decoration-thickness:2px;text-decoration-color:var(--fd);font-weight:600;margin-right:2px}
+[hidden]{display:none!important}
 /* account links: quiet text link + small primary pill */
 .nav{margin-left:auto;display:flex;align-items:center;gap:clamp(12px,3vw,22px)}
 .nav .login{color:var(--ink-2);text-decoration:none;font-weight:600;font-size:14.5px;padding:8px 2px;white-space:nowrap;transition:color .15s ease}
@@ -476,7 +478,7 @@ footer{padding-block:34px 46px;border-top:1px solid var(--line);
       <div class="cap">Illustrative. The shape of it, not a measurement.</div>
     </div>
 
-    <p class="note" style="margin-top:26px">Free account &middot; Free for instructors &middot; Works with no signal &middot;
+    <p class="note" style="margin-top:26px"><span data-p="free">3</span> flights free &middot; then <span data-p="now">$5</span> a year &middot; Works with no signal &middot;
       Private, Instrument, Commercial, IPC, Flight Review, CFI, CFII</p>
   </section>
 
@@ -597,31 +599,31 @@ footer{padding-block:34px 46px;border-top:1px solid var(--line);
 
   <!-- ============================ CREED ============================ -->
   <section>
-    <div class="eyebrow">Why it's free</div>
+    <div class="eyebrow">What it costs</div>
     <p class="creed">Give more in value than <em>you take in payment.</em></p>
     <p class="lead">I didn't come to that as a pricing strategy. It's how I've worked for as
       long as I can remember, and it has opened more doors for me than anything I ever did
       on purpose.</p>
     <p>This app came out of the same habit. The debriefs worth writing always took time
       nobody was paying me for &mdash; so I built something that writes them before the prop
-      stops, and then gave it away. The part that makes your students better shouldn't be
-      the part I charge you for. If Debrief makes you a better instructor and you never send
-      me a dollar, it was still worth building.</p>
-    <p>The grading, the libraries, the debrief, the PDF &mdash; free, for as long as you want
-      it. All it takes is a free account.</p>
-    <p>What costs me money is keeping your records somewhere other than your phone, so that's
-      the part that costs you money. Lose the phone, keep three years of student records.
-      That's the deal, and it's the only thing behind a wall.</p>
+      stops. I priced it the same way: low enough that one better lesson pays for the
+      year.</p>
+    <p>Your first <span data-p="free">3</span> flights are free, with everything switched on.
+      <span data-when="sale">After that it's <span data-p="now">$5</span> a year while the launch
+      price lasts; the regular price is <span data-p="list">$25</span>. Subscribe at the launch
+      price and it stays your price for as long as you stay subscribed.</span>
+      <span data-when="nosale" hidden>After that it's <span data-p="list">$25</span> a year.</span></p>
     <div class="cols">
       <div class="card">
-        <h3>Free, forever, with a free account</h3>
+        <h3>Try it: <span data-p="free">3</span> flights free</h3>
         <p>Every library, every maneuver, the full debrief. The whole tool, not a crippled
-          sample of it.</p>
+          sample of it. All it takes is an email address.</p>
       </div>
       <div class="card">
-        <h3>Paid: the record survives you</h3>
-        <p>Backed up off the device, synced to your iPad, and sharable with the student. The
-          part that costs me is the part that costs you.</p>
+        <h3>Then <s class="was" data-when="sale"><span data-p="list">$25</span></s> <span data-p="now">$5</span> a year</h3>
+        <p>Unlimited flights, every one backed up to your account so a lost phone isn't a
+          lost record. <span data-when="sale">Launch price, locked in while you stay
+          subscribed.</span> Cancel any time.</p>
       </div>
     </div>
   </section>
@@ -634,6 +636,27 @@ footer{padding-block:34px 46px;border-top:1px solid var(--line);
 
 </div>
 
+<script>
+/* Prices on this page come from the same database row the app charges from,
+   so changing a price there changes it here. The numbers in the HTML are the
+   fallback if this request fails. The key below is the publishable one. */
+(function(){
+  var U="https://ljcdicnunebyylyinysl.supabase.co/rest/v1/pricing?id=eq.1&select=list_price_cents,sale_price_cents,sale_ends_at,free_flights";
+  var K="sb_publishable_vj7sWkgNU51LnZ0TmxTY0A_Q8H6gXaz";
+  function money(c){var v=(c/100).toFixed(2);return "$"+(c%100===0?v.slice(0,-3):v);}
+  function each(sel,fn){Array.prototype.forEach.call(document.querySelectorAll(sel),fn);}
+  if(!window.fetch) return;
+  fetch(U,{headers:{apikey:K}}).then(function(r){return r.ok?r.json():null;}).then(function(rows){
+    var p=rows&&rows[0]; if(!p||typeof p.list_price_cents!=="number") return;
+    var sale=typeof p.sale_price_cents==="number"&&p.sale_price_cents<p.list_price_cents&&(!p.sale_ends_at||Date.parse(p.sale_ends_at)>Date.now());
+    each('[data-p="list"]',function(e){e.textContent=money(p.list_price_cents);});
+    each('[data-p="now"]',function(e){e.textContent=money(sale?p.sale_price_cents:p.list_price_cents);});
+    each('[data-p="free"]',function(e){e.textContent=String(p.free_flights);});
+    each('[data-when="sale"]',function(e){e.hidden=!sale;});
+    each('[data-when="nosale"]',function(e){e.hidden=sale;});
+  }).catch(function(){});
+})();
+</script>
 <div class="tape" aria-hidden="true"></div><div class="tapebug" id="tapeBug" aria-hidden="true"></div>
 <script>
 (function(){
