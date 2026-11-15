@@ -16,6 +16,9 @@ const SB_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const STRIPE_KEY = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
+// Optional. The publishable key (pk_...) is public by design. When it is set,
+// checkout can open inside the app; when it is not, the hosted page is used.
+const STRIPE_PK = Deno.env.get("STRIPE_PUBLISHABLE_KEY") ?? "";
 
 // the only places a customer may be sent back to after paying
 const RETURN_TO = ["https://app.cfidebrief.com/", "https://debrief-app-nine.vercel.app/"];
@@ -148,7 +151,7 @@ Deno.serve(async (req) => {
     let product: string = price.stripe_product_id ?? (await newProduct());
     let customer: string = profile.stripe_customer_id ?? (await newCustomer());
 
-    const open = () =>
+    const open = (inApp: boolean) =>
       stripe("checkout/sessions", {
         mode: "subscription",
         customer,
@@ -170,13 +173,16 @@ Deno.serve(async (req) => {
           },
         },
         subscription_data: { metadata: { user_id: user.id } },
-        success_url: `${back}?paid=1`,
-        cancel_url: `${back}?paid=0`,
+        // in the app: Stripe's form is mounted on our page and sends the
+        // customer back to return_url. Hosted: Stripe's own page, two urls.
+        ...(inApp
+          ? { ui_mode: "embedded_page", return_url: `${back}?paid=1` }
+          : { success_url: `${back}?paid=1`, cancel_url: `${back}?paid=0` }),
       });
 
-    let session;
+    const attempt = async (inApp: boolean) => {
     try {
-      session = await open();
+      return await open(inApp);
     } catch (e) {
       // ids saved in test mode do not exist in live mode (and the reverse):
       // make the missing one again and try once more
@@ -188,8 +194,20 @@ Deno.serve(async (req) => {
       else if ((e.param ?? "").includes("product")) product = await newProduct();
       else if ((e.param ?? "").includes("customer")) customer = await newCustomer();
       else throw e;
-      session = await open();
+      return await open(inApp);
     }
+    };
+
+    if (body?.ui === "embedded" && STRIPE_PK) {
+      try {
+        const s = await attempt(true);
+        if (s.client_secret) return reply(req, 200, { client_secret: s.client_secret, pk: STRIPE_PK });
+      } catch (e) {
+        // never let the nicer checkout block a sale: fall through to hosted
+        console.warn("in-app checkout unavailable, using hosted", e);
+      }
+    }
+    const session = await attempt(false);
     return reply(req, 200, { url: session.url });
   } catch (e) {
     console.error("billing", e);

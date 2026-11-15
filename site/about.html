@@ -88,6 +88,34 @@ footer a:hover,footer a:focus-visible{color:var(--fd);border-color:var(--fd)}
 .pull p{font-size:clamp(18px,2.3vw,21px);line-height:1.45;color:var(--ink);font-weight:600;margin:0 0 10px;letter-spacing:-.2px}
 .pull cite{display:block;font-style:normal;font-family:var(--mono);font-size:11.5px;letter-spacing:.3px;color:var(--ink-3);line-height:1.6}
 @media (max-width:760px){.about-grid{grid-template-columns:1fr}.portrait{position:relative;top:0;order:-1;max-width:260px}}
+/* ---- the debrief gallery + in-flight photo + pricing page ---- */
+.gal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(16px,3vw,30px);margin-top:30px;align-items:start}
+.gal figure{margin:0}
+.gal img{display:block;width:100%;height:auto;border-radius:18px;border:1px solid var(--line);background:#0b0b0b}
+.gal .crop{max-height:640px;overflow:hidden;border-radius:18px;border:1px solid var(--line);position:relative}
+.gal .crop img{border:0;border-radius:0}
+.gal .crop::after{content:"";position:absolute;left:0;right:0;bottom:0;height:90px;background:linear-gradient(transparent,#000)}
+.gal figcaption,.flight figcaption{font-family:var(--mono);font-size:11.5px;letter-spacing:.7px;color:var(--ink-3);margin-top:12px;line-height:1.5}
+@media (max-width:640px){.gal{grid-template-columns:1fr}.gal .crop{max-height:520px}}
+.flight{margin:30px 0 0}
+.flight img{display:block;width:100%;height:auto;border-radius:18px;border:1px solid var(--line)}
+.pricebox{border:1px solid var(--line);border-radius:22px;background:var(--surface);padding:clamp(22px,4vw,38px);max-width:560px;position:relative}
+.pricebox::before{content:"";position:absolute;top:-1px;left:28px;width:44px;height:2px;background:var(--fd);border-radius:1px}
+.pricebox .tag{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:var(--on-go);background:var(--grad);border-radius:999px;padding:5px 12px;margin-bottom:16px}
+.pricebox .amt{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+.pricebox .was{font-weight:700;font-size:clamp(30px,6vw,44px);color:var(--ink-3);text-decoration:line-through;text-decoration-thickness:3px;text-decoration-color:var(--fd)}
+.pricebox .now{font-weight:900;font-size:clamp(64px,15vw,112px);line-height:.95;letter-spacing:-4px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pricebox .per{font-size:18px;color:var(--ink-2)}
+.pricebox ul{list-style:none;margin:22px 0 0;padding:0}
+.pricebox li{position:relative;padding:7px 0 7px 28px;font-size:16px;line-height:1.45}
+.pricebox li::before{content:"";position:absolute;left:2px;top:14px;width:13px;height:7px;border-left:2.5px solid var(--go);border-bottom:2.5px solid var(--go);transform:rotate(-45deg)}
+.pricebox .btn{margin-top:24px}
+.pricebox .small{font-size:13.5px;color:var(--ink-3);margin:14px 0 0;line-height:1.55}
+.pricebox .small a{color:var(--ink-2)}
+.essay{max-width:64ch}
+.essay p{font-size:17px;line-height:1.7}
+.pitch{border-left:2px solid var(--fd);padding:2px 0 2px 20px;margin:26px 0}
+.pitch p{font-size:clamp(18px,2.3vw,21px);line-height:1.5;color:var(--ink);font-weight:600;margin:0}
 /* legal pages */
 .legal{max-width:68ch}
 .legal .eff{font-family:var(--mono);font-size:12px;letter-spacing:.6px;color:var(--ink-3);margin:0 0 26px}
@@ -418,6 +446,7 @@ footer{padding-block:34px 46px;border-top:1px solid var(--line);
     </a>
     <nav class="nav" aria-label="Site">
       <a class="login" href="index.html">Home</a>
+      <a class="login mh" href="pricing.html">Pricing</a>
       <a class="login mh" href="login.html">Log in</a>
       <a class="start" href="https://app.cfidebrief.com/">Get started</a>
     </nav>
@@ -432,7 +461,15 @@ footer{padding-block:34px 46px;border-top:1px solid var(--line);
           comes from two things I believe without reservation: performance that gets measured
           improves, and you should give more in value than you take in payment.</p>
 
-        <h2>Measure it, and it improves</h2>
+        <h2>Measure it. Report it. Watch it improve.</h2>
+        <p>Debrief grades every maneuver against the ACS in the cockpit and hands your student
+          a written debrief before the prop stops. Two taps per maneuver for you; a record
+          they can study for them.</p>
+        <div class="pitch"><p>My promise: measure and report your performance, and you will
+          progress faster and more efficiently, whether you're a student, an instructor, or
+          an aviator who simply wants to keep getting better.</p></div>
+
+        <h2>Why measuring works</h2>
         <p class="lead" style="color:var(--ink)">What gets measured improves. What gets measured
           <em style="font-style:normal;color:var(--fd)">and reported back</em> improves faster.</p>
         <p>Instructing is the most rewarding flying I've done, and it taught me this
@@ -471,7 +508,7 @@ footer{padding-block:34px 46px;border-top:1px solid var(--line);
   <footer>
     Debrief is a training record, not a certification result. Tolerances are drawn from the FAA
     Airman Certification Standards and Practical Test Standards for each certificate.<br>
-    <a href="index.html">Home</a> &nbsp;&middot;&nbsp; <a href="login.html">Log in</a> &nbsp;&middot;&nbsp; cfidebrief.com<br>
+    <a href="index.html">Home</a> &nbsp;&middot;&nbsp; <a href="pricing.html">Pricing</a> &nbsp;&middot;&nbsp; <a href="login.html">Log in</a> &nbsp;&middot;&nbsp; cfidebrief.com<br>
     <a href="terms.html">Terms</a> &nbsp;&middot;&nbsp; <a href="privacy.html">Privacy</a> &nbsp;&middot;&nbsp; <a href="refunds.html">Refunds</a>
   </footer>
 

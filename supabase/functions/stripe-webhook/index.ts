@@ -76,8 +76,11 @@ async function applySubscription(sub: any, uidHint?: string) {
     console.warn("no profile for subscription", sub.id);
     return;
   }
-  // an old subscription ending must not cancel a newer one on the same account
-  if (!live && profile.stripe_subscription_id && profile.stripe_subscription_id !== sub.id) return;
+  // A subscription ending only ends access if it is THE subscription on file.
+  // That covers an old subscription ending after a newer one started, and an
+  // account given free access by hand (no subscription on file at all), which
+  // no Stripe event can take away.
+  if (!live && profile.stripe_subscription_id !== sub.id) return;
   await db(`profiles?id=eq.${profile.id}`, {
     method: "PATCH",
     body: JSON.stringify(

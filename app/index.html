@@ -379,6 +379,16 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 #gate .fine{margin-top:22px;font-size:13px;line-height:1.5;color:var(--ink-3,var(--ink-2))}
 
 /* the account row sits under the recents: present, not shouting */
+.badge{position:relative;width:38px;height:38px;flex:none;border-radius:50%;padding:0;cursor:pointer;
+  background:var(--surface);border:1.5px solid var(--line);color:var(--ink);
+  font-family:var(--display);font-weight:800;font-size:13.5px;letter-spacing:.4px}
+.badge::after{content:"";position:absolute;inset:-5px}   /* a 48px tap target around a 38px circle */
+.badge .dot{position:absolute;right:-1px;bottom:-1px;width:10px;height:10px;border-radius:50%;
+  background:var(--go);border:2px solid var(--bg,#000)}
+.badge[data-state="wait"] .dot{background:var(--unsat,#ff8a3d)}
+.badge[data-state="out"] .dot{display:none}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#payFrame{margin-top:6px;border-radius:16px;overflow:hidden;background:#fff;min-height:420px}
 .acct{display:flex;align-items:center;gap:11px;width:100%;box-sizing:border-box;
   margin-top:13px;padding:13px 14px;border-radius:12px;background:var(--surface);
   border:1px solid var(--line);text-align:left;color:inherit;cursor:pointer}
@@ -535,7 +545,13 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--go)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12h4l2.5-7 3.5 14 3-7h7"/></svg>
       <span class="wordmark">Debrief</span>
     </div>
-    <span class="mono" style="font-size:12px;color:var(--ink-2);letter-spacing:1.2px" id="homeDate"></span>
+    <div class="row" style="gap:12px">
+      <span class="mono" style="font-size:12px;color:var(--ink-2);letter-spacing:1.2px" id="homeDate"></span>
+      <button class="badge" id="acctBtn" type="button" aria-label="Account">
+        <span id="acctTitle" aria-hidden="true"></span><i class="dot" aria-hidden="true"></i>
+        <span class="vh" id="acctSub"></span>
+      </button>
+    </div>
   </div>
 
   <figure class="quote" id="quoteBox">
@@ -572,22 +588,6 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
       <span class="eyebrow" id="recentCount"></span>
     </div>
     <div class="card" id="recentList"></div>
-  </div>
-  <div class="stack" id="acctWrap" style="margin-top:14px">
-    <button class="acct" id="acctBtn" type="button">
-      <span class="ic">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--go)"
-             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M20 17.6V6.4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v11.2"/>
-          <path d="M3 17.6h18"/><path d="M9 9.5l3 3 3-3"/><path d="M12 4.6v7.9"/>
-        </svg>
-      </span>
-      <span class="sp">
-        <span class="t" id="acctTitle">Back up your flights</span>
-        <span class="s" id="acctSub">Not signed in &middot; records live on this phone only</span>
-      </span>
-      <span class="cv">&rsaquo;</span>
-    </button>
   </div>
 </section>
 
@@ -998,16 +998,27 @@ function paintAcct(){
   if(!t || !sb) return;
   if(signedIn()){
     var w = unsentCount();
-    t.textContent = A.name || "Signed in";
+    t.textContent = initials(A.name || A.email);
+    var btn = $("acctBtn");
+    if(btn){ btn.setAttribute("data-state", (w || SY.hold) ? "wait" : "ok");
+             btn.setAttribute("aria-label", "Account: " + (A.name || A.email || "signed in")); }
     var fl = freeLeft();
-    sb.textContent = (isPaid() ? "Subscribed" : fl ? (fl + " free flight" + (fl === 1 ? "" : "s") + " left") : "Free flights used")
+    sb.textContent = (isComp() ? "Free access" : isPaid() ? "Subscribed" : fl ? (fl + " free flight" + (fl === 1 ? "" : "s") + " left") : "Free flights used")
       + " \u00b7 " + (SY.hold ? "backup paused" : w ? (w + " waiting to back up") : "backed up");
   } else {
-    t.textContent = "Back up your flights";
-    sb.textContent = "Not signed in · records live on this phone only";
+    t.textContent = "?";
+    if($("acctBtn")) $("acctBtn").setAttribute("data-state", "out");
+    sb.textContent = "Not signed in";
   }
 }
 
+function initials(n){
+  var p = String(n || "").split("@")[0].replace(/[^A-Za-z0-9 ._-]/g, "").split(/[ ._-]+/).filter(Boolean);
+  if(!p.length) return "\u2022";
+  return (p[0].charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : "")).toUpperCase();
+}
+/* access granted by hand: paid, with nothing to renew */
+function isComp(){ return A.plan === "paid" && !A.paidUntil; }
 function openAccount(){ if(signedIn()) openAcctSheet(); else openGate(); }
 function signOutAsk(){
   if(signedIn()){
@@ -1323,19 +1334,59 @@ function refreshEntitlement(){
 
 /* the only two things the app can ask the billing function for: a checkout
    link, or a link to Stripe's own manage/cancel page */
-function billing(action){
+function billing(action, ui){
   return authReady().then(function(ok){
     if(!ok) throw new Error("offline");
-    return sbFetch("/functions/v1/billing", { method:"POST",
-      body: JSON.stringify({ action:action, return_to: location.origin + location.pathname }) });
+    var body = { action:action, return_to: location.origin + location.pathname };
+    if(ui) body.ui = ui;
+    return sbFetch("/functions/v1/billing", { method:"POST", body: JSON.stringify(body) });
   }).then(function(r){
     return r.json().catch(function(){ return {}; }).then(function(j){
+      if(r.ok && j.client_secret && j.pk) return { secret:j.client_secret, pk:j.pk };
       if(!r.ok || !j.url){
         if(j.already){ return refreshEntitlement().then(function(){ return null; }); }
         throw new Error(j.error || "Couldn't reach checkout.");
       }
-      return j.url;
+      return { url:j.url };
     });
+  });
+}
+
+/* Stripe's own script, from Stripe's own server, loaded only when someone
+   actually subscribes. It is never cached or bundled: card details must go
+   straight from Stripe's frame to Stripe. */
+var stripeJs = null;
+function loadStripeJs(){
+  if(window.Stripe) return Promise.resolve();
+  if(stripeJs) return stripeJs;
+  stripeJs = new Promise(function(res, rej){
+    var sc = document.createElement("script");
+    sc.src = "https://js.stripe.com/endive/stripe.js"; sc.async = true;
+    var t = setTimeout(function(){ rej(new Error("stripe.js timeout")); }, 12000);
+    sc.onload = function(){ clearTimeout(t); window.Stripe ? res() : rej(new Error("stripe.js empty")); };
+    sc.onerror = function(){ clearTimeout(t); rej(new Error("stripe.js blocked")); };
+    document.head.appendChild(sc);
+  });
+  stripeJs.catch(function(){ stripeJs = null; });
+  return stripeJs;
+}
+var embedded = null;
+function closeEmbedded(){ try{ if(embedded && embedded.destroy) embedded.destroy(); }catch(e){} embedded = null; }
+function mountEmbedded(sh, got){
+  return loadStripeJs().then(function(){
+    var st = window.Stripe(got.pk);
+    var make = st.createEmbeddedCheckoutPage || st.initEmbeddedCheckout;
+    if(!make) throw new Error("no embedded checkout in this stripe.js");
+    return make.call(st, { fetchClientSecret:function(){ return Promise.resolve(got.secret); } });
+  }).then(function(co){
+    if(!$("pay")) { try{ co.destroy(); }catch(e){} return; }
+    closeEmbedded(); embedded = co;
+    var box = sh.box; box.innerHTML = "";
+    box.appendChild(el("div","mark","Debrief"));
+    var f = el("div"); f.id = "payFrame"; box.appendChild(f);
+    var back = el("button","alt quiet","Cancel"); back.type = "button"; back.id = "payBack"; box.appendChild(back);
+    back.addEventListener("click", function(){ closeEmbedded(); sh.close(); });
+    co.mount("#payFrame");
   });
 }
 
@@ -1349,9 +1400,16 @@ function payShell(){
 function payGo(sh, btn, er, action, busyText){
   var label = btn.textContent;
   er.hidden = true; btn.disabled = true; btn.textContent = busyText;
-  billing(action).then(function(url){
-    if(url){ location.href = url; return; }
-    sh.close(); toast("You're subscribed"); paintAcct();
+  billing(action, action === "checkout" ? "embedded" : null).then(function(got){
+    if(!got){ sh.close(); toast("You're subscribed"); paintAcct(); return; }
+    if(got.url){ location.href = got.url; return; }
+    /* embedded: if Stripe's script will not load or mount, use the hosted page */
+    return mountEmbedded(sh, got).catch(function(){
+      closeEmbedded();
+      return billing(action, "hosted").then(function(h){
+        if(h && h.url) location.href = h.url; else throw new Error("Couldn't reach checkout.");
+      });
+    });
   }).catch(function(e){
     btn.disabled = false; btn.textContent = label;
     er.textContent = (!navigator.onLine || /offline|fetch|network|load failed/i.test(e.message || ""))
@@ -1404,11 +1462,14 @@ function openAcctSheet(){
   box.appendChild(el("h1",null, A.name || "Your account"));
   function row(k, v){ var r = el("div","row"); r.appendChild(el("span",null,k)); r.appendChild(el("span",null,v)); box.appendChild(r); }
   row("Email", A.email || "—");
-  row("Plan", paid ? "Subscribed" : "Free");
+  var comp = isComp(), w = unsentCount();
+  row("Plan", comp ? "Free access" : paid ? "Subscribed" : "Free");
+  row("Backup", SY.hold ? "Paused" : w ? (w + " flight" + (w === 1 ? "" : "s") + " waiting for a signal") : "All flights backed up");
   if(paid && A.paidUntil) row("Renews", new Date(A.paidUntil).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}));
   if(!paid) row("Free flights left", String(freeLeft()));
   var er = el("div","bad"); er.hidden = true; er.setAttribute("role","alert"); box.appendChild(er);
   var a = el("button","go", paid ? "Manage subscription" : "Subscribe — " + money(priceNow()) + " a year"); a.type = "button"; a.id = "payMain"; box.appendChild(a);
+  if(comp) a.hidden = true;
   a.addEventListener("click", function(){
     if(paid) payGo(sh, a, er, "portal", "Opening…"); else openPaywall();
   });
