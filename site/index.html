@@ -116,6 +116,17 @@ footer a:hover,footer a:focus-visible{color:var(--fd);border-color:var(--fd)}
 .essay p{font-size:17px;line-height:1.7}
 .pitch{border-left:2px solid var(--fd);padding:2px 0 2px 20px;margin:26px 0}
 .pitch p{font-size:clamp(18px,2.3vw,21px);line-height:1.5;color:var(--ink);font-weight:600;margin:0}
+.gal .zoom{cursor:zoom-in}
+.gal .zoom:focus-visible{outline:2px solid var(--fd);outline-offset:3px}
+.hint-tap{display:none}
+@media (hover:none){.hint-hover{display:none}.hint-tap{display:inline}}
+#lb{position:fixed;inset:0;z-index:60;display:flex;justify-content:center;align-items:flex-start;
+  background:rgba(0,0,0,.82);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  padding:3vh 16px;overflow-y:auto;opacity:0;transition:opacity .16s ease;cursor:zoom-out}
+#lb.on{opacity:1}
+#lb img{display:block;width:min(620px,100%);height:auto;border-radius:18px;border:1px solid var(--line);
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.9);cursor:default}
+@media (prefers-reduced-motion:reduce){#lb{transition:none}}
 /* legal pages */
 .legal{max-width:68ch}
 .legal .eff{font-family:var(--mono);font-size:12px;letter-spacing:.6px;color:var(--ink-3);margin:0 0 26px}
@@ -445,7 +456,6 @@ footer{padding-block:34px 46px;border-top:1px solid var(--line);
     <nav class="nav" aria-label="Account">
       <a class="login about" href="pricing.html">Pricing</a>
       <a class="login about" href="about.html">About</a>
-      <a class="login" href="login.html">Log in</a>
       <a class="start" href="https://app.cfidebrief.com/">Get started</a>
     </nav>
   </div>
@@ -647,17 +657,17 @@ footer{padding-block:34px 46px;border-top:1px solid var(--line);
       time you shut down.</p>
     <div class="gal">
       <figure>
-        <div class="crop"><img src="debrief-screen.jpg" width="786" height="1704" loading="lazy"
+        <div class="crop zoom" tabindex="0" role="button" aria-label="Show the whole debrief screen"><img src="debrief-screen.jpg" width="786" height="1704" loading="lazy"
           alt="The debrief screen in the Debrief app: a scorecard listing each maneuver as SAT or UNSAT with the standard that was not met"></div>
         <figcaption>In the app, the moment the lesson closes out.</figcaption>
       </figure>
       <figure>
-        <div class="crop"><img src="debrief-share.jpg" width="900" height="1725" loading="lazy"
+        <div class="crop zoom" tabindex="0" role="button" aria-label="Show the whole debrief image"><img src="debrief-share.jpg" width="900" height="1725" loading="lazy"
           alt="The debrief as a shareable image: 5 SAT, 2 UNSAT, the instructor's summary, the scorecard, and what to re-fly before the next lesson"></div>
         <figcaption>What you text the student: one image, saved to their photos.</figcaption>
       </figure>
     </div>
-    <p class="note" style="margin-top:18px">Example student and flight. Real screens from the app.</p>
+    <p class="note" style="margin-top:18px"><span class="hint-hover">Hover over</span><span class="hint-tap">Tap</span> either one to see the whole debrief. Example student and flight; real screens from the app.</p>
   </section>
 
   <!-- ============================ IN FLIGHT ============================ -->
@@ -709,7 +719,7 @@ footer{padding-block:34px 46px;border-top:1px solid var(--line);
   <footer>
     Debrief is a training record, not a certification result. Tolerances are drawn from the FAA
     Airman Certification Standards and Practical Test Standards for each certificate.<br>
-    <a href="pricing.html">Pricing</a> &nbsp;&middot;&nbsp; <a href="about.html">About</a> &nbsp;&middot;&nbsp; <a href="login.html">Log in</a> &nbsp;&middot;&nbsp; cfidebrief.com<br>
+    <a href="pricing.html">Pricing</a> &nbsp;&middot;&nbsp; <a href="about.html">About</a> &nbsp;&middot;&nbsp; cfidebrief.com<br>
     <a href="terms.html">Terms</a> &nbsp;&middot;&nbsp; <a href="privacy.html">Privacy</a> &nbsp;&middot;&nbsp; <a href="refunds.html">Refunds</a>
   </footer>
 
@@ -734,6 +744,36 @@ footer{padding-block:34px 46px;border-top:1px solid var(--line);
     each('[data-when="sale"]',function(e){e.hidden=!sale;});
     each('[data-when="nosale"]',function(e){e.hidden=sale;});
   }).catch(function(){});
+})();
+</script>
+<script>
+/* The whole debrief, enlarged. A mouse opens it by hovering and closes it by
+   moving off the picture; touch and keyboard open it with a tap or Enter and
+   close it with a tap outside, the picture itself, or Escape. */
+(function(){
+  var lb=null, timer=null, canHover=window.matchMedia&&matchMedia("(hover:hover) and (pointer:fine)").matches;
+  function close(){ clearTimeout(timer); if(!lb) return; var n=lb; lb=null; n.classList.remove("on");
+    setTimeout(function(){ if(n.parentNode) n.parentNode.removeChild(n); },180); document.removeEventListener("keydown",key); }
+  function key(e){ if(e.key==="Escape") close(); }
+  function open(src,alt,byHover){
+    if(lb) return;
+    lb=document.createElement("div"); lb.id="lb"; lb.setAttribute("role","dialog"); lb.setAttribute("aria-label","The whole debrief");
+    var im=document.createElement("img"); im.src=src; im.alt=alt; lb.appendChild(im); document.body.appendChild(lb);
+    requestAnimationFrame(function(){ if(lb) lb.classList.add("on"); });
+    lb.addEventListener("click",close);
+    if(byHover) im.addEventListener("mouseleave",close);
+    document.addEventListener("keydown",key);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".gal .zoom"),function(z){
+    var im=z.querySelector("img");
+    function go(h){ open(im.getAttribute("src"),im.getAttribute("alt"),h); }
+    if(canHover){
+      z.addEventListener("mouseenter",function(){ clearTimeout(timer); timer=setTimeout(function(){ go(true); },140); });
+      z.addEventListener("mouseleave",function(){ clearTimeout(timer); });
+    }
+    z.addEventListener("click",function(){ clearTimeout(timer); go(false); });
+    z.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(false); } });
+  });
 })();
 </script>
 <div class="tape" aria-hidden="true"></div><div class="tapebug" id="tapeBug" aria-hidden="true"></div>

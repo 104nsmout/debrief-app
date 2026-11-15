@@ -1309,10 +1309,12 @@ function needsPay(){ return signedIn() && !isPaid() && freeLeft() === 0; }
 function refreshEntitlement(){
   if(!signedIn() || !A.uid) return Promise.resolve();
   var nop = function(){};
-  var a = sbFetch("/rest/v1/profiles?id=eq." + encodeURIComponent(A.uid) + "&select=plan,paid_until", { method:"GET" })
+  var a = sbFetch("/rest/v1/profiles?id=eq." + encodeURIComponent(A.uid) + "&select=plan,paid_until,created_at", { method:"GET" })
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(rows){
-      if(rows && rows[0]){ A.plan = rows[0].plan || "free"; A.paidUntil = rows[0].paid_until || null; authSave(); }
+      if(rows && rows[0]){ A.plan = rows[0].plan || "free"; A.paidUntil = rows[0].paid_until || null;
+        if(rows[0].created_at) A.since = rows[0].created_at;
+        authSave(); }
     });
   var b = sbFetch("/rest/v1/pricing?id=eq.1&select=list_price_cents,sale_price_cents,sale_ends_at,sale_label,free_flights", { method:"GET" })
     .then(function(r){ return r.ok ? r.json() : null; })
@@ -1467,6 +1469,10 @@ function openAcctSheet(){
   row("Backup", SY.hold ? "Paused" : w ? (w + " flight" + (w === 1 ? "" : "s") + " waiting for a signal") : "All flights backed up");
   if(paid && A.paidUntil) row("Renews", new Date(A.paidUntil).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}));
   if(!paid) row("Free flights left", String(freeLeft()));
+  var n = flightsUsed();
+  row("Debriefs written", String(n));
+  if(A.since){ var d = new Date(A.since);
+    if(!isNaN(d)) row("Member since", d.toLocaleDateString(undefined,{year:"numeric",month:"long"})); }
   var er = el("div","bad"); er.hidden = true; er.setAttribute("role","alert"); box.appendChild(er);
   var a = el("button","go", paid ? "Manage subscription" : "Subscribe — " + money(priceNow()) + " a year"); a.type = "button"; a.id = "payMain"; box.appendChild(a);
   if(comp) a.hidden = true;

@@ -116,6 +116,17 @@ footer a:hover,footer a:focus-visible{color:var(--fd);border-color:var(--fd)}
 .essay p{font-size:17px;line-height:1.7}
 .pitch{border-left:2px solid var(--fd);padding:2px 0 2px 20px;margin:26px 0}
 .pitch p{font-size:clamp(18px,2.3vw,21px);line-height:1.5;color:var(--ink);font-weight:600;margin:0}
+.gal .zoom{cursor:zoom-in}
+.gal .zoom:focus-visible{outline:2px solid var(--fd);outline-offset:3px}
+.hint-tap{display:none}
+@media (hover:none){.hint-hover{display:none}.hint-tap{display:inline}}
+#lb{position:fixed;inset:0;z-index:60;display:flex;justify-content:center;align-items:flex-start;
+  background:rgba(0,0,0,.82);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  padding:3vh 16px;overflow-y:auto;opacity:0;transition:opacity .16s ease;cursor:zoom-out}
+#lb.on{opacity:1}
+#lb img{display:block;width:min(620px,100%);height:auto;border-radius:18px;border:1px solid var(--line);
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.9);cursor:default}
+@media (prefers-reduced-motion:reduce){#lb{transition:none}}
 /* legal pages */
 .legal{max-width:68ch}
 .legal .eff{font-family:var(--mono);font-size:12px;letter-spacing:.6px;color:var(--ink-3);margin:0 0 26px}
@@ -447,7 +458,6 @@ footer{padding-block:34px 46px;border-top:1px solid var(--line);
     <nav class="nav" aria-label="Site">
       <a class="login" href="index.html">Home</a>
       <a class="login mh" href="pricing.html">Pricing</a>
-      <a class="login mh" href="login.html">Log in</a>
       <a class="start" href="https://app.cfidebrief.com/">Get started</a>
     </nav>
   </div>
@@ -508,7 +518,7 @@ footer{padding-block:34px 46px;border-top:1px solid var(--line);
   <footer>
     Debrief is a training record, not a certification result. Tolerances are drawn from the FAA
     Airman Certification Standards and Practical Test Standards for each certificate.<br>
-    <a href="index.html">Home</a> &nbsp;&middot;&nbsp; <a href="pricing.html">Pricing</a> &nbsp;&middot;&nbsp; <a href="login.html">Log in</a> &nbsp;&middot;&nbsp; cfidebrief.com<br>
+    <a href="index.html">Home</a> &nbsp;&middot;&nbsp; <a href="pricing.html">Pricing</a> &nbsp;&middot;&nbsp; cfidebrief.com<br>
     <a href="terms.html">Terms</a> &nbsp;&middot;&nbsp; <a href="privacy.html">Privacy</a> &nbsp;&middot;&nbsp; <a href="refunds.html">Refunds</a>
   </footer>
 
