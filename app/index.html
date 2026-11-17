@@ -376,6 +376,71 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 .tryline .lnk{border:0;background:none;padding:6px 4px;font:inherit;font-weight:600;color:var(--go);cursor:pointer}
 .tryline .legal{margin:2px 0 0;font-size:12px;color:var(--ink-3,var(--ink-2))}
 .tryline .legal a{color:inherit}
+/* ---------- floating tab bar ---------- */
+body.tabs #app{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+body.tabs .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+.tabbar{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:20;
+  transform:translateX(-50%);width:min(280px,calc(100vw - 48px));box-sizing:border-box;padding:5px;
+  display:flex;border-radius:999px;
+  background:rgba(30,30,30,.52);border:1px solid rgba(255,255,255,.10);
+  -webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);
+  box-shadow:0 14px 40px -10px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.07)}
+@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){ .tabbar{background:#171717} }
+.tabbar .ind{position:absolute;top:5px;bottom:5px;left:5px;width:calc(50% - 5px);border-radius:999px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.17),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.15);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 6px 16px -6px rgba(0,0,0,.7);
+  transition:transform .34s cubic-bezier(.32,1.25,.5,1)}
+.tabbar[data-tab="learn"] .ind{transform:translateX(100%)}
+.tabbar button{flex:1;position:relative;z-index:1;height:46px;border:0;background:none;border-radius:999px;
+  display:flex;align-items:center;justify-content:center;gap:8px;color:var(--ink-2);
+  font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:1px;text-transform:uppercase;transition:color .2s ease}
+.tabbar button svg{stroke:currentColor;transition:stroke .2s ease}
+.tabbar button[aria-selected="true"]{color:var(--ink)}
+.tabbar button[aria-selected="true"] svg{stroke:var(--go)}
+@media (prefers-reduced-motion:reduce){ .tabbar .ind,.tabbar button{transition:none} }
+
+/* ---------- learn ---------- */
+.lhead{padding:4px 0 0}
+.lhead .k{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--go);text-transform:uppercase}
+.lhead h1{margin:4px 0 0;font-family:var(--display);font-weight:800;font-size:34px;line-height:1.05;letter-spacing:-.6px}
+.lsearch{position:relative;display:flex;align-items:center;gap:10px;height:50px;margin-top:18px;padding:0 16px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--line)}
+.lsearch:focus-within{border-color:var(--go)}
+.lsearch input{flex:1;min-width:0;height:44px;border:0;outline:0;background:transparent;color:var(--ink);font:inherit;font-size:16.5px}
+.lsearch input::placeholder{color:var(--ink-2)}
+.lsearch input::-webkit-search-cancel-button{filter:invert(1) opacity(.5)}
+.lcap{display:block;margin:20px 0 9px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--ink-2)}
+.lchips{display:flex;flex-wrap:wrap;gap:8px}
+.lchip{min-height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  font-family:var(--display);font-weight:600;font-size:14.5px}
+.lchip[aria-pressed="true"]{background:var(--go);border-color:var(--go);color:var(--on-go)}
+.lsum{display:block;margin-top:10px;font-size:13px;color:var(--ink-2)}
+.lsec{margin-top:30px}
+.lsec h2{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 12px;
+  font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink)}
+.lsec h2 span{font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:0;color:var(--go)}
+.ltopics{display:flex;flex-wrap:wrap;gap:8px}
+.ltopic{display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:0 15px 0 8px;border-radius:999px;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:var(--body);font-weight:500;font-size:15px;text-align:left}
+.ltopic:hover{border-color:#444}
+.lcode{flex:none;min-width:26px;padding:3px 6px;border-radius:7px;text-align:center;background:var(--go-soft);color:var(--go);
+  border:1px solid color-mix(in srgb,var(--go) 30%,transparent);font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.4px}
+.lempty{margin-top:26px;color:var(--ink-2)}
+/* one lesson */
+.lesson .lcode{font-size:12px;padding:4px 8px}
+.lesson h1{margin:14px 0 8px;font-family:var(--display);font-weight:800;font-size:32px;line-height:1.08;letter-spacing:-.6px}
+.lmeta{font-family:var(--mono);font-size:11.5px;letter-spacing:.8px;color:var(--ink-2);text-transform:uppercase}
+.lidea{margin:24px 0 0;padding:4px 0 4px 18px;border-left:3px solid var(--go);font-family:var(--display);font-weight:700;
+  font-size:23px;line-height:1.28;letter-spacing:-.2px;color:var(--ink)}
+.lpoints{margin:22px 0 0;padding:0;list-style:none;display:grid;gap:12px}
+.lpoints li{position:relative;padding:14px 16px 14px 42px;border-radius:14px;background:var(--surface);border:1px solid var(--line);
+  font-size:16px;line-height:1.5}
+.lpoints li::before{content:counter(lp);counter-increment:lp;position:absolute;left:14px;top:14px;font-family:var(--mono);
+  font-weight:600;font-size:12px;color:var(--go)}
+.lpoints{counter-reset:lp}
+.lref{margin-top:18px;font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
+.lsoon{margin-top:26px;padding:20px;border-radius:16px;border:1px dashed #3a3a3a;background:var(--surface);color:var(--ink-2);font-size:15px;line-height:1.55}
+.lsoon b{display:block;margin-bottom:6px;color:var(--ink);font-family:var(--display);font-size:17px}
 #gate .alt{width:100%;min-height:46px;margin-top:10px;border:0;background:none;color:var(--go);font-weight:600;font-size:15px}
 #gate .bad{margin-top:14px;padding:11px 13px;border-radius:11px;border:1px solid var(--unsat,#ff8a3d);
   color:var(--ink);font-size:14.5px;line-height:1.45}
@@ -596,6 +661,40 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
     <div class="card" id="recentList"></div>
   </div>
 </section>
+
+<!-- LEARN -->
+<section id="v-learn" hidden>
+  <div class="lhead">
+    <div class="k">Debrief &middot; Learn</div>
+    <h1>All Topics</h1>
+  </div>
+  <div class="lsearch">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+    <label for="learnQ" class="vh">Search topics</label>
+    <input id="learnQ" type="search" placeholder="Search topics" autocomplete="off" spellcheck="false">
+  </div>
+  <span class="lcap">CERTIFICATE</span>
+  <div class="lchips" id="learnCerts" role="group" aria-label="Certificate"></div>
+  <span class="lsum" id="learnSum" aria-live="polite"></span>
+  <div id="learnList"></div>
+</section>
+
+<section id="v-lesson" hidden>
+  <div class="topbar">
+    <button class="iconbtn" id="lessonBack" aria-label="Back to all topics" style="margin-left:-10px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--go)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+  </div>
+  <article class="lesson" id="lessonBody"></article>
+</section>
+
+<nav class="tabbar" id="tabbar" role="tablist" aria-label="Sections" data-tab="home" hidden>
+  <span class="ind" aria-hidden="true"></span>
+  <button type="button" role="tab" id="tabFly" aria-selected="true">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12h4l2.5-7 3.5 14 3-7h7"/></svg>Fly</button>
+  <button type="button" role="tab" id="tabLearn" aria-selected="false">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h7"/></svg>Learn</button>
+</nav>
 
 <!-- SETUP -->
 <section id="v-setup" hidden>
@@ -2412,11 +2511,12 @@ function fitName(node,name,base){
   var n=(name||"").length;
   node.style.fontSize=(n>30?base-20:n>20?base-11:base)+"px";
 }
-var VIEWS=["home","setup","grade","close","debrief"];
+var VIEWS=["home","setup","grade","close","debrief","learn","lesson"];
 function show(v){
   for(var i=0;i<VIEWS.length;i++){ $("v-"+VIEWS[i]).hidden = (VIEWS[i]!==v); }
   window.scrollTo(0,0);
   var sc=document.querySelector("#v-"+v+" .scroll"); if(sc) sc.scrollTop=0;
+  try{ paintTabs(v); }catch(e){}
 }
 
 /* entry = one maneuver in this flight */
@@ -2549,6 +2649,90 @@ function renderHome(){
     })(done[k]);
   }
 }
+
+/* ---------- Learn ----------
+   TOPICS: [section, [[label, code, certificates], ...]]. LESSONS: code ->
+   { idea, points:[...], ref }. Both ship inside the app: no signal needed. */
+var TOPICS = [["REGULATIONS & PAPERWORK",[["14 CFR Part 61","61","PICFA"],["14 CFR Part 91","91","PICFA"],["Airworthiness & Documents","AWD","PICF"],["Pilot Currency","CUR","PICFA"],["Endorsements","END","F"],["NTSB 830 Reporting","830","PCFA"]]],["WEATHER",[["Weather Theory","WX","PICFA"],["METARs & TAFs","MTR","PICFA"],["Charts & Graphics","PROG","PICF"],["Icing","ICE","ICFA"],["Thunderstorms","TS","PICFA"],["Density Altitude","DA","PCF"]]],["AIRCRAFT & SYSTEMS",[["Aerodynamics","AERO","PCFA"],["Powerplant","ENG","PCF"],["Propeller","PROP","PCF"],["Fuel System","FUEL","PCF"],["Electrical System","ELEC","PICF"],["Flight Controls & Trim","CTRL","PCF"],["Landing Gear & Brakes","GEAR","PCF"],["Ice Protection","DICE","ICFA"],["Oxygen & Pressurization","O2","CA"],["Glass Cockpit (G1000)","G1K","ICF"],["Autopilot","AP","ICA"],["Complex & High-Performance","CPLX","CF"],["High-Altitude Ops","ALT","CA"]]],["FLIGHT INSTRUMENTS",[["Pitot-Static System","P/S","PIF"],["Airspeed Indicator","ASI","PIF"],["Altimeter","ALTM","PIF"],["Vertical Speed Indicator","VSI","PIF"],["Gyroscopic Instruments","GYRO","PIF"],["Vacuum System","VAC","PIF"],["Magnetic Compass","MAG","PIF"],["AHRS & ADC","AHRS","IF"],["Instrument Failures","FAIL","IF"]]],["NAV & APPROACH EQUIPMENT",[["VOR","VOR","PICFA"],["DME","DME","IFA"],["ILS","ILS","IFA"],["Localizer","LOC","IFA"],["Glideslope","G/S","IFA"],["Marker Beacons","MKR","IF"],["ADF & NDB","ADF","IF"],["GPS & WAAS","GPS","PICFA"],["RAIM","RAIM","IFA"],["CDI","CDI","PIF"],["HSI","HSI","PIF"],["RMI","RMI","IFA"],["Transponder & ADS-B","XPDR","PICFA"],["Approach Lighting","ALS","IFA"],["VASI & PAPI","PAPI","PICF"]]],["AEROMEDICAL FACTORS",[["Fitness for Flight (IMSAFE)","FIT","PICFA"],["Hypoxia","HYPX","PICFA"],["Hyperventilation","HYPV","PICFA"],["Spatial Disorientation","SD","PICFA"],["Vision & Night Vision","VIS","PICFA"],["Carbon Monoxide","CO","PICF"],["Alcohol & Medications","MEDS","PICFA"],["Stress & Fatigue","FTG","PICFA"],["Ear & Sinus Block","EAR","PCF"],["Motion Sickness","MOT","PF"],["Decompression Sickness","DCS","PCFA"]]],["PERFORMANCE & PLANNING",[["Weight & Balance","W&B","PCFA"],["Takeoff & Landing Performance","PERF","PCFA"],["Cross-Country Planning","XC","PCF"],["Fuel Planning","FPLN","PICA"]]],["AIRSPACE & NAVIGATION",[["Airspace","ASP","PICF"],["Sectional Charts","SEC","PCF"],["Pilotage & Dead Reckoning","DR","PCF"],["VOR Navigation","VORN","PCF"],["GPS Navigation","GPSN","PCF"],["Lost Procedures","LOST","PF"]]],["AIRPORT & ATC",[["Radio Communication","COM","PICF"],["Airport Operations","APT","PCF"],["IFR Clearances","CLR","IFA"],["Lost Communications","NORDO","IFA"]]],["VFR MANEUVERS",[["Takeoffs & Landings","T/L","PCF"],["Slow Flight","SLOW","PCF"],["Stalls","STALL","PCF"],["Spin Awareness","SPIN","CF"],["Steep Turns","STEEP","PCF"],["Ground Reference","GRM","PF"],["Chandelles","CHAN","CF"],["Lazy Eights","LZY8","CF"],["Eights on Pylons","PYL","CF"],["Steep Spirals","SPRL","CF"],["Power-Off 180","180","CF"],["Emergency Descent","EDES","PCF"]]],["INSTRUMENT FLYING",[["Attitude Instrument Flying","AIF","PIF"],["Scan & Cross-Check","SCAN","PIF"],["Partial Panel","PP","IF"],["Unusual Attitudes","UA","PIF"],["IFR Flight Planning","IFPL","IFA"],["IFR Enroute Charts","ENR","IFA"],["Approach Plates","IAP","IFA"],["Departures (SIDs & ODPs)","DP","IFA"],["Arrivals (STARs)","STAR","IFA"],["Holding","HOLD","IFA"],["Procedure Turns","PT","IF"],["DME Arcs","ARC","IFA"],["ILS Approaches","PREC","IFA"],["RNAV (GPS) Approaches","RNAV","IFA"],["LPV vs. LNAV/VNAV","LPV","IFA"],["VOR Approaches","VORA","IFA"],["Localizer Approaches","LOCA","IFA"],["NDB Approaches","NDBA","IF"],["Approach Minimums","MINS","IFA"],["Missed Approaches","MAP","IFA"],["Circling Approaches","CIRC","IFA"],["Visual & Contact Approaches","VCA","IFA"],["IFR Alternates","ALTN","IFA"]]],["SAFETY & HUMAN FACTORS",[["Decision-Making (ADM)","ADM","PICFA"],["Risk Management","RISK","PICFA"],["Night Operations","NGT","PCF"],["Mountain Flying","MTN","PCF"],["Emergency Procedures","EMER","PICFA"],["Crew Resource Mgmt","CRM","CA"]]],["TEACHING",[["Fundamentals of Instructing","FOI","F"],["Lesson Planning","PLAN","F"],["Effective Debriefs","DBRF","F"],["Student Evaluation","EVAL","F"]]]];
+var LESSONS = {};
+var CERTS = [["ALL","All"],["P","Private"],["I","Instrument"],["C","Commercial"],["F","CFI"],["A","ATP"]];
+var CERT_NAME = { P:"Private", I:"Instrument", C:"Commercial", F:"CFI", A:"ATP" };
+var LRN = { cert:"ALL", q:"", y:0 };
+
+function paintTabs(v){
+  var on = v === "home" || v === "learn" || v === "lesson";
+  var bar = $("tabbar"); if(!bar) return;
+  bar.hidden = !on; document.body.classList.toggle("tabs", on);
+  var learn = v === "learn" || v === "lesson";
+  bar.setAttribute("data-tab", learn ? "learn" : "home");
+  $("tabFly").setAttribute("aria-selected", String(!learn));
+  $("tabLearn").setAttribute("aria-selected", String(learn));
+}
+
+function renderLearn(){
+  var C = $("learnCerts"); C.innerHTML = "";
+  CERTS.forEach(function(c){
+    var b = el("button","lchip",c[1]); b.type = "button"; b.setAttribute("aria-pressed", String(LRN.cert === c[0]));
+    b.addEventListener("click", function(){ LRN.cert = c[0]; renderLearn(); });
+    C.appendChild(b);
+  });
+  var q = LRN.q.trim().toLowerCase(), list = $("learnList"), n = 0;
+  list.innerHTML = "";
+  TOPICS.forEach(function(sec){
+    var items = sec[1].filter(function(t){
+      if(LRN.cert !== "ALL" && t[2].indexOf(LRN.cert) < 0) return false;
+      return !q || t[0].toLowerCase().indexOf(q) >= 0 || t[1].toLowerCase().indexOf(q) >= 0;
+    });
+    if(!items.length) return;
+    n += items.length;
+    var box = el("section","lsec"), h = el("h2");
+    h.appendChild(document.createTextNode(sec[0])); h.appendChild(el("span",null,String(items.length)));
+    box.appendChild(h);
+    var wrap = el("div","ltopics");
+    items.forEach(function(t){
+      var b = el("button","ltopic"); b.type = "button";
+      b.appendChild(el("span","lcode",t[1])); b.appendChild(document.createTextNode(t[0]));
+      b.addEventListener("click", function(){ openLesson(t, sec[0]); });
+      wrap.appendChild(b);
+    });
+    box.appendChild(wrap); list.appendChild(box);
+  });
+  if(!n) list.appendChild(el("p","lempty","No topics match that search."));
+  $("learnSum").textContent = n + " topic" + (n === 1 ? "" : "s") + " · "
+    + (LRN.cert === "ALL" ? "all certificates" : CERT_NAME[LRN.cert]);
+}
+
+function openLesson(t, section){
+  LRN.y = window.scrollY || 0;
+  var a = $("lessonBody"); a.innerHTML = "";
+  a.appendChild(el("span","lcode",t[1]));
+  a.appendChild(el("h1",null,t[0]));
+  a.appendChild(el("div","lmeta", section + " · " + t[2].split("").map(function(c){ return CERT_NAME[c]; }).join(", ")));
+  var L = LESSONS[t[1]];
+  if(L && L.idea){
+    a.appendChild(el("p","lidea",L.idea));
+    if(L.points && L.points.length){
+      var ol = el("ol","lpoints");
+      L.points.forEach(function(p){ ol.appendChild(el("li",null,p)); });
+      a.appendChild(ol);
+    }
+    if(L.ref) a.appendChild(el("div","lref",L.ref));
+  } else {
+    var s = el("div","lsoon"); s.appendChild(el("b",null,"Lesson coming soon."));
+    s.appendChild(document.createTextNode("The big idea for this topic is being written. It will appear here, and it will work with no signal."));
+    a.appendChild(s);
+  }
+  show("lesson");
+}
+
+function openLearn(keep){
+  renderLearn(); show("learn");
+  if(keep && LRN.y) window.scrollTo(0, LRN.y);
+}
+$("tabFly").addEventListener("click", function(){ renderHome(); show("home"); });
+$("tabLearn").addEventListener("click", function(){ openLearn(false); });
+$("lessonBack").addEventListener("click", function(){ openLearn(true); });
+$("learnQ").addEventListener("input", function(){ LRN.q = this.value || ""; renderLearn(); });
 $("newFlightBtn").addEventListener("click",function(){
   if(!signedIn() && freeLeft() === 0){
     openGate({ reason:"limit", dismiss:true, then:function(){
