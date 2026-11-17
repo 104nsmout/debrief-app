@@ -120,11 +120,12 @@ footer a:hover,footer a:focus-visible{color:var(--fd);border-color:var(--fd)}
 .gal .zoom:focus-visible{outline:2px solid var(--fd);outline-offset:3px}
 .hint-tap{display:none}
 @media (hover:none){.hint-hover{display:none}.hint-tap{display:inline}}
-#lb{position:fixed;inset:0;z-index:60;display:flex;justify-content:center;align-items:flex-start;
+#lb{position:fixed;inset:0;z-index:60;display:flex;justify-content:center;align-items:center;
   background:rgba(0,0,0,.82);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
-  padding:3vh 16px;overflow-y:auto;opacity:0;transition:opacity .16s ease;cursor:zoom-out}
+  padding:3vh 16px;overflow:hidden;opacity:0;transition:opacity .16s ease;cursor:zoom-out}
 #lb.on{opacity:1}
-#lb img{display:block;width:min(620px,100%);height:auto;border-radius:18px;border:1px solid var(--line);
+/* the whole debrief in one look: sized to the height of the window, never scrolled */
+#lb img{display:block;width:auto;height:auto;max-width:100%;max-height:94vh;border-radius:18px;border:1px solid var(--line);
   box-shadow:0 30px 80px -20px rgba(0,0,0,.9);cursor:default}
 @media (prefers-reduced-motion:reduce){#lb{transition:none}}
 /* legal pages */
@@ -474,7 +475,7 @@ footer{padding-block:34px 46px;border-top:1px solid var(--line);
     <div class="eyebrow">Legal</div>
     <h1 class="creed" style="max-width:none;font-size:clamp(30px,5.4vw,52px)">Privacy Policy</h1>
     <div class="legal">
-      <p class="eff">Effective November 14, 2026</p>
+      <p class="eff">Effective November 17, 2026</p>
 
       <p>This policy explains what Debrief collects, why, who it is shared with, and the
         choices you have. Debrief is operated by Nicholas Smout ("Debrief", "we"). Contact:
@@ -529,8 +530,13 @@ footer{padding-block:34px 46px;border-top:1px solid var(--line);
       <p>Your flights are stored on your device and, once you are signed in with a connection,
         in your account on servers in the United States. If you use Debrief from another
         country, your information is transferred to and processed in the United States.</p>
+      <p>If you sign in on more than one device, such as a phone, an iPad and a laptop, your
+        flights are copied to each of them so they match, and a debrief you change or delete on
+        one is changed or deleted on the others. Anyone who can use a device you are signed in
+        on can see the flights in your account, so sign out of devices you share.</p>
       <p>We keep account and flight information for as long as your account exists. When you
-        delete a debrief in the app it is removed from the app and marked deleted on our
+        delete a debrief in the app it is removed from the app on every device you are signed
+        in on and marked deleted on our
         servers; it is erased permanently when your account is deleted or when you ask us
         to. When you ask us to delete your account we erase your profile and flights within 30
         days, except records we must keep for tax, accounting or legal reasons.</p>

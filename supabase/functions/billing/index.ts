@@ -148,6 +148,11 @@ Deno.serve(async (req) => {
       return p.id as string;
     };
 
+    // Discount codes: a box on Stripe's page where a customer can type a code
+    // you created in the Stripe Dashboard. If Stripe refuses the option for
+    // this account, checkout opens without it rather than not at all.
+    let promos = true;
+
     let product: string = price.stripe_product_id ?? (await newProduct());
     let customer: string = profile.stripe_customer_id ?? (await newCustomer());
 
@@ -173,6 +178,7 @@ Deno.serve(async (req) => {
           },
         },
         subscription_data: { metadata: { user_id: user.id } },
+        ...(promos ? { allow_promotion_codes: true } : {}),
         // in the app: Stripe's form is mounted on our page and sends the
         // customer back to return_url. Hosted: Stripe's own page, two urls.
         ...(inApp
@@ -187,7 +193,9 @@ Deno.serve(async (req) => {
       // ids saved in test mode do not exist in live mode (and the reverse):
       // make the missing one again and try once more
       if (!(e instanceof StripeError)) throw e;
-      if (/tax code/i.test(e.message)) {
+      if (promos && (/promotion/i.test(e.message) || (e.param ?? "").includes("promotion"))) {
+        promos = false;
+      } else if (/tax code/i.test(e.message)) {
         // a product made before the tax code was added: put it on, once
         await stripe(`products/${product}`, { tax_code: TAX_CODE });
       } else if (e.code !== "resource_missing") throw e;

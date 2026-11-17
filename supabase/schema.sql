@@ -153,6 +153,44 @@ revoke delete, truncate, references, trigger on public.flights from authenticate
 revoke delete, truncate, references, trigger on public.profiles from authenticated;
 grant select, insert, update on public.flights to authenticated;
 
+-- ---------------------------------------------------------------- two-way sync
+-- synced_at: when the SERVER accepted the latest change to a row. Each device
+-- remembers the newest synced_at it has merged and asks for rows after it.
+-- updated_at (set by the device) cannot serve as that bookmark: device clocks
+-- differ, and a flight graded offline reaches the server hours after its edit.
+alter table public.flights
+  add column if not exists synced_at timestamptz not null default clock_timestamp();
+
+create index if not exists flights_user_synced_idx
+  on public.flights (user_id, synced_at);
+
+-- Newest edit wins. An older copy arriving late (its device was offline while
+-- another device edited the flight) does not overwrite the newer one; the row
+-- is re-stamped instead, so the late device pulls the newer copy back.
+-- A device clock set in the future cannot win forever: capped at five minutes.
+create or replace function public.flights_stamp()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_at := least(new.updated_at, now() + interval '5 minutes');
+  if tg_op = 'UPDATE' and new.updated_at < old.updated_at then
+    old.synced_at := clock_timestamp();
+    return old;
+  end if;
+  new.synced_at := clock_timestamp();
+  return new;
+end;
+$$;
+
+revoke execute on function public.flights_stamp() from public, anon, authenticated;
+
+drop trigger if exists flights_stamp on public.flights;
+create trigger flights_stamp
+  before insert or update on public.flights
+  for each row execute function public.flights_stamp();
+
 
 -- ================================================================ FOR YOU
 -- Run these in the SQL editor whenever you want numbers. They work for you

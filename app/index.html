@@ -1127,13 +1127,18 @@ function signOutAsk(){
      owner  the account these flights were last backed up to
      hold   set when a different account signs in and declines to adopt them */
 var SKEY = "debrief.sync.v1";
-var SY = { sent:{}, arch:{}, owner:null, hold:false };
+var SY = { sent:{}, arch:{}, owner:null, hold:false, cur:null, mod:{}, seen:{}, pend:{} };
+/* cur   newest server synced_at this device has merged
+   mod   flight id -> when it was last edited on THIS device (ms)
+   seen  flight id -> hash at that edit, to notice the next one
+   pend  ids whose remote change is waiting for the instructor to leave the flight */
 var syncBusy = false, syncTimer = null;
 
 function syncLoad(){
   try{ var raw = localStorage.getItem(SKEY); if(raw){ var p = JSON.parse(raw);
     if(p && typeof p === "object"){ SY.sent = p.sent || {}; SY.arch = p.arch || {};
-      SY.owner = p.owner || null; SY.hold = !!p.hold; } } }catch(e){}
+      SY.owner = p.owner || null; SY.hold = !!p.hold;
+      SY.cur = p.cur || null; SY.mod = p.mod || {}; SY.seen = p.seen || {}; SY.pend = p.pend || {}; } } }catch(e){}
 }
 function syncSave(){ try{ localStorage.setItem(SKEY, JSON.stringify(SY)); }catch(e){} }
 
@@ -1171,10 +1176,20 @@ function syncNow(){
        flights being backed up, and a failed upload must not stop deletes */
     var nop = function(){};
     return pushProfile().catch(nop).then(pushFlights).catch(nop).then(pushDeletes).catch(nop)
+      .then(pullFlights).catch(nop)
       .then(function(){ return true; });
   }).catch(function(){ return false; }).then(function(r){
     syncBusy = false; paintAcct(); return r;
   });
+}
+
+function markEdits(){
+  var now = Date.now(), dirty = false;
+  for(var i = 0; i < S.flights.length; i++){
+    var f = S.flights[i], h = hashStr(JSON.stringify(f));
+    if(SY.seen[f.id] !== h){ SY.seen[f.id] = h; SY.mod[f.id] = now; dirty = true; }
+  }
+  if(dirty) syncSave();
 }
 
 function pushFlights(){
@@ -1183,7 +1198,8 @@ function pushFlights(){
     var f = S.flights[i], h = hashStr(JSON.stringify(f));
     if(SY.sent[f.id] === h) continue;
     rows.push({ id:String(f.id), student:f.student || null, flown_at:f.date || null,
-                lib_key:f.libKey || null, data:f, updated_at:now, deleted:false });
+                lib_key:f.libKey || null, data:f, deleted:false,
+                updated_at: SY.mod[f.id] ? new Date(SY.mod[f.id]).toISOString() : now });
     marks.push([f.id, h]);
   }
   if(!rows.length) return Promise.resolve();
@@ -1218,6 +1234,132 @@ function pushDeletes(){
     for(var k = 0; k < dead.length; k++) delete SY.sent[dead[k]];
     syncSave();
   });
+}
+
+/* ---------- pull: what the other devices changed ---------- */
+var PULL_COLS = "select=id,data,deleted,updated_at,synced_at";
+var OVERLAP_MS = 120000;
+
+function getRows(q){
+  return sbFetch("/rest/v1/flights?" + q, { method:"GET" }).then(function(r){
+    if(!r.ok) throw new Error("pull " + r.status);
+    return r.json();
+  });
+}
+function safeIds(obj){
+  var out = [];
+  for(var id in obj) if(/^[\w-]+$/.test(id)) out.push(id);
+  return out;
+}
+function laterIso(a, b){ return !a ? b : !b ? a : (Date.parse(b) > Date.parse(a) ? b : a); }
+
+/* the flight the instructor is looking at right now, if any */
+function openFlightId(){
+  var home = document.getElementById("v-home");
+  if(!S.current || !home || !home.hidden) return null;
+  return String(S.current.id);
+}
+
+function pullFlights(){
+  var start;
+  if(!SY.cur){
+    /* first sync on this device: take the bookmark FIRST, so anything that
+       changes while the rest downloads is picked up next time; then the
+       newest 25, and any tombstones for flights this device holds */
+    var here = {}; for(var i = 0; i < S.flights.length; i++) here[S.flights[i].id] = 1;
+    var ids = safeIds(here);
+    start = getRows("select=synced_at&order=synced_at.desc&limit=1").then(function(top){
+      var mark = top && top[0] ? top[0].synced_at : null;
+      return getRows(PULL_COLS + "&deleted=eq.false&order=flown_at.desc.nullslast&limit=25").then(function(rows){
+        if(!ids.length) return rows;
+        return getRows(PULL_COLS + "&deleted=eq.true&id=in.(" + ids.join(",") + ")").then(function(t){ return rows.concat(t); });
+      }).then(function(rows){ return { rows:rows, mark:mark }; });
+    });
+  } else {
+    var since = new Date(Date.parse(SY.cur) - OVERLAP_MS).toISOString();
+    var all = [], pages = 0;
+    var next = function(from){
+      return getRows(PULL_COLS + "&synced_at=gt." + encodeURIComponent(from) + "&order=synced_at.asc&limit=500").then(function(rows){
+        all = all.concat(rows); pages++;
+        if(rows.length === 500 && pages < 10) return next(rows[rows.length - 1].synced_at);
+        return all;
+      });
+    };
+    start = next(since).then(function(rows){
+      var mark = SY.cur;
+      for(var k = 0; k < rows.length; k++) mark = laterIso(mark, rows[k].synced_at);
+      return { rows:rows, mark:mark };
+    });
+  }
+  return start.then(function(got){
+    /* changes that were waiting for the instructor to leave a flight */
+    var waiting = safeIds(SY.pend), open = openFlightId();
+    waiting = waiting.filter(function(id){ return id !== open; });
+    if(!waiting.length) return got;
+    return getRows(PULL_COLS + "&id=in.(" + waiting.join(",") + ")").then(function(p){
+      for(var k = 0; k < waiting.length; k++) delete SY.pend[waiting[k]];
+      got.rows = got.rows.concat(p); return got;
+    });
+  }).then(function(got){
+    mergeRows(got.rows);
+    if(got.mark) SY.cur = laterIso(SY.cur, got.mark);
+    SY.owner = A.uid; syncSave();
+  });
+}
+
+function flightKey(f){
+  var n = Number(f && f.id);
+  return isFinite(n) && n > 0 ? n : (Date.parse(f && f.date) || 0);
+}
+
+function mergeRows(rows){
+  if(!rows || !rows.length) return 0;
+  var open = openFlightId(), changed = 0, seenRow = {};
+  for(var i = 0; i < rows.length; i++){
+    var r = rows[i], id = String(r.id);
+    if(seenRow[id] && Date.parse(seenRow[id]) > Date.parse(r.synced_at)) continue;
+    seenRow[id] = r.synced_at;
+    if(id === open){ SY.pend[id] = 1; continue; }
+    var at = -1;
+    for(var j = 0; j < S.flights.length; j++) if(String(S.flights[j].id) === id){ at = j; break; }
+    var L = at >= 0 ? S.flights[at] : null;
+    var rt = Date.parse(r.updated_at) || 0, lt = SY.mod[id] || 0;
+    var unsent = L && SY.sent[id] !== hashStr(JSON.stringify(L));
+    if(r.deleted){
+      /* deleted on another device: gone here too, unless this device has a
+         newer edit it hasn't uploaded yet */
+      if(L && unsent && lt > rt) continue;
+      if(L){ S.flights.splice(at, 1); changed++; }
+      delete SY.sent[id]; delete SY.mod[id]; delete SY.seen[id]; delete SY.arch[id];
+      continue;
+    }
+    var d = r.data;
+    if(!d || typeof d !== "object") continue;
+    if(L){
+      if(unsent && lt > rt) continue;              /* ours is newer; it goes up next */
+      try{ migrateFlight(d); }catch(e){}
+      var hr = hashStr(JSON.stringify(d));
+      if(hashStr(JSON.stringify(L)) !== hr){ S.flights[at] = d; changed++; }
+      SY.sent[id] = hr; SY.seen[id] = hr; SY.mod[id] = rt;
+    } else {
+      if(SY.arch[id]) continue;                    /* past this device's 25: stays in the account */
+      if(SY.sent[id]) continue;                    /* deleted here; the tombstone is on its way */
+      try{ migrateFlight(d); }catch(e){}
+      var h2 = hashStr(JSON.stringify(d));
+      S.flights.push(d); changed++;
+      SY.sent[id] = h2; SY.seen[id] = h2; SY.mod[id] = rt;
+    }
+  }
+  if(!changed) return 0;
+  S.flights.sort(function(a, b){ return flightKey(b) - flightKey(a); });
+  while(S.flights.length > 25){ var gone = S.flights.pop(); if(gone && gone.id) SY.arch[gone.id] = 1; }
+  /* written straight to storage: these came FROM the server, so there is
+     nothing to send back and no reason to schedule another sync */
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
+  syncSave();
+  var home = document.getElementById("v-home");
+  if(home && !home.hidden){ try{ renderHome(); }catch(e){} }
+  return changed;
 }
 
 /* the profile written at sign-up. Held in A.pending until the server takes
@@ -1614,7 +1756,8 @@ function openGate(){
       openConfirm("Flights from another account",
         "This phone has " + S.flights.length + " flight" + (S.flights.length === 1 ? "" : "s")
         + " recorded under a different account. Add them to " + (A.email || "this account") + "?",
-        function(){ SY.hold = false; SY.sent = {}; SY.arch = {}; SY.owner = A.uid; syncSave(); syncNow(); },
+        function(){ SY.hold = false; SY.sent = {}; SY.arch = {}; SY.cur = null; SY.mod = {}; SY.seen = {}; SY.pend = {};
+          SY.owner = A.uid; syncSave(); syncNow(); },
         "Add them");
       return;
     }
@@ -2151,7 +2294,7 @@ function lvlHint(c){
 var KEY="debrief.v1";
 var S={ current:null, flights:[], lastLib:null, bag:null, lastQuote:null, students:{} };
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
-  try{ scheduleSync(); }catch(e){} }
+  try{ markEdits(); scheduleSync(); }catch(e){} }
 function load(){
   try{
     var raw=localStorage.getItem(KEY);
@@ -2294,6 +2437,7 @@ var sessionQuote=null;
 
 /* ---------- HOME ---------- */
 function renderHome(){
+  if(SY && SY.pend && Object.keys(SY.pend).length && signedIn()) setTimeout(syncNow, 300);
   libTheme();
   var c=S.current;
   var rb=$("resumeWrap");
@@ -3908,6 +4052,7 @@ else syncNow();
 try{ afterCheckout(); }catch(e){}
 window.addEventListener("online", function(){ syncNow(); });
 document.addEventListener("visibilitychange", function(){ if(!document.hidden) syncNow(); });
+setInterval(function(){ if(!document.hidden && navigator.onLine !== false) syncNow(); }, 30000);
 })();/*__APP_SCOPE_END__*/
 </script>
 
