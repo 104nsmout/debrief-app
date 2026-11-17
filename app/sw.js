@@ -1,7 +1,7 @@
 /* Maneuver Debrief — offline service worker.
    VERSION is injected at build time from a hash of index.html, so every
    rebuild invalidates the old cache automatically. Nothing to bump by hand. */
-var VERSION = "dfdbb80181fa";
+var VERSION = "2a2f4f2df4b9";
 var CACHE   = "debrief-" + VERSION;
 
 var SHELL = [
@@ -34,7 +34,8 @@ self.addEventListener("activate", function (e) {
   e.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(keys.map(function (k) {
-        if (k !== CACHE) return caches.delete(k);
+        /* narration lives in its own cache, managed by the app: keep it */
+        if (k !== CACHE && k !== "debrief-audio") return caches.delete(k);
       }));
     }).then(function () { return self.clients.claim(); })
   );
@@ -79,6 +80,10 @@ self.addEventListener("fetch", function (e) {
     e.respondWith(staleWhileRevalidate(req));
     return;
   }
+
+  /* audio is fetched and cached by the app itself; players ask for byte
+     ranges, which a whole cached file would answer wrongly on iPhone */
+  if (url.origin === self.location.origin && url.pathname.indexOf("/audio/") !== -1) return;
 
   if (url.origin === self.location.origin) {
     e.respondWith(staleWhileRevalidate(req));

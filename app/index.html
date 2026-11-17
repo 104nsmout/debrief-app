@@ -471,6 +471,15 @@ body.tabs .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
 .lans{margin-top:18px;padding:16px 18px;border-radius:14px;border-left:3px solid var(--go);background:var(--surface);font-size:16.5px;line-height:1.6}
 .lans b{color:var(--go)}
 .lthink{margin-top:14px;font-size:14px;color:var(--ink-2)}
+.lplay{display:flex;align-items:center;gap:12px;margin-top:14px;padding:8px 10px 8px 8px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--line)}
+.lplay .pp{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--go);color:var(--on-go);
+  display:flex;align-items:center;justify-content:center}
+.lplay .bar{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden;cursor:pointer}
+.lplay .bar i{display:block;height:100%;width:0;background:var(--go);border-radius:3px}
+.lplay .tm{flex:none;min-width:38px;text-align:right;font-family:var(--mono);font-size:11.5px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.lplay .spd{flex:none;min-width:48px;height:34px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);
+  font-family:var(--mono);font-size:12px;font-weight:600}
 .lnav{display:flex;gap:10px;margin-top:18px;position:sticky;bottom:0;z-index:2;
   padding:16px 0 calc(6px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,transparent,var(--bg) 34%)}
 .lnav button{min-height:54px;border-radius:999px;font-family:var(--display);font-weight:800;font-size:16px;letter-spacing:.8px;text-transform:uppercase}
@@ -2701,6 +2710,7 @@ var LRN = { cert:"ALL", q:"", y:0 };
 function paintTabs(v){
   /* a lesson is a focused flow with its own Back: no tab bar there */
   var on = v === "home" || v === "learn";
+  if(v !== "lesson"){ VO.listening = false; try{ voStop(); }catch(e){} }
   var bar = $("tabbar"); if(!bar) return;
   bar.hidden = !on; document.body.classList.toggle("tabs", on);
   var learn = v === "learn" || v === "lesson";
@@ -2745,8 +2755,125 @@ function renderLearn(){
     + " \u00b7 " + Object.keys(LESSONS).length + " lessons ready";
 }
 
+/* ---------- narration ----------
+   AUDIO: code -> { step: [file, seconds] }, steps "1" "2" "3" "4q" "4a".
+   One player for the whole app: an <audio> element that has been started by
+   a tap may be started again later without one, which is what lets Next carry
+   straight into the next clip on iPhone. Clips are kept in their own cache
+   ("debrief-audio") the first time a lesson is opened, so a lesson heard
+   once at home plays in the airplane with no signal. File names carry a hash
+   of the recording, so a re-recorded clip is never served stale. */
+var AUDIO = {"61":{"1":["61-1.d6fa78029d.m4a",32.3],"2":["61-2.6df1dc37fe.m4a",29.6],"3":["61-3.d8281be25b.m4a",17.9],"4a":["61-4a.0fa9dc0f72.m4a",7.1],"4q":["61-4q.cf42448f97.m4a",9.7]}};
+var ACACHE = "debrief-audio";
+var SPEEDS = [1, 1.25, 1.5];
+var VO = { el:null, url:null, listening:false, ui:null, key:null };
+
+function voEl(){
+  if(VO.el) return VO.el;
+  var a = VO.el = new Audio(); a.preload = "auto";
+  a.addEventListener("timeupdate", voPaint);
+  a.addEventListener("play", voPaint); a.addEventListener("pause", voPaint);
+  a.addEventListener("ended", function(){ voPaint(); });
+  a.addEventListener("loadedmetadata", voPaint);
+  return a;
+}
+function voSpeed(){ try{ var v = parseFloat(localStorage.getItem("debrief.speed")); return SPEEDS.indexOf(v) >= 0 ? v : 1; }catch(e){ return 1; } }
+function mmss(t){ t = Math.max(0, Math.round(t || 0)); return Math.floor(t / 60) + ":" + ("0" + (t % 60)).slice(-2); }
+
+function clipBlobUrl(url){
+  if(!("caches" in window)) return Promise.resolve(url);
+  return caches.open(ACACHE).then(function(c){
+    return c.match(url).then(function(hit){
+      if(hit) return hit;
+      return fetch(url).then(function(r){ if(!r.ok) throw new Error("clip " + r.status); c.put(url, r.clone()).catch(function(){}); return r; });
+    });
+  }).then(function(r){ return r.blob(); }).then(function(b){ return URL.createObjectURL(b); })
+    .catch(function(){ return url; });
+}
+/* keep every clip of a lesson, so it all works offline after one visit */
+function saveLessonAudio(code){
+  var A = AUDIO[code]; if(!A || !("caches" in window) || navigator.onLine === false) return;
+  caches.open(ACACHE).then(function(c){
+    Object.keys(A).forEach(function(k){
+      var u = "audio/" + A[k][0];
+      c.match(u).then(function(hit){ if(!hit) return fetch(u).then(function(r){ if(r.ok) return c.put(u, r); }); }).catch(function(){});
+    });
+  }).catch(function(){});
+}
+
+function voStop(){
+  var a = VO.el; if(a){ try{ a.pause(); }catch(e){} }
+  if(VO.url && VO.url.indexOf("blob:") === 0){ try{ URL.revokeObjectURL(VO.url); }catch(e){} }
+  VO.url = null; VO.key = null; VO.ui = null;
+}
+
+/* the player row for one step; returns null if that step has no recording */
+function voRow(code, key, lessonTitle, stepName){
+  var A = AUDIO[code], clip = A && A[key];
+  if(!clip) return null;
+  var a = voEl();
+  if(VO.key !== code + ":" + key){
+    try{ a.pause(); }catch(e){}
+    if(VO.url && VO.url.indexOf("blob:") === 0){ try{ URL.revokeObjectURL(VO.url); }catch(e){} }
+    VO.key = code + ":" + key; VO.url = null;
+    var mine = VO.key;
+    a.removeAttribute("src");
+    clipBlobUrl("audio/" + clip[0]).then(function(u){
+      if(VO.key !== mine) return;
+      VO.url = u; a.src = u; a.playbackRate = voSpeed();
+      if(VO.listening){ a.play().catch(function(){ VO.listening = false; voPaint(); }); }
+    });
+  }
+  if("mediaSession" in navigator && window.MediaMetadata){
+    try{
+      navigator.mediaSession.metadata = new MediaMetadata({ title: stepName, artist: "Debrief", album: lessonTitle });
+      navigator.mediaSession.setActionHandler("play", function(){ VO.listening = true; a.play(); });
+      navigator.mediaSession.setActionHandler("pause", function(){ VO.listening = false; a.pause(); });
+    }catch(e){}
+  }
+  var row = el("div","lplay");
+  var pp = el("button","pp"); pp.type = "button"; pp.id = "voPlay";
+  var bar = el("div","bar"), fill = el("i"); bar.appendChild(fill);
+  var tm = el("span","tm", mmss(clip[1]));
+  var sp = el("button","spd", voSpeed() + "×"); sp.type = "button"; sp.id = "voSpeed";
+  sp.setAttribute("aria-label","Playback speed");
+  row.appendChild(pp); row.appendChild(bar); row.appendChild(tm); row.appendChild(sp);
+  pp.addEventListener("click", function(){
+    if(a.paused){
+      VO.listening = true;
+      if(a.ended || (a.duration && a.currentTime >= a.duration - 0.05)) a.currentTime = 0;
+      a.playbackRate = voSpeed();
+      var p = a.play(); if(p && p.catch) p.catch(function(){ VO.listening = false; voPaint(); });
+    } else { VO.listening = false; a.pause(); }
+  });
+  sp.addEventListener("click", function(){
+    var v = SPEEDS[(SPEEDS.indexOf(voSpeed()) + 1) % SPEEDS.length];
+    try{ localStorage.setItem("debrief.speed", String(v)); }catch(e){}
+    a.playbackRate = v; sp.textContent = v + "×";
+  });
+  bar.addEventListener("click", function(e){
+    if(!a.duration) return;
+    var r = bar.getBoundingClientRect(); a.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * a.duration;
+  });
+  VO.ui = { pp:pp, fill:fill, tm:tm, total:clip[1] };
+  voPaint();
+  return row;
+}
+function voPaint(){
+  var u = VO.ui, a = VO.el; if(!u) return;
+  var playing = a && !a.paused && !a.ended;
+  u.pp.innerHTML = playing
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.2" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1.2" fill="currentColor"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>';
+  u.pp.setAttribute("aria-label", playing ? "Pause narration" : "Play narration");
+  var d = (a && a.duration && isFinite(a.duration)) ? a.duration : u.total, t = a ? a.currentTime : 0;
+  u.fill.style.width = (d ? Math.min(100, 100 * t / d) : 0) + "%";
+  u.tm.textContent = (t > 0.2 ? mmss(t) + " / " : "") + mmss(d);
+}
+
 function openLesson(t, section){
   LRN.y = window.scrollY || 0;
+  VO.listening = false; voStop(); saveLessonAudio(t[1]);
   var a = $("lessonBody"); a.innerHTML = "";
   a.appendChild(el("span","lcode",t[1]));
   a.appendChild(el("h1",null,t[0]));
@@ -2803,6 +2930,9 @@ function openLesson(t, section){
     });
     stage.innerHTML = "";
     stage.appendChild(el("div","k", (at + 1) + " of 4 · " + STEPS[at]));
+    var vkey = at < 3 ? String(at + 1) : (shown ? "4a" : "4q");
+    var vrow = voRow(t[1], vkey, t[0], STEPS[at] + (at === 3 ? (shown ? " · Answer" : " · Question") : ""));
+    if(vrow) stage.appendChild(vrow);
     if(at === 0){ stage.appendChild(el("p","big",L.principle)); if(L.more) para(L.more, "more"); }
     if(at === 1){ (Array.isArray(L.picture) ? L.picture : [L.picture]).forEach(function(x){ para(x); }); }
     if(at === 2){ blocks(L.memory); }
