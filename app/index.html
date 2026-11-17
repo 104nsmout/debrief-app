@@ -376,6 +376,115 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 .tryline .lnk{border:0;background:none;padding:6px 4px;font:inherit;font-weight:600;color:var(--go);cursor:pointer}
 .tryline .legal{margin:2px 0 0;font-size:12px;color:var(--ink-3,var(--ink-2))}
 .tryline .legal a{color:inherit}
+/* ---------- floating tab bar ---------- */
+body.tabs #app{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+body.tabs .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+.tabbar{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:20;
+  transform:translateX(-50%);width:min(280px,calc(100vw - 48px));box-sizing:border-box;padding:5px;
+  display:flex;border-radius:999px;
+  background:rgba(30,30,30,.52);border:1px solid rgba(255,255,255,.10);
+  -webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);
+  box-shadow:0 14px 40px -10px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.07)}
+@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){ .tabbar{background:#171717} }
+.tabbar .ind{position:absolute;top:5px;bottom:5px;left:5px;width:calc(50% - 5px);border-radius:999px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.17),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.15);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 6px 16px -6px rgba(0,0,0,.7);
+  transition:transform .34s cubic-bezier(.32,1.25,.5,1)}
+.tabbar[data-tab="learn"] .ind{transform:translateX(100%)}
+.tabbar button{flex:1;position:relative;z-index:1;height:46px;border:0;background:none;border-radius:999px;
+  display:flex;align-items:center;justify-content:center;gap:8px;color:var(--ink-2);
+  font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:1px;text-transform:uppercase;transition:color .2s ease}
+.tabbar button svg{stroke:currentColor;transition:stroke .2s ease}
+.tabbar button[aria-selected="true"]{color:var(--ink)}
+.tabbar button[aria-selected="true"] svg{stroke:var(--go)}
+@media (prefers-reduced-motion:reduce){ .tabbar .ind,.tabbar button{transition:none} }
+
+/* ---------- learn ---------- */
+.lhead{padding:4px 0 0}
+.lhead .k{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--go);text-transform:uppercase}
+.lhead h1{margin:4px 0 0;font-family:var(--display);font-weight:800;font-size:34px;line-height:1.05;letter-spacing:-.6px}
+.lsearch{position:relative;display:flex;align-items:center;gap:10px;height:50px;margin-top:18px;padding:0 16px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--line)}
+.lsearch:focus-within{border-color:var(--go)}
+.lsearch input{flex:1;min-width:0;height:44px;border:0;outline:0;background:transparent;color:var(--ink);font:inherit;font-size:16.5px}
+.lsearch input::placeholder{color:var(--ink-2)}
+.lsearch input::-webkit-search-cancel-button{filter:invert(1) opacity(.5)}
+.lcap{display:block;margin:20px 0 9px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--ink-2)}
+.lchips{display:flex;flex-wrap:wrap;gap:8px}
+.lchip{min-height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  font-family:var(--display);font-weight:600;font-size:14.5px}
+.lchip[aria-pressed="true"]{background:var(--go);border-color:var(--go);color:var(--on-go)}
+.lsum{display:block;margin-top:10px;font-size:13px;color:var(--ink-2)}
+.lsec{margin-top:30px}
+.lsec h2{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 12px;
+  font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink)}
+.lsec h2 span{font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:0;color:var(--go)}
+.ltopics{display:flex;flex-wrap:wrap;gap:8px}
+.ltopic{display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:0 15px 0 8px;border-radius:999px;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:var(--body);font-weight:500;font-size:15px;text-align:left}
+.ltopic:hover{border-color:#444}
+.lcode{flex:none;min-width:26px;padding:3px 6px;border-radius:7px;text-align:center;background:var(--go-soft);color:var(--go);
+  border:1px solid color-mix(in srgb,var(--go) 30%,transparent);font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.4px}
+.lempty{margin-top:26px;color:var(--ink-2)}
+/* one lesson */
+.lesson .lcode{font-size:12px;padding:4px 8px}
+.lesson h1{margin:14px 0 8px;font-family:var(--display);font-weight:800;font-size:32px;line-height:1.08;letter-spacing:-.6px}
+.lmeta{font-family:var(--mono);font-size:11.5px;letter-spacing:.8px;color:var(--ink-2);text-transform:uppercase}
+.lidea{margin:24px 0 0;padding:4px 0 4px 18px;border-left:3px solid var(--go);font-family:var(--display);font-weight:700;
+  font-size:23px;line-height:1.28;letter-spacing:-.2px;color:var(--ink)}
+.lpoints{margin:22px 0 0;padding:0;list-style:none;display:grid;gap:12px}
+.lpoints li{position:relative;padding:14px 16px 14px 42px;border-radius:14px;background:var(--surface);border:1px solid var(--line);
+  font-size:16px;line-height:1.5}
+.lpoints li::before{content:counter(lp);counter-increment:lp;position:absolute;left:14px;top:14px;font-family:var(--mono);
+  font-weight:600;font-size:12px;color:var(--go)}
+.lpoints{counter-reset:lp}
+.lref{margin-top:18px;font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
+.lsoon{margin-top:26px;padding:20px;border-radius:16px;border:1px dashed #3a3a3a;background:var(--surface);color:var(--ink-2);font-size:15px;line-height:1.55}
+.lsoon b{display:block;margin-bottom:6px;color:var(--ink);font-family:var(--display);font-size:17px}
+.ltopic.soon{color:var(--ink-2)}
+.ltopic.soon .lcode{background:transparent;color:var(--ink-2);border-color:var(--line)}
+.ltopic .tick{margin-left:-2px;color:var(--go);font-weight:700}
+/* four-step lesson */
+.lsteps{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:22px}
+.lsteps button{border:0;background:none;padding:0 0 4px;text-align:left;color:var(--ink-2);
+  font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase}
+.lsteps button i{display:block;height:4px;border-radius:2px;background:var(--line);margin-bottom:7px;transition:background .2s ease}
+.lsteps button.past i{background:color-mix(in srgb,var(--go) 45%,var(--line))}
+.lsteps button[aria-current="step"]{color:var(--ink)}
+.lsteps button[aria-current="step"] i{background:var(--go)}
+.lstage{margin-top:20px;min-height:44vh;touch-action:pan-y}
+.lstage .k{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1.4px;color:var(--go);text-transform:uppercase}
+.lstage .big{margin:12px 0 0;font-family:var(--display);font-weight:700;font-size:24px;line-height:1.3;letter-spacing:-.2px;color:var(--ink)}
+.lstage p{font-size:16.5px;line-height:1.6;margin:14px 0 0;color:var(--ink)}
+.lstage p.more{color:var(--ink-2)}
+.lhook{margin:14px 0 0;padding:14px 16px;border-radius:14px;background:var(--go-soft);border:1px solid color-mix(in srgb,var(--go) 35%,transparent);
+  font-family:var(--display);font-weight:800;font-size:20px;line-height:1.3;color:var(--go)}
+.lacro{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.lacro li{display:grid;grid-template-columns:34px 1fr;gap:2px 12px;align-items:baseline;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.lacro b{grid-row:span 2;font-family:var(--display);font-weight:800;font-size:24px;line-height:1;color:var(--go);text-align:center}
+.lacro span{font-size:15.5px;font-weight:600;color:var(--ink)}
+.lacro small{grid-column:2;font-size:13.5px;line-height:1.45;color:var(--ink-2)}
+.llist{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.llist li{padding:11px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:15.5px;line-height:1.5;color:var(--ink-2)}
+.llist li b{color:var(--ink);font-weight:600}
+.lq{margin:12px 0 0;font-family:var(--display);font-weight:700;font-size:21px;line-height:1.35;color:var(--ink)}
+.lans{margin-top:18px;padding:16px 18px;border-radius:14px;border-left:3px solid var(--go);background:var(--surface);font-size:16.5px;line-height:1.6}
+.lans b{color:var(--go)}
+.lthink{margin-top:14px;font-size:14px;color:var(--ink-2)}
+.lplay{display:flex;align-items:center;gap:12px;margin-top:14px;padding:8px 10px 8px 8px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--line)}
+.lplay .pp{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--go);color:var(--on-go);
+  display:flex;align-items:center;justify-content:center}
+.lplay .bar{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden;cursor:pointer}
+.lplay .bar i{display:block;height:100%;width:0;background:var(--go);border-radius:3px}
+.lplay .tm{flex:none;min-width:38px;text-align:right;font-family:var(--mono);font-size:11.5px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.lplay .spd{flex:none;min-width:48px;height:34px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);
+  font-family:var(--mono);font-size:12px;font-weight:600}
+.lnav{display:flex;gap:10px;margin-top:18px;position:sticky;bottom:0;z-index:2;
+  padding:16px 0 calc(6px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,transparent,var(--bg) 34%)}
+.lnav button{min-height:54px;border-radius:999px;font-family:var(--display);font-weight:800;font-size:16px;letter-spacing:.8px;text-transform:uppercase}
+.lnav .prev{flex:0 0 auto;padding:0 22px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.lnav .next{flex:1;border:0;background:var(--grad);color:var(--on-go)}
 #gate .alt{width:100%;min-height:46px;margin-top:10px;border:0;background:none;color:var(--go);font-weight:600;font-size:15px}
 #gate .bad{margin-top:14px;padding:11px 13px;border-radius:11px;border:1px solid var(--unsat,#ff8a3d);
   color:var(--ink);font-size:14.5px;line-height:1.45}
@@ -596,6 +705,40 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
     <div class="card" id="recentList"></div>
   </div>
 </section>
+
+<!-- LEARN -->
+<section id="v-learn" hidden>
+  <div class="lhead">
+    <div class="k">Debrief &middot; Learn</div>
+    <h1>All Topics</h1>
+  </div>
+  <div class="lsearch">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+    <label for="learnQ" class="vh">Search topics</label>
+    <input id="learnQ" type="search" placeholder="Search topics" autocomplete="off" spellcheck="false">
+  </div>
+  <span class="lcap">CERTIFICATE</span>
+  <div class="lchips" id="learnCerts" role="group" aria-label="Certificate"></div>
+  <span class="lsum" id="learnSum" aria-live="polite"></span>
+  <div id="learnList"></div>
+</section>
+
+<section id="v-lesson" hidden>
+  <div class="topbar">
+    <button class="iconbtn" id="lessonBack" aria-label="Back to all topics" style="margin-left:-10px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--go)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+  </div>
+  <article class="lesson" id="lessonBody"></article>
+</section>
+
+<nav class="tabbar" id="tabbar" role="tablist" aria-label="Sections" data-tab="home" hidden>
+  <span class="ind" aria-hidden="true"></span>
+  <button type="button" role="tab" id="tabFly" aria-selected="true">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12h4l2.5-7 3.5 14 3-7h7"/></svg>Fly</button>
+  <button type="button" role="tab" id="tabLearn" aria-selected="false">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h7"/></svg>Learn</button>
+</nav>
 
 <!-- SETUP -->
 <section id="v-setup" hidden>
@@ -2412,11 +2555,12 @@ function fitName(node,name,base){
   var n=(name||"").length;
   node.style.fontSize=(n>30?base-20:n>20?base-11:base)+"px";
 }
-var VIEWS=["home","setup","grade","close","debrief"];
+var VIEWS=["home","setup","grade","close","debrief","learn","lesson"];
 function show(v){
   for(var i=0;i<VIEWS.length;i++){ $("v-"+VIEWS[i]).hidden = (VIEWS[i]!==v); }
   window.scrollTo(0,0);
   var sc=document.querySelector("#v-"+v+" .scroll"); if(sc) sc.scrollTop=0;
+  try{ paintTabs(v); }catch(e){}
 }
 
 /* entry = one maneuver in this flight */
@@ -2549,6 +2693,287 @@ function renderHome(){
     })(done[k]);
   }
 }
+
+/* ---------- Learn ----------
+   TOPICS: [section, [[label, code, certificates], ...]]. LESSONS: code ->
+   { idea, points:[...], ref }. Both ship inside the app: no signal needed. */
+var TOPICS = [["REGULATIONS & PAPERWORK",[["14 CFR Part 61","61","PICFA"],["14 CFR Part 91","91","PICFA"],["Airworthiness & Documents","AWD","PICF"],["Pilot Currency","CUR","PICFA"],["Endorsements","END","F"],["NTSB 830 Reporting","830","PCFA"]]],["WEATHER",[["Weather Theory","WX","PICFA"],["METARs & TAFs","MTR","PICFA"],["Charts & Graphics","PROG","PICF"],["Icing","ICE","ICFA"],["Thunderstorms","TS","PICFA"],["Density Altitude","DA","PCF"]]],["AIRCRAFT & SYSTEMS",[["Aerodynamics","AERO","PCFA"],["Powerplant","ENG","PCF"],["Propeller","PROP","PCF"],["Fuel System","FUEL","PCF"],["Electrical System","ELEC","PICF"],["Flight Controls & Trim","CTRL","PCF"],["Landing Gear & Brakes","GEAR","PCF"],["Ice Protection","DICE","ICFA"],["Oxygen & Pressurization","O2","CA"],["Glass Cockpit (G1000)","G1K","ICF"],["Autopilot","AP","ICA"],["Complex & High-Performance","CPLX","CF"],["High-Altitude Ops","ALT","CA"]]],["FLIGHT INSTRUMENTS",[["Pitot-Static System","P/S","PIF"],["Airspeed Indicator","ASI","PIF"],["Altimeter","ALTM","PIF"],["Vertical Speed Indicator","VSI","PIF"],["Gyroscopic Instruments","GYRO","PIF"],["Vacuum System","VAC","PIF"],["Magnetic Compass","MAG","PIF"],["AHRS & ADC","AHRS","IF"],["Instrument Failures","FAIL","IF"]]],["NAV & APPROACH EQUIPMENT",[["VOR","VOR","PICFA"],["DME","DME","IFA"],["ILS","ILS","IFA"],["Localizer","LOC","IFA"],["Glideslope","G/S","IFA"],["Marker Beacons","MKR","IF"],["ADF & NDB","ADF","IF"],["GPS & WAAS","GPS","PICFA"],["RAIM","RAIM","IFA"],["CDI","CDI","PIF"],["HSI","HSI","PIF"],["RMI","RMI","IFA"],["Transponder & ADS-B","XPDR","PICFA"],["Approach Lighting","ALS","IFA"],["VASI & PAPI","PAPI","PICF"]]],["AEROMEDICAL FACTORS",[["Fitness for Flight (IMSAFE)","FIT","PICFA"],["Hypoxia","HYPX","PICFA"],["Hyperventilation","HYPV","PICFA"],["Spatial Disorientation","SD","PICFA"],["Vision & Night Vision","VIS","PICFA"],["Carbon Monoxide","CO","PICF"],["Alcohol & Medications","MEDS","PICFA"],["Stress & Fatigue","FTG","PICFA"],["Ear & Sinus Block","EAR","PCF"],["Motion Sickness","MOT","PF"],["Decompression Sickness","DCS","PCFA"]]],["PERFORMANCE & PLANNING",[["Weight & Balance","W&B","PCFA"],["Takeoff & Landing Performance","PERF","PCFA"],["Cross-Country Planning","XC","PCF"],["Fuel Planning","FPLN","PICA"]]],["AIRSPACE & NAVIGATION",[["Airspace","ASP","PICF"],["Sectional Charts","SEC","PCF"],["Pilotage & Dead Reckoning","DR","PCF"],["VOR Navigation","VORN","PCF"],["GPS Navigation","GPSN","PCF"],["Lost Procedures","LOST","PF"]]],["AIRPORT & ATC",[["Radio Communication","COM","PICF"],["Airport Operations","APT","PCF"],["IFR Clearances","CLR","IFA"],["Lost Communications","NORDO","IFA"]]],["VFR MANEUVERS",[["Takeoffs & Landings","T/L","PCF"],["Slow Flight","SLOW","PCF"],["Stalls","STALL","PCF"],["Spin Awareness","SPIN","CF"],["Steep Turns","STEEP","PCF"],["Ground Reference","GRM","PF"],["Chandelles","CHAN","CF"],["Lazy Eights","LZY8","CF"],["Eights on Pylons","PYL","CF"],["Steep Spirals","SPRL","CF"],["Power-Off 180","180","CF"],["Emergency Descent","EDES","PCF"]]],["INSTRUMENT FLYING",[["Attitude Instrument Flying","AIF","PIF"],["Scan & Cross-Check","SCAN","PIF"],["Partial Panel","PP","IF"],["Unusual Attitudes","UA","PIF"],["IFR Flight Planning","IFPL","IFA"],["IFR Enroute Charts","ENR","IFA"],["Approach Plates","IAP","IFA"],["Departures (SIDs & ODPs)","DP","IFA"],["Arrivals (STARs)","STAR","IFA"],["Holding","HOLD","IFA"],["Procedure Turns","PT","IF"],["DME Arcs","ARC","IFA"],["ILS Approaches","PREC","IFA"],["RNAV (GPS) Approaches","RNAV","IFA"],["LPV vs. LNAV/VNAV","LPV","IFA"],["VOR Approaches","VORA","IFA"],["Localizer Approaches","LOCA","IFA"],["NDB Approaches","NDBA","IF"],["Approach Minimums","MINS","IFA"],["Missed Approaches","MAP","IFA"],["Circling Approaches","CIRC","IFA"],["Visual & Contact Approaches","VCA","IFA"],["IFR Alternates","ALTN","IFA"]]],["SAFETY & HUMAN FACTORS",[["Decision-Making (ADM)","ADM","PICFA"],["Risk Management","RISK","PICFA"],["Night Operations","NGT","PCF"],["Mountain Flying","MTN","PCF"],["Emergency Procedures","EMER","PICFA"],["Crew Resource Mgmt","CRM","CA"]]],["TEACHING",[["Fundamentals of Instructing","FOI","F"],["Lesson Planning","PLAN","F"],["Effective Debriefs","DBRF","F"],["Student Evaluation","EVAL","F"]]]];
+var LESSONS = {};
+var anyReady = Object.keys(LESSONS).length > 0;
+var LKEY = "debrief.learned.v1";
+function learned(){ try{ return JSON.parse(localStorage.getItem(LKEY) || "{}") || {}; }catch(e){ return {}; } }
+function markLearned(code){ try{ var m = learned(); m[code] = Date.now(); localStorage.setItem(LKEY, JSON.stringify(m)); }catch(e){} }
+var STEPS = ["Principle","Picture it","Memory aid","Check"];
+var CERTS = [["ALL","All"],["P","Private"],["I","Instrument"],["C","Commercial"],["F","CFI"],["A","ATP"]];
+var CERT_NAME = { P:"Private", I:"Instrument", C:"Commercial", F:"CFI", A:"ATP" };
+var LRN = { cert:"ALL", q:"", y:0 };
+
+function paintTabs(v){
+  /* a lesson is a focused flow with its own Back: no tab bar there */
+  var on = v === "home" || v === "learn";
+  if(v !== "lesson"){ VO.listening = false; try{ voStop(); }catch(e){} }
+  var bar = $("tabbar"); if(!bar) return;
+  bar.hidden = !on; document.body.classList.toggle("tabs", on);
+  var learn = v === "learn" || v === "lesson";
+  bar.setAttribute("data-tab", learn ? "learn" : "home");
+  $("tabFly").setAttribute("aria-selected", String(!learn));
+  $("tabLearn").setAttribute("aria-selected", String(learn));
+}
+
+function renderLearn(){
+  var C = $("learnCerts"); C.innerHTML = "";
+  CERTS.forEach(function(c){
+    var b = el("button","lchip",c[1]); b.type = "button"; b.setAttribute("aria-pressed", String(LRN.cert === c[0]));
+    b.addEventListener("click", function(){ LRN.cert = c[0]; renderLearn(); });
+    C.appendChild(b);
+  });
+  var q = LRN.q.trim().toLowerCase(), list = $("learnList"), n = 0;
+  list.innerHTML = "";
+  TOPICS.forEach(function(sec){
+    var items = sec[1].filter(function(t){
+      if(LRN.cert !== "ALL" && t[2].indexOf(LRN.cert) < 0) return false;
+      return !q || t[0].toLowerCase().indexOf(q) >= 0 || t[1].toLowerCase().indexOf(q) >= 0;
+    });
+    if(!items.length) return;
+    n += items.length;
+    var box = el("section","lsec"), h = el("h2");
+    h.appendChild(document.createTextNode(sec[0])); h.appendChild(el("span",null,String(items.length)));
+    box.appendChild(h);
+    var wrap = el("div","ltopics");
+    items.forEach(function(t){
+      var ready = !!LESSONS[t[1]];
+      /* dim the unwritten ones only once some are written */
+      var b = el("button", ready || !anyReady ? "ltopic" : "ltopic soon"); b.type = "button";
+      b.appendChild(el("span","lcode",t[1])); b.appendChild(document.createTextNode(t[0]));
+      if(learned()[t[1]]){ var tk = el("span","tick","\u2713"); tk.setAttribute("aria-label","done"); b.appendChild(tk); }
+      b.addEventListener("click", function(){ openLesson(t, sec[0]); });
+      wrap.appendChild(b);
+    });
+    box.appendChild(wrap); list.appendChild(box);
+  });
+  if(!n) list.appendChild(el("p","lempty","No topics match that search."));
+  $("learnSum").textContent = n + " topic" + (n === 1 ? "" : "s") + " · "
+    + (LRN.cert === "ALL" ? "all certificates" : CERT_NAME[LRN.cert])
+    + (anyReady ? " \u00b7 " + Object.keys(LESSONS).length + " lessons ready" : "");
+}
+
+/* ---------- narration ----------
+   AUDIO: code -> { step: [file, seconds] }, steps "1" "2" "3" "4q" "4a".
+   One player for the whole app: an <audio> element that has been started by
+   a tap may be started again later without one, which is what lets Next carry
+   straight into the next clip on iPhone. Clips are kept in their own cache
+   ("debrief-audio") the first time a lesson is opened, so a lesson heard
+   once at home plays in the airplane with no signal. File names carry a hash
+   of the recording, so a re-recorded clip is never served stale. */
+var AUDIO = {};
+var ACACHE = "debrief-audio";
+var SPEEDS = [1, 1.25, 1.5];
+var VO = { el:null, url:null, listening:false, ui:null, key:null };
+
+function voEl(){
+  if(VO.el) return VO.el;
+  var a = VO.el = new Audio(); a.preload = "auto";
+  a.addEventListener("timeupdate", voPaint);
+  a.addEventListener("play", voPaint); a.addEventListener("pause", voPaint);
+  a.addEventListener("ended", function(){ voPaint(); });
+  a.addEventListener("loadedmetadata", voPaint);
+  return a;
+}
+function voSpeed(){ try{ var v = parseFloat(localStorage.getItem("debrief.speed")); return SPEEDS.indexOf(v) >= 0 ? v : 1; }catch(e){ return 1; } }
+function mmss(t){ t = Math.max(0, Math.round(t || 0)); return Math.floor(t / 60) + ":" + ("0" + (t % 60)).slice(-2); }
+
+function clipBlobUrl(url){
+  if(!("caches" in window)) return Promise.resolve(url);
+  return caches.open(ACACHE).then(function(c){
+    return c.match(url).then(function(hit){
+      if(hit) return hit;
+      return fetch(url).then(function(r){ if(!r.ok) throw new Error("clip " + r.status); c.put(url, r.clone()).catch(function(){}); return r; });
+    });
+  }).then(function(r){ return r.blob(); }).then(function(b){ return URL.createObjectURL(b); })
+    .catch(function(){ return url; });
+}
+/* keep every clip of a lesson, so it all works offline after one visit */
+function saveLessonAudio(code){
+  var A = AUDIO[code]; if(!A || !("caches" in window) || navigator.onLine === false) return;
+  caches.open(ACACHE).then(function(c){
+    Object.keys(A).forEach(function(k){
+      var u = "audio/" + A[k][0];
+      c.match(u).then(function(hit){ if(!hit) return fetch(u).then(function(r){ if(r.ok) return c.put(u, r); }); }).catch(function(){});
+    });
+  }).catch(function(){});
+}
+
+function voStop(){
+  var a = VO.el; if(a){ try{ a.pause(); }catch(e){} }
+  if(VO.url && VO.url.indexOf("blob:") === 0){ try{ URL.revokeObjectURL(VO.url); }catch(e){} }
+  VO.url = null; VO.key = null; VO.ui = null;
+}
+
+/* the player row for one step; returns null if that step has no recording */
+function voRow(code, key, lessonTitle, stepName){
+  var A = AUDIO[code], clip = A && A[key];
+  if(!clip) return null;
+  var a = voEl();
+  if(VO.key !== code + ":" + key){
+    try{ a.pause(); }catch(e){}
+    if(VO.url && VO.url.indexOf("blob:") === 0){ try{ URL.revokeObjectURL(VO.url); }catch(e){} }
+    VO.key = code + ":" + key; VO.url = null;
+    var mine = VO.key;
+    a.removeAttribute("src");
+    clipBlobUrl("audio/" + clip[0]).then(function(u){
+      if(VO.key !== mine) return;
+      VO.url = u; a.src = u; a.playbackRate = voSpeed();
+      if(VO.listening){ a.play().catch(function(){ VO.listening = false; voPaint(); }); }
+    });
+  }
+  if("mediaSession" in navigator && window.MediaMetadata){
+    try{
+      navigator.mediaSession.metadata = new MediaMetadata({ title: stepName, artist: "Debrief", album: lessonTitle });
+      navigator.mediaSession.setActionHandler("play", function(){ VO.listening = true; a.play(); });
+      navigator.mediaSession.setActionHandler("pause", function(){ VO.listening = false; a.pause(); });
+    }catch(e){}
+  }
+  var row = el("div","lplay");
+  var pp = el("button","pp"); pp.type = "button"; pp.id = "voPlay";
+  var bar = el("div","bar"), fill = el("i"); bar.appendChild(fill);
+  var tm = el("span","tm", mmss(clip[1]));
+  var sp = el("button","spd", voSpeed() + "×"); sp.type = "button"; sp.id = "voSpeed";
+  sp.setAttribute("aria-label","Playback speed");
+  row.appendChild(pp); row.appendChild(bar); row.appendChild(tm); row.appendChild(sp);
+  pp.addEventListener("click", function(){
+    if(a.paused){
+      VO.listening = true;
+      if(a.ended || (a.duration && a.currentTime >= a.duration - 0.05)) a.currentTime = 0;
+      a.playbackRate = voSpeed();
+      var p = a.play(); if(p && p.catch) p.catch(function(){ VO.listening = false; voPaint(); });
+    } else { VO.listening = false; a.pause(); }
+  });
+  sp.addEventListener("click", function(){
+    var v = SPEEDS[(SPEEDS.indexOf(voSpeed()) + 1) % SPEEDS.length];
+    try{ localStorage.setItem("debrief.speed", String(v)); }catch(e){}
+    a.playbackRate = v; sp.textContent = v + "×";
+  });
+  bar.addEventListener("click", function(e){
+    if(!a.duration) return;
+    var r = bar.getBoundingClientRect(); a.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * a.duration;
+  });
+  VO.ui = { pp:pp, fill:fill, tm:tm, total:clip[1] };
+  voPaint();
+  return row;
+}
+function voPaint(){
+  var u = VO.ui, a = VO.el; if(!u) return;
+  var playing = a && !a.paused && !a.ended;
+  u.pp.innerHTML = playing
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.2" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1.2" fill="currentColor"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>';
+  u.pp.setAttribute("aria-label", playing ? "Pause narration" : "Play narration");
+  var d = (a && a.duration && isFinite(a.duration)) ? a.duration : u.total, t = a ? a.currentTime : 0;
+  u.fill.style.width = (d ? Math.min(100, 100 * t / d) : 0) + "%";
+  u.tm.textContent = (t > 0.2 ? mmss(t) + " / " : "") + mmss(d);
+}
+
+function openLesson(t, section){
+  LRN.y = window.scrollY || 0;
+  VO.listening = false; voStop(); saveLessonAudio(t[1]);
+  var a = $("lessonBody"); a.innerHTML = "";
+  a.appendChild(el("span","lcode",t[1]));
+  a.appendChild(el("h1",null,t[0]));
+  a.appendChild(el("div","lmeta", section + " · " + t[2].split("").map(function(c){ return CERT_NAME[c]; }).join(", ")));
+  var L = LESSONS[t[1]];
+  if(!L){
+    var s = el("div","lsoon"); s.appendChild(el("b",null,"Lesson coming soon."));
+    s.appendChild(document.createTextNode("The big idea for this topic is being written. It will appear here, and it will work with no signal."));
+    a.appendChild(s); show("lesson"); return;
+  }
+  /* four parts, one at a time: Principle, Picture it, Memory aid, Check.
+     The check hides its answer until asked, so it tests understanding. */
+  var rail = el("div","lsteps"); rail.setAttribute("aria-label","Lesson steps");
+  var stage = el("div","lstage"); stage.setAttribute("aria-live","polite");
+  var nav = el("div","lnav");
+  var prev = el("button","prev","Back"); prev.type = "button"; prev.id = "lessonPrev";
+  var next = el("button","next","Next"); next.type = "button"; next.id = "lessonNext";
+  nav.appendChild(prev); nav.appendChild(next);
+  a.appendChild(rail); a.appendChild(stage); a.appendChild(nav);
+  var at = 0, shown = false;
+
+  function para(txt, cls){ var p = el("p", cls || null, txt); stage.appendChild(p); return p; }
+  function blocks(list){
+    list.forEach(function(b){
+      if(b.hook) stage.appendChild(el("div","lhook","“" + b.hook + "”"));
+      else if(b.p) para(b.p);
+      else if(b.acro){
+        var ul = el("ul","lacro");
+        b.acro.forEach(function(r){
+          var li = el("li"); li.appendChild(el("b",null,r[0])); li.appendChild(el("span",null,r[1]));
+          if(r[2]) li.appendChild(el("small",null,r[2]));
+          ul.appendChild(li);
+        });
+        stage.appendChild(ul);
+      } else if(b.list){
+        var ul2 = el("ul","llist");
+        b.list.forEach(function(r){
+          var li = el("li");
+          if(r[0]){ li.appendChild(el("b",null,r[0])); li.appendChild(document.createTextNode(" ")); }
+          li.appendChild(document.createTextNode(r[1])); ul2.appendChild(li);
+        });
+        stage.appendChild(ul2);
+      }
+    });
+  }
+  function paint(){
+    rail.innerHTML = "";
+    STEPS.forEach(function(name, i){
+      var b = el("button", i < at ? "past" : null); b.type = "button";
+      b.appendChild(el("i")); b.appendChild(document.createTextNode(name));
+      if(i === at) b.setAttribute("aria-current","step");
+      b.addEventListener("click", function(){ go(i); });
+      rail.appendChild(b);
+    });
+    stage.innerHTML = "";
+    stage.appendChild(el("div","k", (at + 1) + " of 4 · " + STEPS[at]));
+    var vkey = at < 3 ? String(at + 1) : (shown ? "4a" : "4q");
+    var vrow = voRow(t[1], vkey, t[0], STEPS[at] + (at === 3 ? (shown ? " · Answer" : " · Question") : ""));
+    if(vrow) stage.appendChild(vrow);
+    if(at === 0){ stage.appendChild(el("p","big",L.principle)); if(L.more) para(L.more, "more"); }
+    if(at === 1){ (Array.isArray(L.picture) ? L.picture : [L.picture]).forEach(function(x){ para(x); }); }
+    if(at === 2){ blocks(L.memory); }
+    if(at === 3){
+      stage.appendChild(el("p","lq",L.check.q));
+      if(shown){
+        var ans = el("div","lans"); ans.appendChild(el("b",null,"Answer. ")); ans.appendChild(document.createTextNode(L.check.a));
+        stage.appendChild(ans);
+      } else stage.appendChild(el("p","lthink","Work it out before you look."));
+    }
+    prev.style.visibility = at === 0 ? "hidden" : "visible";
+    next.textContent = at < 3 ? "Next" : shown ? "Done" : "Show answer";
+  }
+  function go(i){ at = Math.max(0, Math.min(3, i)); if(at < 3) shown = false; paint(); window.scrollTo(0, 0); }
+  prev.addEventListener("click", function(){ go(at - 1); });
+  next.addEventListener("click", function(){
+    if(at < 3) go(at + 1);
+    else if(!shown){ shown = true; paint(); }
+    else { markLearned(t[1]); openLearn(true); }
+  });
+  /* a sideways swipe moves between steps */
+  var x0 = null, y0 = 0;
+  stage.addEventListener("touchstart", function(e){ x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive:true });
+  stage.addEventListener("touchend", function(e){
+    if(x0 === null) return;
+    var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+    if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5){ if(dx < 0 && at < 3) go(at + 1); else if(dx > 0) go(at - 1); }
+  }, { passive:true });
+  paint(); show("lesson");
+}
+
+function openLearn(keep){
+  renderLearn(); show("learn");
+  if(keep && LRN.y) window.scrollTo(0, LRN.y);
+}
+$("tabFly").addEventListener("click", function(){ renderHome(); show("home"); });
+$("tabLearn").addEventListener("click", function(){ openLearn(false); });
+$("lessonBack").addEventListener("click", function(){ openLearn(true); });
+$("learnQ").addEventListener("input", function(){ LRN.q = this.value || ""; renderLearn(); });
 $("newFlightBtn").addEventListener("click",function(){
   if(!signedIn() && freeLeft() === 0){
     openGate({ reason:"limit", dismiss:true, then:function(){
