@@ -441,6 +441,41 @@ body.tabs .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
 .lref{margin-top:18px;font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
 .lsoon{margin-top:26px;padding:20px;border-radius:16px;border:1px dashed #3a3a3a;background:var(--surface);color:var(--ink-2);font-size:15px;line-height:1.55}
 .lsoon b{display:block;margin-bottom:6px;color:var(--ink);font-family:var(--display);font-size:17px}
+.ltopic.soon{color:var(--ink-2)}
+.ltopic.soon .lcode{background:transparent;color:var(--ink-2);border-color:var(--line)}
+.ltopic .tick{margin-left:-2px;color:var(--go);font-weight:700}
+/* four-step lesson */
+.lsteps{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:22px}
+.lsteps button{border:0;background:none;padding:0 0 4px;text-align:left;color:var(--ink-2);
+  font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase}
+.lsteps button i{display:block;height:4px;border-radius:2px;background:var(--line);margin-bottom:7px;transition:background .2s ease}
+.lsteps button.past i{background:color-mix(in srgb,var(--go) 45%,var(--line))}
+.lsteps button[aria-current="step"]{color:var(--ink)}
+.lsteps button[aria-current="step"] i{background:var(--go)}
+.lstage{margin-top:20px;min-height:44vh;touch-action:pan-y}
+.lstage .k{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1.4px;color:var(--go);text-transform:uppercase}
+.lstage .big{margin:12px 0 0;font-family:var(--display);font-weight:700;font-size:24px;line-height:1.3;letter-spacing:-.2px;color:var(--ink)}
+.lstage p{font-size:16.5px;line-height:1.6;margin:14px 0 0;color:var(--ink)}
+.lstage p.more{color:var(--ink-2)}
+.lhook{margin:14px 0 0;padding:14px 16px;border-radius:14px;background:var(--go-soft);border:1px solid color-mix(in srgb,var(--go) 35%,transparent);
+  font-family:var(--display);font-weight:800;font-size:20px;line-height:1.3;color:var(--go)}
+.lacro{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.lacro li{display:grid;grid-template-columns:34px 1fr;gap:2px 12px;align-items:baseline;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.lacro b{grid-row:span 2;font-family:var(--display);font-weight:800;font-size:24px;line-height:1;color:var(--go);text-align:center}
+.lacro span{font-size:15.5px;font-weight:600;color:var(--ink)}
+.lacro small{grid-column:2;font-size:13.5px;line-height:1.45;color:var(--ink-2)}
+.llist{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.llist li{padding:11px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:15.5px;line-height:1.5;color:var(--ink-2)}
+.llist li b{color:var(--ink);font-weight:600}
+.lq{margin:12px 0 0;font-family:var(--display);font-weight:700;font-size:21px;line-height:1.35;color:var(--ink)}
+.lans{margin-top:18px;padding:16px 18px;border-radius:14px;border-left:3px solid var(--go);background:var(--surface);font-size:16.5px;line-height:1.6}
+.lans b{color:var(--go)}
+.lthink{margin-top:14px;font-size:14px;color:var(--ink-2)}
+.lnav{display:flex;gap:10px;margin-top:18px;position:sticky;bottom:0;z-index:2;
+  padding:16px 0 calc(6px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,transparent,var(--bg) 34%)}
+.lnav button{min-height:54px;border-radius:999px;font-family:var(--display);font-weight:800;font-size:16px;letter-spacing:.8px;text-transform:uppercase}
+.lnav .prev{flex:0 0 auto;padding:0 22px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.lnav .next{flex:1;border:0;background:var(--grad);color:var(--on-go)}
 #gate .alt{width:100%;min-height:46px;margin-top:10px;border:0;background:none;color:var(--go);font-weight:600;font-size:15px}
 #gate .bad{margin-top:14px;padding:11px 13px;border-radius:11px;border:1px solid var(--unsat,#ff8a3d);
   color:var(--ink);font-size:14.5px;line-height:1.45}
@@ -2654,13 +2689,18 @@ function renderHome(){
    TOPICS: [section, [[label, code, certificates], ...]]. LESSONS: code ->
    { idea, points:[...], ref }. Both ship inside the app: no signal needed. */
 var TOPICS = [["REGULATIONS & PAPERWORK",[["14 CFR Part 61","61","PICFA"],["14 CFR Part 91","91","PICFA"],["Airworthiness & Documents","AWD","PICF"],["Pilot Currency","CUR","PICFA"],["Endorsements","END","F"],["NTSB 830 Reporting","830","PCFA"]]],["WEATHER",[["Weather Theory","WX","PICFA"],["METARs & TAFs","MTR","PICFA"],["Charts & Graphics","PROG","PICF"],["Icing","ICE","ICFA"],["Thunderstorms","TS","PICFA"],["Density Altitude","DA","PCF"]]],["AIRCRAFT & SYSTEMS",[["Aerodynamics","AERO","PCFA"],["Powerplant","ENG","PCF"],["Propeller","PROP","PCF"],["Fuel System","FUEL","PCF"],["Electrical System","ELEC","PICF"],["Flight Controls & Trim","CTRL","PCF"],["Landing Gear & Brakes","GEAR","PCF"],["Ice Protection","DICE","ICFA"],["Oxygen & Pressurization","O2","CA"],["Glass Cockpit (G1000)","G1K","ICF"],["Autopilot","AP","ICA"],["Complex & High-Performance","CPLX","CF"],["High-Altitude Ops","ALT","CA"]]],["FLIGHT INSTRUMENTS",[["Pitot-Static System","P/S","PIF"],["Airspeed Indicator","ASI","PIF"],["Altimeter","ALTM","PIF"],["Vertical Speed Indicator","VSI","PIF"],["Gyroscopic Instruments","GYRO","PIF"],["Vacuum System","VAC","PIF"],["Magnetic Compass","MAG","PIF"],["AHRS & ADC","AHRS","IF"],["Instrument Failures","FAIL","IF"]]],["NAV & APPROACH EQUIPMENT",[["VOR","VOR","PICFA"],["DME","DME","IFA"],["ILS","ILS","IFA"],["Localizer","LOC","IFA"],["Glideslope","G/S","IFA"],["Marker Beacons","MKR","IF"],["ADF & NDB","ADF","IF"],["GPS & WAAS","GPS","PICFA"],["RAIM","RAIM","IFA"],["CDI","CDI","PIF"],["HSI","HSI","PIF"],["RMI","RMI","IFA"],["Transponder & ADS-B","XPDR","PICFA"],["Approach Lighting","ALS","IFA"],["VASI & PAPI","PAPI","PICF"]]],["AEROMEDICAL FACTORS",[["Fitness for Flight (IMSAFE)","FIT","PICFA"],["Hypoxia","HYPX","PICFA"],["Hyperventilation","HYPV","PICFA"],["Spatial Disorientation","SD","PICFA"],["Vision & Night Vision","VIS","PICFA"],["Carbon Monoxide","CO","PICF"],["Alcohol & Medications","MEDS","PICFA"],["Stress & Fatigue","FTG","PICFA"],["Ear & Sinus Block","EAR","PCF"],["Motion Sickness","MOT","PF"],["Decompression Sickness","DCS","PCFA"]]],["PERFORMANCE & PLANNING",[["Weight & Balance","W&B","PCFA"],["Takeoff & Landing Performance","PERF","PCFA"],["Cross-Country Planning","XC","PCF"],["Fuel Planning","FPLN","PICA"]]],["AIRSPACE & NAVIGATION",[["Airspace","ASP","PICF"],["Sectional Charts","SEC","PCF"],["Pilotage & Dead Reckoning","DR","PCF"],["VOR Navigation","VORN","PCF"],["GPS Navigation","GPSN","PCF"],["Lost Procedures","LOST","PF"]]],["AIRPORT & ATC",[["Radio Communication","COM","PICF"],["Airport Operations","APT","PCF"],["IFR Clearances","CLR","IFA"],["Lost Communications","NORDO","IFA"]]],["VFR MANEUVERS",[["Takeoffs & Landings","T/L","PCF"],["Slow Flight","SLOW","PCF"],["Stalls","STALL","PCF"],["Spin Awareness","SPIN","CF"],["Steep Turns","STEEP","PCF"],["Ground Reference","GRM","PF"],["Chandelles","CHAN","CF"],["Lazy Eights","LZY8","CF"],["Eights on Pylons","PYL","CF"],["Steep Spirals","SPRL","CF"],["Power-Off 180","180","CF"],["Emergency Descent","EDES","PCF"]]],["INSTRUMENT FLYING",[["Attitude Instrument Flying","AIF","PIF"],["Scan & Cross-Check","SCAN","PIF"],["Partial Panel","PP","IF"],["Unusual Attitudes","UA","PIF"],["IFR Flight Planning","IFPL","IFA"],["IFR Enroute Charts","ENR","IFA"],["Approach Plates","IAP","IFA"],["Departures (SIDs & ODPs)","DP","IFA"],["Arrivals (STARs)","STAR","IFA"],["Holding","HOLD","IFA"],["Procedure Turns","PT","IF"],["DME Arcs","ARC","IFA"],["ILS Approaches","PREC","IFA"],["RNAV (GPS) Approaches","RNAV","IFA"],["LPV vs. LNAV/VNAV","LPV","IFA"],["VOR Approaches","VORA","IFA"],["Localizer Approaches","LOCA","IFA"],["NDB Approaches","NDBA","IF"],["Approach Minimums","MINS","IFA"],["Missed Approaches","MAP","IFA"],["Circling Approaches","CIRC","IFA"],["Visual & Contact Approaches","VCA","IFA"],["IFR Alternates","ALTN","IFA"]]],["SAFETY & HUMAN FACTORS",[["Decision-Making (ADM)","ADM","PICFA"],["Risk Management","RISK","PICFA"],["Night Operations","NGT","PCF"],["Mountain Flying","MTN","PCF"],["Emergency Procedures","EMER","PICFA"],["Crew Resource Mgmt","CRM","CA"]]],["TEACHING",[["Fundamentals of Instructing","FOI","F"],["Lesson Planning","PLAN","F"],["Effective Debriefs","DBRF","F"],["Student Evaluation","EVAL","F"]]]];
-var LESSONS = {};
+var LESSONS = {"61":{"principle":"Part 61 is about the person. A certificate is a privilege earned by proving competence, and it stays valid only while you keep proving it.","more":"Part 61 answers who may fly, and how they get there: the requirements for every certificate and rating, the medical you need to use it, and the recent experience that keeps it usable. Almost every Part 61 question comes back to one idea: show competence, then keep showing it.","picture":["A certificate is a key, and it never expires. The key alone won't start the airplane, though. It also needs fresh batteries: a valid medical (61.23), a flight review within 24 calendar months (61.56), and recent experience for what you plan to do (61.57). The key proves you learned to fly. The batteries prove you still can."],"memory":[{"hook":"61 is the pilot, 91 is the flight."},{"p":"Ask whether the question is about you (your certificate, logbook, medical, currency) or about how the flight is conducted. If it's about you, look in Part 61."},{"list":[["Certificates and ratings required","61.3"],["Medical duration","61.23"],["Logging time","61.51"],["Flight review","61.56"],["Recent flight experience","61.57"]]}],"check":{"q":"A private pilot has a valid medical and 400 hours but hasn't flown in 26 months. Is the certificate still valid?","a":"Yes. The certificate never expires, but without a current flight review they can't act as PIC. The key is good; the battery is dead."}},"91":{"principle":"Part 91 is about the flight. The PIC has final authority, and the rules exist mainly to protect the people who didn't choose to accept your risk.","more":"Passengers, people on the ground, and other aircraft never signed up for your decisions. Most of Part 91 (right-of-way, minimum altitudes, VFR weather minimums, fuel reserves, equipment) separates your risk from theirs. When a rule seems arbitrary, ask who is it protecting? The answer usually explains the number.","picture":["A ship's captain is the final authority aboard, and if the ship hits a dock, the captain answers for it. Part 91 makes you the captain. 91.3 hands you final authority, including the right to deviate from any rule in an emergency. That authority comes with the duty to explain yourself afterward if asked."],"memory":[{"hook":"Authority and accountability arrive together."},{"p":"For 91.103 preflight action, use NWKRAFT:"},{"acro":[["N","NOTAMs",""],["W","Weather reports and forecasts",""],["K","Known ATC delays",""],["R","Runway lengths at airports of intended use",""],["A","Alternatives if the flight can't be completed as planned",""],["F","Fuel requirements",""],["T","Takeoff and landing performance data",""]]},{"p":"Key sections: PIC authority (91.3), airworthiness (91.7), preflight action (91.103), fuel requirements (91.151 VFR, 91.167 IFR), required equipment (91.205)."}],"check":{"q":"ATC assigns a heading that would put you into a building cumulus. You turn away without permission. Legal?","a":"Only if it's an emergency. 91.123 lets you deviate from a clearance without permission only in an emergency (or for a TCAS resolution advisory). If there's time, say \"unable\" and ask for a new heading. If there isn't, 91.3 lets the PIC deviate to the extent required. Tell ATC as soon as you can (91.123(c)), and be ready to send a written report if the FAA requests one."}},"AWD":{"principle":"Airworthy has two parts. The aircraft must conform to its approved design, and it must be in condition for safe operation. Paperwork proves the first part; your preflight proves the second.","more":"The documents and inspections show the airplane still matches what the FAA certified. Only the person standing next to it can judge whether it's safe today. A fresh annual doesn't fix a flat tire, and a perfect-looking airplane with an overdue AD isn't airworthy. Under 91.7, the PIC makes the final call.","picture":["Think of the airplane's factory photo. To be airworthy, it has to still match that photo, plus any approved modifications on file (conformity). It also has to be in good shape today: no bald tires, no oil streaks, no loose cowl (condition). Paperwork compares the airplane to the photo. Your walk-around checks the condition."],"memory":[{"p":"ARROW for the documents on board:"},{"acro":[["A","Airworthiness certificate","Displayed"],["R","Registration","Valid 7 years under current rules"],["R","Radio station license","International flights only"],["O","Operating limitations","POH/AFM, placards, markings"],["W","Weight and balance data",""]]},{"p":"AV1ATE for required inspections:"},{"acro":[["A","Airworthiness Directives","As each AD specifies · All aircraft (39)"],["V","VOR check","30 days · IFR use of VOR (91.171)"],["1","100-hour","100 hours time in service · Carrying people for hire, or flight instruction for hire in an aircraft the CFI provides (91.409(b))"],["A","Annual","12 calendar months · All aircraft (91.409(a))"],["T","Transponder","24 calendar months · Transponder use (91.413)"],["E","ELT","12 calendar months; battery at 1 hr cumulative use or 50% of its useful life · Most aircraft (91.207)"]]},{"p":"Add the altimeter/static system check: 24 calendar months for IFR in controlled airspace (91.411). For equipment that's inoperative, use 91.213."}],"check":{"q":"The annual was done last week, but you find a cracked exhaust stack on preflight. Is the airplane airworthy?","a":"No. It conforms on paper but fails the condition test. Paperwork can't overrule what you see."}},"CUR":{"principle":"Skills decay when they go unused. Currency is the legal minimum of recent practice, set for the skills that decay fastest and hurt the most when they do.","more":"That's why currency focuses on landings, night landings, and instrument approaches: they're perishable and unforgiving. Currency is a floor, not a standard. Being current means you're legal; being proficient means you're ready. Those are not the same.","picture":["Currency is the \"best by\" date on a carton of milk. Before the date, you can legally serve it. That doesn't promise it tastes good, and the date says nothing about how the carton was stored. A pilot who flew three landings 89 days ago is legal. Whether they're sharp is a separate question only they can answer honestly."],"memory":[{"list":[["Passengers, day: \"3 in 90.\"","Three takeoffs and landings in the preceding 90 days, in the same category, class, and type if a type rating is required (61.57(a)). Tailwheel landings must be to a full stop."],["Passengers, night: \"3 full stops in the dark.\"","Three takeoffs and landings to a full stop, between 1 hour after sunset and 1 hour before sunrise, within 90 days (61.57(b))."],["IFR: \"6 HIT in 6.\"","Six approaches, Holding, and Intercepting and Tracking courses, within the preceding 6 calendar months (61.57(c)). If you miss that, you have another 6 months to regain it with a safety pilot or approved device. After 12 months, you need an instrument proficiency check (61.57(d))."],["Flight review:","Every 24 calendar months (61.56), with at least 1 hour of ground and 1 hour of flight training."]]}],"check":{"q":"You did three daytime landings last week. Can you take your family on a night flight tonight?","a":"No. You can fly at night solo, but carrying passengers at night needs three full-stop landings in the night window. Day landings don't count toward it."}},"END":{"principle":"The FAA can't ride along on every lesson, so it lends its trust to instructors. An endorsement is a CFI putting their own certificate behind a specific claim: \"I trained this pilot, and they're ready for this.\"","more":"That's why endorsements are narrow and specific. Each one names the person, the privilege, the aircraft or conditions, and often an expiration. The trust is limited to exactly what the CFI saw and verified, and nothing more.","picture":["An endorsement is like co-signing a loan. When you co-sign, the bank lends money based on your word, and if it goes bad, it comes back to you. When a CFI signs a solo endorsement, the FAA lets a student fly alone based on the CFI's judgment. The signature is a promise with your name on it."],"memory":[{"hook":"Sign it, own it."},{"p":"Every endorsement answers who, what, which aircraft, what limits, until when. Common ones:"},{"list":[["Pre-solo knowledge test and pre-solo flight training","61.87(b) and (c)"],["Solo flight, valid 90 days","61.87(n)"],["Solo cross-country, and repeated solo cross-country within 50 NM","61.93"],["Knowledge test and practical test","Required before each test"],["Complex, high-performance, tailwheel, and high-altitude","61.31"],["Flight review completion","61.56"]]},{"p":"The FAA's advisory circular on endorsements (AC 61-65) has sample wording for each. CFIs must keep a record of endorsements they give for 3 years (61.189)."}],"check":{"q":"Your student's solo endorsement was signed 95 days ago. They want to go practice landings alone this morning. Can they?","a":"No. A solo endorsement under 61.87(n) lasts 90 days. You need to fly with them, confirm they're still ready, and sign a new one."}},"830":{"principle":"The NTSB is not the FAA. Its job is to find out why something happened so it doesn't happen again, not to punish anyone. Evidence fades fast, so Part 830 is built around speed: notify immediately and preserve the scene.","more":"Keep that purpose in mind and the rules make sense. You call right away because evidence fades. You leave the wreckage alone (830.10) because moving it can destroy the clue that explains the cause. The written report comes later, once the urgent work is done.","picture":["A detective arrives at a scene. The first hour matters most: footprints wash away and witnesses forget. A good detective says \"Don't touch anything, call me now, and write your statement later.\" Part 830 asks the same three things of a pilot."],"memory":[{"hook":"Call now, write in 10, overdue in 7."},{"list":[["Call now:","notify the NTSB immediately after an accident or a listed serious incident (830.5)."],["Write in 10:","file the accident report (NTSB Form 6120.1) within 10 days (830.15)."],["Overdue in 7:","if an overdue aircraft is still missing after 7 days, file the report then (830.15)."],["Incidents:","written report only if the NTSB asks for one."]]},{"p":"An accident (830.2) happens between boarding with intent of flight and when everyone has gotten off. It involves death, serious injury, or substantial damage. Serious injury includes being hospitalized more than 48 hours within 7 days, most fractures, and serious burns. Incidents requiring immediate notice include a flight control malfunction, a crewmember incapacitated, an in-flight fire, a midair collision, and property damage over $25,000 to something other than the aircraft."}],"check":{"q":"Your student taxis out for takeoff and clips a hangar, damaging a wingtip. No one is hurt. Is this an NTSB accident?","a":"No. 830.2 specifically excludes wingtip, landing gear, tire, flap, and brake damage from \"substantial damage.\" It's still worth documenting for insurance and the school, and the NTSB can always request a report."}}};
+var LKEY = "debrief.learned.v1";
+function learned(){ try{ return JSON.parse(localStorage.getItem(LKEY) || "{}") || {}; }catch(e){ return {}; } }
+function markLearned(code){ try{ var m = learned(); m[code] = Date.now(); localStorage.setItem(LKEY, JSON.stringify(m)); }catch(e){} }
+var STEPS = ["Principle","Picture it","Memory aid","Check"];
 var CERTS = [["ALL","All"],["P","Private"],["I","Instrument"],["C","Commercial"],["F","CFI"],["A","ATP"]];
 var CERT_NAME = { P:"Private", I:"Instrument", C:"Commercial", F:"CFI", A:"ATP" };
 var LRN = { cert:"ALL", q:"", y:0 };
 
 function paintTabs(v){
-  var on = v === "home" || v === "learn" || v === "lesson";
+  /* a lesson is a focused flow with its own Back: no tab bar there */
+  var on = v === "home" || v === "learn";
   var bar = $("tabbar"); if(!bar) return;
   bar.hidden = !on; document.body.classList.toggle("tabs", on);
   var learn = v === "learn" || v === "lesson";
@@ -2690,8 +2730,10 @@ function renderLearn(){
     box.appendChild(h);
     var wrap = el("div","ltopics");
     items.forEach(function(t){
-      var b = el("button","ltopic"); b.type = "button";
+      var ready = !!LESSONS[t[1]];
+      var b = el("button", ready ? "ltopic" : "ltopic soon"); b.type = "button";
       b.appendChild(el("span","lcode",t[1])); b.appendChild(document.createTextNode(t[0]));
+      if(learned()[t[1]]){ var tk = el("span","tick","\u2713"); tk.setAttribute("aria-label","done"); b.appendChild(tk); }
       b.addEventListener("click", function(){ openLesson(t, sec[0]); });
       wrap.appendChild(b);
     });
@@ -2699,7 +2741,8 @@ function renderLearn(){
   });
   if(!n) list.appendChild(el("p","lempty","No topics match that search."));
   $("learnSum").textContent = n + " topic" + (n === 1 ? "" : "s") + " · "
-    + (LRN.cert === "ALL" ? "all certificates" : CERT_NAME[LRN.cert]);
+    + (LRN.cert === "ALL" ? "all certificates" : CERT_NAME[LRN.cert])
+    + " \u00b7 " + Object.keys(LESSONS).length + " lessons ready";
 }
 
 function openLesson(t, section){
@@ -2709,20 +2752,86 @@ function openLesson(t, section){
   a.appendChild(el("h1",null,t[0]));
   a.appendChild(el("div","lmeta", section + " · " + t[2].split("").map(function(c){ return CERT_NAME[c]; }).join(", ")));
   var L = LESSONS[t[1]];
-  if(L && L.idea){
-    a.appendChild(el("p","lidea",L.idea));
-    if(L.points && L.points.length){
-      var ol = el("ol","lpoints");
-      L.points.forEach(function(p){ ol.appendChild(el("li",null,p)); });
-      a.appendChild(ol);
-    }
-    if(L.ref) a.appendChild(el("div","lref",L.ref));
-  } else {
+  if(!L){
     var s = el("div","lsoon"); s.appendChild(el("b",null,"Lesson coming soon."));
     s.appendChild(document.createTextNode("The big idea for this topic is being written. It will appear here, and it will work with no signal."));
-    a.appendChild(s);
+    a.appendChild(s); show("lesson"); return;
   }
-  show("lesson");
+  /* four parts, one at a time: Principle, Picture it, Memory aid, Check.
+     The check hides its answer until asked, so it tests understanding. */
+  var rail = el("div","lsteps"); rail.setAttribute("aria-label","Lesson steps");
+  var stage = el("div","lstage"); stage.setAttribute("aria-live","polite");
+  var nav = el("div","lnav");
+  var prev = el("button","prev","Back"); prev.type = "button"; prev.id = "lessonPrev";
+  var next = el("button","next","Next"); next.type = "button"; next.id = "lessonNext";
+  nav.appendChild(prev); nav.appendChild(next);
+  a.appendChild(rail); a.appendChild(stage); a.appendChild(nav);
+  var at = 0, shown = false;
+
+  function para(txt, cls){ var p = el("p", cls || null, txt); stage.appendChild(p); return p; }
+  function blocks(list){
+    list.forEach(function(b){
+      if(b.hook) stage.appendChild(el("div","lhook","“" + b.hook + "”"));
+      else if(b.p) para(b.p);
+      else if(b.acro){
+        var ul = el("ul","lacro");
+        b.acro.forEach(function(r){
+          var li = el("li"); li.appendChild(el("b",null,r[0])); li.appendChild(el("span",null,r[1]));
+          if(r[2]) li.appendChild(el("small",null,r[2]));
+          ul.appendChild(li);
+        });
+        stage.appendChild(ul);
+      } else if(b.list){
+        var ul2 = el("ul","llist");
+        b.list.forEach(function(r){
+          var li = el("li");
+          if(r[0]){ li.appendChild(el("b",null,r[0])); li.appendChild(document.createTextNode(" ")); }
+          li.appendChild(document.createTextNode(r[1])); ul2.appendChild(li);
+        });
+        stage.appendChild(ul2);
+      }
+    });
+  }
+  function paint(){
+    rail.innerHTML = "";
+    STEPS.forEach(function(name, i){
+      var b = el("button", i < at ? "past" : null); b.type = "button";
+      b.appendChild(el("i")); b.appendChild(document.createTextNode(name));
+      if(i === at) b.setAttribute("aria-current","step");
+      b.addEventListener("click", function(){ go(i); });
+      rail.appendChild(b);
+    });
+    stage.innerHTML = "";
+    stage.appendChild(el("div","k", (at + 1) + " of 4 · " + STEPS[at]));
+    if(at === 0){ stage.appendChild(el("p","big",L.principle)); if(L.more) para(L.more, "more"); }
+    if(at === 1){ (Array.isArray(L.picture) ? L.picture : [L.picture]).forEach(function(x){ para(x); }); }
+    if(at === 2){ blocks(L.memory); }
+    if(at === 3){
+      stage.appendChild(el("p","lq",L.check.q));
+      if(shown){
+        var ans = el("div","lans"); ans.appendChild(el("b",null,"Answer. ")); ans.appendChild(document.createTextNode(L.check.a));
+        stage.appendChild(ans);
+      } else stage.appendChild(el("p","lthink","Work it out before you look."));
+    }
+    prev.style.visibility = at === 0 ? "hidden" : "visible";
+    next.textContent = at < 3 ? "Next" : shown ? "Done" : "Show answer";
+  }
+  function go(i){ at = Math.max(0, Math.min(3, i)); if(at < 3) shown = false; paint(); window.scrollTo(0, 0); }
+  prev.addEventListener("click", function(){ go(at - 1); });
+  next.addEventListener("click", function(){
+    if(at < 3) go(at + 1);
+    else if(!shown){ shown = true; paint(); }
+    else { markLearned(t[1]); openLearn(true); }
+  });
+  /* a sideways swipe moves between steps */
+  var x0 = null, y0 = 0;
+  stage.addEventListener("touchstart", function(e){ x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive:true });
+  stage.addEventListener("touchend", function(e){
+    if(x0 === null) return;
+    var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+    if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5){ if(dx < 0 && at < 3) go(at + 1); else if(dx > 0) go(at - 1); }
+  }, { passive:true });
+  paint(); show("lesson");
 }
 
 function openLearn(keep){
