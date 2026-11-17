@@ -371,6 +371,11 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
 #gate .go{width:100%;min-height:56px;margin-top:22px;border:0;border-radius:999px;background:var(--grad);
   color:var(--on-go);font-weight:800;font-size:17px}
 #gate .go:disabled{opacity:.55}
+.tryline{flex:none;margin-top:12px;text-align:center;font-size:13.5px;line-height:1.5;color:var(--ink-2)}
+.tryline b{color:var(--ink);font-weight:600}
+.tryline .lnk{border:0;background:none;padding:6px 4px;font:inherit;font-weight:600;color:var(--go);cursor:pointer}
+.tryline .legal{margin:2px 0 0;font-size:12px;color:var(--ink-3,var(--ink-2))}
+.tryline .legal a{color:inherit}
 #gate .alt{width:100%;min-height:46px;margin-top:10px;border:0;background:none;color:var(--go);font-weight:600;font-size:15px}
 #gate .bad{margin-top:14px;padding:11px 13px;border-radius:11px;border:1px solid var(--unsat,#ff8a3d);
   color:var(--ink);font-size:14.5px;line-height:1.45}
@@ -579,6 +584,7 @@ label.fl{display:block;font-family:var(--mono);font-size:11px;font-weight:600;le
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
     New Flight
   </button>
+  <div class="tryline" id="tryLine" hidden></div>
 
   <div class="status"><span class="sdot" aria-hidden="true"></span>Offline ready</div>
 
@@ -993,7 +999,27 @@ function authReady(){
   });
 }
 
+function paintTry(){
+  var t = $("tryLine");
+  if(!t) return;
+  if(signedIn()){ t.hidden = true; return; }
+  t.hidden = false; t.innerHTML = "";
+  var n = freeLeft(), p = el("p"); p.style.margin = "0";
+  if(n){
+    p.appendChild(el("b", null, n + " free flight" + (n === 1 ? "" : "s") + " left"));
+    p.appendChild(document.createTextNode(" · no sign-up needed. "));
+  } else {
+    p.appendChild(el("b", null, "Free flights used."));
+    p.appendChild(document.createTextNode(" Create a free account to keep grading. "));
+  }
+  var a = el("button", "lnk", "Sign in"); a.type = "button"; a.id = "signInLink";
+  a.addEventListener("click", function(){ openGate({ reason:"signin", dismiss:true }); });
+  p.appendChild(a); t.appendChild(p);
+  t.appendChild(legalLine("By using Debrief you agree to the ", [["terms.html","Terms"],["privacy.html","Privacy Policy"]]));
+}
+
 function paintAcct(){
+  try{ paintTry(); }catch(e){}
   var t = $("acctTitle"), sb = $("acctSub");
   if(!t || !sb) return;
   if(signedIn()){
@@ -1019,15 +1045,15 @@ function initials(n){
 }
 /* access granted by hand: paid, with nothing to renew */
 function isComp(){ return A.plan === "paid" && !A.paidUntil; }
-function openAccount(){ if(signedIn()) openAcctSheet(); else openGate(); }
+function openAccount(){ if(signedIn()) openAcctSheet(); else openGate({ reason:"signin", dismiss:true }); }
 function signOutAsk(){
   if(signedIn()){
     openConfirm("Sign out?",
       (A.email ? A.email + " will be signed out on this phone. " : "") +
-      "Your flights stay on this phone and in your account. You will need to sign in again to grade.",
+      "Your flights stay on this phone and in your account.",
       function(){
         if(S.current && !S.current.done){ toast("Finish or discard the lesson in progress first"); return; }
-        authClear(); paintAcct(); openGate();
+        authClear(); paintAcct(); renderHome();
       },
       "Sign out");
     return;
@@ -1420,7 +1446,7 @@ function legalLine(lead, pages){
    PRICE is whatever the `pricing` row in the database says, cached for
    offline. Amounts are in cents, as Stripe keeps them. */
 var PKEY = "debrief.price.v1";
-var PRICE = { list:2500, sale:500, ends:null, label:"Founding-member price", free:3 };
+var PRICE = { list:2500, sale:999, ends:null, label:"Founding-member price", free:3 };
 var PAID_GRACE = 7 * 864e5;   /* a renewal may post while the phone has no signal */
 
 function priceLoad(){
@@ -1441,9 +1467,14 @@ function isPaid(){
 }
 /* deleting a debrief does not hand a free flight back: the server count
    includes deleted rows, and the larger of the two counts wins */
+var TKEY = "debrief.tries.v1";
+function triesUsed(){ try{ return parseInt(localStorage.getItem(TKEY) || "0", 10) || 0; }catch(e){ return 0; } }
+function countTry(){ try{ localStorage.setItem(TKEY, String(triesUsed() + 1)); }catch(e){} }
 function flightsUsed(){
   var local = S.flights.length + Object.keys(SY.arch || {}).length;
-  return Math.max(A.fc || 0, local);
+  /* every lesson closed out here before signing up counts, deleted or not,
+     including after sign-up: deleting a debrief never hands a free flight back */
+  return Math.max(signedIn() ? (A.fc || 0) : 0, local, triesUsed());
 }
 function freeLeft(){ return Math.max(0, (PRICE.free || 0) - flightsUsed()); }
 function needsPay(){ return signedIn() && !isPaid() && freeLeft() === 0; }
@@ -1647,9 +1678,10 @@ function afterCheckout(){
 
 /* ---------- the gate ----------
    Raised at launch and on sign-out. Never while a lesson is open. */
-function gateNeeded(){ return !signedIn() || !!A.stale; }
+function gateNeeded(){ return !!A.stale; }
 
-function openGate(){
+function openGate(opts){
+  opts = opts || {};
   if($("gate")) return;
   var g = el("div"); g.id = "gate"; g.setAttribute("role","dialog"); g.setAttribute("aria-modal","true");
   var box = el("div","box"); g.appendChild(box); document.body.appendChild(g);
@@ -1667,10 +1699,14 @@ function openGate(){
 
   function stepEmail(){
     clear();
-    box.appendChild(el("h1",null, A.stale ? "Sign in again." : "Create your free account."));
+    var free = PRICE.free || 0, limit = opts.reason === "limit";
+    box.appendChild(el("h1",null, A.stale ? "Sign in again."
+      : limit ? "Your " + free + " free flight" + (free === 1 ? " is" : "s are") + " done."
+      : "Sign in or create an account."));
     box.appendChild(el("p","lede", A.stale
       ? "Your session ended. Your flights are still on this phone."
-      : "Grading is free. An account keeps your flights backed up, so a lost phone is not a lost record."));
+      : limit ? "Create a free account to keep grading. The flights on this phone go into it, backed up and kept in sync across your devices."
+      : "An account keeps your flights backed up and in sync across your phone, iPad and laptop, so a lost phone is not a lost record."));
     var m = field("gateEmail","Email","email");
     m.autocomplete = "email"; m.inputMode = "email"; m.autocapitalize = "none"; m.spellcheck = false;
     m.placeholder = "you@example.com"; m.value = email || A.email || "";
@@ -1678,6 +1714,10 @@ function openGate(){
     var go = el("button","go","Email me a code"); go.type = "button"; box.appendChild(go);
     box.appendChild(el("p","fine","Already have an account? Same step. We email a six-digit code, so there is no password. You need a signal for this once; after that Debrief works with none."));
     box.appendChild(legalLine("By continuing you agree to the ", [["terms.html","Terms"],["privacy.html","Privacy Policy"]]));
+    if(opts.dismiss && !A.stale){
+      var later = el("button","alt","Not now"); later.type = "button"; later.id = "gateLater"; box.appendChild(later);
+      later.addEventListener("click", function(){ if(g.parentNode) g.parentNode.removeChild(g); paintAcct(); });
+    }
     function send(){
       email = (m.value || "").trim();
       if(!email || email.indexOf("@") < 1){ say(er,"That doesn't look like an email address."); return; }
@@ -1762,10 +1802,13 @@ function openGate(){
       return;
     }
     SY.hold = false; syncSave();
+    try{ renderHome(); }catch(e){}
     restoreIfEmpty().catch(function(){ return 0; }).then(function(n){
       if(n) toast(n + " flight" + (n === 1 ? "" : "s") + " restored");
       syncNow();
     });
+    /* signed up to start a flight: carry on to it, or to the paywall */
+    if(opts.then) refreshEntitlement().catch(function(){}).then(opts.then);
   }
 
   stepEmail();
@@ -2437,6 +2480,7 @@ var sessionQuote=null;
 
 /* ---------- HOME ---------- */
 function renderHome(){
+  try{ paintTry(); }catch(e){}
   if(SY && SY.pend && Object.keys(SY.pend).length && signedIn()) setTimeout(syncNow, 300);
   libTheme();
   var c=S.current;
@@ -2506,6 +2550,12 @@ function renderHome(){
   }
 }
 $("newFlightBtn").addEventListener("click",function(){
+  if(!signedIn() && freeLeft() === 0){
+    openGate({ reason:"limit", dismiss:true, then:function(){
+      if(needsPay()) openPaywall(); else { renderPicker(); show("setup"); }
+    } });
+    return;
+  }
   if(needsPay()){ openPaywall(); return; }
   renderPicker(); show("setup");
 });
@@ -3642,6 +3692,7 @@ $("doneBtn").addEventListener("click",function(){
   var c=S.current;
   if(c && !c.done){
     c.done=true;
+    if(!signedIn()) countTry();
     S.flights.unshift(c);
     /* the phone keeps 25; the account keeps all of them. Note which ones
        left so the backup does not mistake them for deletions. */
@@ -4045,8 +4096,8 @@ if(S.current && !S.current.done){
   show("home");
 } else show("home");
 
-/* the gate, then the backup. A lesson already in progress is let through:
-   nobody is asked for an email with the engine running. */
+/* nothing stands between opening the app and grading. Only a session that
+   ended asks to sign in again, and never with a lesson in progress. */
 if(gateNeeded() && !(S.current && !S.current.done)) openGate();
 else syncNow();
 try{ afterCheckout(); }catch(e){}
