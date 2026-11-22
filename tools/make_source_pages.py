@@ -82,10 +82,13 @@ def main():
                 rects = []
                 for phrase in card["q"] + card.get("hl", []):
                     quads = page.search_for(phrase, quads=True)
-                    if not quads and "/" in phrase:
-                        # a line break right after "/" defeats the search: place each side separately
-                        parts = re.split(r"(?<=/)", phrase)
-                        found = [page.search_for(x, quads=True) for x in parts]
+                    if not quads and ("/" in phrase or "-" in phrase):
+                        # a line break right after "/" or "-" defeats the search: place each side
+                        # separately (the search drops a hyphen that ends a line, so retry without it)
+                        parts = [x for x in re.split(r"(?<=[/-])", phrase) if x]
+                        found = [page.search_for(x, quads=True) or
+                                 (x.endswith("-") and page.search_for(x[:-1], quads=True)) or []
+                                 for x in parts]
                         quads = sum(found, []) if all(found) else []
                     if not quads:
                         errors.append(f"{where}: could not place highlight for {phrase!r}")
