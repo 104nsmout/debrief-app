@@ -471,6 +471,27 @@ body.tabs .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
 .lans{margin-top:18px;padding:16px 18px;border-radius:14px;border-left:3px solid var(--go);background:var(--surface);font-size:16.5px;line-height:1.6}
 .lans b{color:var(--go)}
 .lthink{margin-top:14px;font-size:14px;color:var(--ink-2)}
+/* source cards: the FAA text behind each step, word for word */
+.lsrcs{margin-top:26px;display:grid;gap:10px}
+.lsrcs .k{margin-bottom:-2px;color:var(--ink-2)}
+.lsrc{display:block;width:100%;text-align:left;padding:13px 14px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--line);color:var(--ink);font:inherit;cursor:pointer}
+.lsrc:active{border-color:#444}
+.lsrc .ref{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.8px;color:var(--ink-2);text-transform:uppercase}
+.lsrc .ref b{color:var(--go);font-weight:600}
+.lsrc .ref span{margin-left:auto;color:var(--go)}
+.lsrc mark{display:block;margin-top:8px;background:none;color:var(--ink);font-size:14.5px;line-height:1.5;padding-left:10px;border-left:3px solid #FFDB00}
+.lsrc .sec{margin-top:8px;font-size:12.5px;color:var(--ink-2)}
+/* the book page itself, highlighted, full screen */
+.pview{position:fixed;inset:0;z-index:40;background:#000;display:flex;flex-direction:column}
+.pview .bar{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 12px 10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.pview .cap{flex:1;min-width:0;font-family:var(--mono);font-size:11px;line-height:1.45;letter-spacing:.4px;color:var(--ink-2)}
+.pview .cap b{display:block;color:var(--ink);font-size:12px}
+.pview .x{flex:none;border:0;border-radius:999px;padding:9px 16px;background:var(--go);color:var(--on-go);font-weight:700;font-size:15px}
+.pview .scroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;background:#fff}
+.pview img{display:block;width:100%;height:auto;max-width:none}
+.pview .foot{padding:10px 16px calc(12px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line);font-size:13px;color:var(--ink-2);display:flex;gap:10px;align-items:center;justify-content:space-between}
+.pview .foot a{color:var(--go)}
+.pview .miss{padding:40px 20px;color:#444;font-size:15px;line-height:1.5;text-align:center}
 .lplay{display:flex;align-items:center;gap:12px;margin-top:14px;padding:8px 10px 8px 8px;border-radius:999px;
   background:var(--surface);border:1px solid var(--line)}
 .lplay .pp{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--go);color:var(--on-go);
@@ -911,6 +932,7 @@ body.tabs .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
 
 </div>
 
+<script src="lessons.js"></script>
 <script>
 (function(){
 "use strict";
@@ -2698,7 +2720,9 @@ function renderHome(){
    TOPICS: [section, [[label, code, certificates], ...]]. LESSONS: code ->
    { idea, points:[...], ref }. Both ship inside the app: no signal needed. */
 var TOPICS = [["REGULATIONS & PAPERWORK",[["14 CFR Part 61","61","PICFA"],["14 CFR Part 91","91","PICFA"],["Airworthiness & Documents","AWD","PICF"],["Pilot Currency","CUR","PICFA"],["Endorsements","END","F"],["NTSB 830 Reporting","830","PCFA"]]],["WEATHER",[["Weather Theory","WX","PICFA"],["METARs & TAFs","MTR","PICFA"],["Charts & Graphics","PROG","PICF"],["Icing","ICE","ICFA"],["Thunderstorms","TS","PICFA"],["Density Altitude","DA","PCF"]]],["AIRCRAFT & SYSTEMS",[["Aerodynamics","AERO","PCFA"],["Powerplant","ENG","PCF"],["Propeller","PROP","PCF"],["Fuel System","FUEL","PCF"],["Electrical System","ELEC","PICF"],["Flight Controls & Trim","CTRL","PCF"],["Landing Gear & Brakes","GEAR","PCF"],["Ice Protection","DICE","ICFA"],["Oxygen & Pressurization","O2","CA"],["Glass Cockpit (G1000)","G1K","ICF"],["Autopilot","AP","ICA"],["Complex & High-Performance","CPLX","CF"],["High-Altitude Ops","ALT","CA"]]],["FLIGHT INSTRUMENTS",[["Pitot-Static System","P/S","PIF"],["Airspeed Indicator","ASI","PIF"],["Altimeter","ALTM","PIF"],["Vertical Speed Indicator","VSI","PIF"],["Gyroscopic Instruments","GYRO","PIF"],["Vacuum System","VAC","PIF"],["Magnetic Compass","MAG","PIF"],["AHRS & ADC","AHRS","IF"],["Instrument Failures","FAIL","IF"]]],["NAV & APPROACH EQUIPMENT",[["VOR","VOR","PICFA"],["DME","DME","IFA"],["ILS","ILS","IFA"],["Localizer","LOC","IFA"],["Glideslope","G/S","IFA"],["Marker Beacons","MKR","IF"],["ADF & NDB","ADF","IF"],["GPS & WAAS","GPS","PICFA"],["RAIM","RAIM","IFA"],["CDI","CDI","PIF"],["HSI","HSI","PIF"],["RMI","RMI","IFA"],["Transponder & ADS-B","XPDR","PICFA"],["Approach Lighting","ALS","IFA"],["VASI & PAPI","PAPI","PICF"]]],["AEROMEDICAL FACTORS",[["Fitness for Flight (IMSAFE)","FIT","PICFA"],["Hypoxia","HYPX","PICFA"],["Hyperventilation","HYPV","PICFA"],["Spatial Disorientation","SD","PICFA"],["Vision & Night Vision","VIS","PICFA"],["Carbon Monoxide","CO","PICF"],["Alcohol & Medications","MEDS","PICFA"],["Stress & Fatigue","FTG","PICFA"],["Ear & Sinus Block","EAR","PCF"],["Motion Sickness","MOT","PF"],["Decompression Sickness","DCS","PCFA"]]],["PERFORMANCE & PLANNING",[["Weight & Balance","W&B","PCFA"],["Takeoff & Landing Performance","PERF","PCFA"],["Cross-Country Planning","XC","PCF"],["Fuel Planning","FPLN","PICA"]]],["AIRSPACE & NAVIGATION",[["Airspace","ASP","PICF"],["Sectional Charts","SEC","PCF"],["Pilotage & Dead Reckoning","DR","PCF"],["VOR Navigation","VORN","PCF"],["GPS Navigation","GPSN","PCF"],["Lost Procedures","LOST","PF"]]],["AIRPORT & ATC",[["Radio Communication","COM","PICF"],["Airport Operations","APT","PCF"],["IFR Clearances","CLR","IFA"],["Lost Communications","NORDO","IFA"]]],["VFR MANEUVERS",[["Takeoffs & Landings","T/L","PCF"],["Slow Flight","SLOW","PCF"],["Stalls","STALL","PCF"],["Spin Awareness","SPIN","CF"],["Steep Turns","STEEP","PCF"],["Ground Reference","GRM","PF"],["Chandelles","CHAN","CF"],["Lazy Eights","LZY8","CF"],["Eights on Pylons","PYL","CF"],["Steep Spirals","SPRL","CF"],["Power-Off 180","180","CF"],["Emergency Descent","EDES","PCF"]]],["INSTRUMENT FLYING",[["Attitude Instrument Flying","AIF","PIF"],["Scan & Cross-Check","SCAN","PIF"],["Partial Panel","PP","IF"],["Unusual Attitudes","UA","PIF"],["IFR Flight Planning","IFPL","IFA"],["IFR Enroute Charts","ENR","IFA"],["Approach Plates","IAP","IFA"],["Departures (SIDs & ODPs)","DP","IFA"],["Arrivals (STARs)","STAR","IFA"],["Holding","HOLD","IFA"],["Procedure Turns","PT","IF"],["DME Arcs","ARC","IFA"],["ILS Approaches","PREC","IFA"],["RNAV (GPS) Approaches","RNAV","IFA"],["LPV vs. LNAV/VNAV","LPV","IFA"],["VOR Approaches","VORA","IFA"],["Localizer Approaches","LOCA","IFA"],["NDB Approaches","NDBA","IF"],["Approach Minimums","MINS","IFA"],["Missed Approaches","MAP","IFA"],["Circling Approaches","CIRC","IFA"],["Visual & Contact Approaches","VCA","IFA"],["IFR Alternates","ALTN","IFA"]]],["SAFETY & HUMAN FACTORS",[["Decision-Making (ADM)","ADM","PICFA"],["Risk Management","RISK","PICFA"],["Night Operations","NGT","PCF"],["Mountain Flying","MTN","PCF"],["Emergency Procedures","EMER","PICFA"],["Crew Resource Mgmt","CRM","CA"]]],["TEACHING",[["Fundamentals of Instructing","FOI","F"],["Lesson Planning","PLAN","F"],["Effective Debriefs","DBRF","F"],["Student Evaluation","EVAL","F"]]]];
-var LESSONS = {};
+/* lesson text, FAA quotes and page images live in lessons.js (see tools/make_source_pages.py) */
+var LEARN = (window.LEARN && window.LEARN.lessons) ? window.LEARN : { books:{}, lessons:{} };
+var LESSONS = LEARN.lessons;
 var anyReady = Object.keys(LESSONS).length > 0;
 var LKEY = "debrief.learned.v1";
 function learned(){ try{ return JSON.parse(localStorage.getItem(LKEY) || "{}") || {}; }catch(e){ return {}; } }
@@ -2754,7 +2778,7 @@ function renderLearn(){
   if(!n) list.appendChild(el("p","lempty","No topics match that search."));
   $("learnSum").textContent = n + " topic" + (n === 1 ? "" : "s") + " · "
     + (LRN.cert === "ALL" ? "all certificates" : CERT_NAME[LRN.cert])
-    + (anyReady ? " \u00b7 " + Object.keys(LESSONS).length + " lessons ready" : "");
+    + (anyReady ? " \u00b7 " + Object.keys(LESSONS).length + (Object.keys(LESSONS).length === 1 ? " lesson ready" : " lessons ready") : "");
 }
 
 /* ---------- narration ----------
@@ -2873,6 +2897,105 @@ function voPaint(){
   u.tm.textContent = (t > 0.2 ? mmss(t) + " / " : "") + mmss(d);
 }
 
+/* ---------- sources ----------
+   Every step carries the FAA text it is built on (L.src[step]): the quotes,
+   word for word, and a picture of the book page with those lines
+   highlighted. The pictures are fetched the first time a lesson opens, so
+   the service worker keeps them for a flight with no signal. */
+function srcRef(s){ return s.b + " · Ch. " + s.ch + " · p. " + s.p; }
+function savePages(L){
+  (L.src || []).forEach(function(step){ (step || []).forEach(function(s){
+    if(s.img) fetch(s.img).catch(function(){});
+  }); });
+}
+function drawSources(stage, list){
+  if(!list || !list.length) return;
+  var box = el("div","lsrcs");
+  box.appendChild(el("div","k","From the FAA"));
+  list.forEach(function(s){
+    var b = el("button","lsrc"); b.type = "button";
+    b.setAttribute("aria-label", "Open " + srcRef(s) + ", highlighted");
+    var r = el("div","ref"); r.appendChild(el("b",null,s.b));
+    r.appendChild(document.createTextNode("Ch. " + s.ch + " · p. " + s.p));
+    r.appendChild(el("span",null,"View page ›"));
+    b.appendChild(r);
+    s.q.forEach(function(q){ b.appendChild(el("mark",null,"“" + q + "”")); });
+    b.appendChild(el("div","sec",s.sec));
+    b.addEventListener("click", function(){ openPage(s); });
+    box.appendChild(b);
+  });
+  stage.appendChild(box);
+}
+function openPage(s){
+  var book = LEARN.books[s.b] || {};
+  var wrap = el("div","pview"); wrap.setAttribute("role","dialog"); wrap.setAttribute("aria-modal","true");
+  var bar = el("div","bar"), cap = el("div","cap");
+  cap.appendChild(el("b",null,(book.name || s.b) + ", p. " + s.p));
+  cap.appendChild(document.createTextNode((book.ed || "") + " · Ch. " + s.ch + " · " + s.sec));
+  var x = el("button","x","Done"); x.type = "button";
+  bar.appendChild(cap); bar.appendChild(x);
+  var sc = el("div","scroll"), img = el("img");
+  img.alt = "Page " + s.p + " of the " + (book.name || s.b) + ", with the quoted lines highlighted";
+  sc.appendChild(img);
+  var foot = el("div","foot");
+  foot.appendChild(el("span",null,"Pinch or double-tap to zoom"));
+  if(book.url){
+    var a = el("a",null,"Full handbook on faa.gov"); a.href = book.url + "#page=" + s.pdf;
+    a.target = "_blank"; a.rel = "noopener"; foot.appendChild(a);
+  }
+  wrap.appendChild(bar); wrap.appendChild(sc); wrap.appendChild(foot);
+  document.body.appendChild(wrap);
+
+  function close(){ document.removeEventListener("keydown", key); if(wrap.parentNode) wrap.parentNode.removeChild(wrap); }
+  function key(ev){ if(ev.key === "Escape") close(); }
+  x.addEventListener("click", close);
+  document.addEventListener("keydown", key);
+  x.focus();
+
+  /* open zoomed in so the highlighted lines fill the screen width: a whole
+     page at phone width is too small to read */
+  img.onload = function(){
+    var z = Math.max(1, Math.min(2.4, 0.92 / (s.w || 1)));
+    scale = z; img.style.width = (z * 100) + "%";
+    var W = img.offsetWidth, H = img.offsetHeight;
+    sc.scrollLeft = Math.max(0, (s.x || 0) * W - (sc.clientWidth - (s.w || 1) * W) / 2);
+    sc.scrollTop = Math.max(0, (s.y || 0) * H - sc.clientHeight * 0.25);
+  };
+  img.onerror = function(){
+    sc.innerHTML = "";
+    sc.appendChild(el("p","miss","This page isn’t saved on this phone yet. Open the lesson once with a signal and it will be kept for offline use. The quoted text is on the lesson card."));
+  };
+  img.src = s.img;
+
+  /* zoom: the scale is the image width; keep the point under the fingers still */
+  var scale = 1;
+  function zoomTo(n, cx, cy){
+    n = Math.max(1, Math.min(4, n));
+    var r = sc.getBoundingClientRect(), px = cx - r.left, py = cy - r.top;
+    var fx = (sc.scrollLeft + px) / (scale), fy = (sc.scrollTop + py) / (scale);
+    scale = n; img.style.width = (n * 100) + "%";
+    sc.scrollLeft = fx * n - px; sc.scrollTop = fy * n - py;
+  }
+  var d0 = 0, s0 = 1, mid = null, lastTap = 0;
+  function dist(t){ return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
+  sc.addEventListener("touchstart", function(e){
+    if(e.touches.length === 2){ d0 = dist(e.touches); s0 = scale; }
+    else if(e.touches.length === 1){
+      var now = Date.now();
+      if(now - lastTap < 300){ var t = e.touches[0]; zoomTo(scale > 1.4 ? 1 : 2.5, t.clientX, t.clientY); lastTap = 0; }
+      else lastTap = now;
+    }
+  }, { passive:true });
+  sc.addEventListener("touchmove", function(e){
+    if(e.touches.length !== 2 || !d0) return;
+    e.preventDefault();
+    mid = { x:(e.touches[0].clientX + e.touches[1].clientX) / 2, y:(e.touches[0].clientY + e.touches[1].clientY) / 2 };
+    zoomTo(s0 * dist(e.touches) / d0, mid.x, mid.y);
+  }, { passive:false });
+  sc.addEventListener("touchend", function(e){ if(e.touches.length < 2) d0 = 0; }, { passive:true });
+  sc.addEventListener("dblclick", function(e){ zoomTo(scale > 1.4 ? 1 : 2.5, e.clientX, e.clientY); });
+}
+
 function openLesson(t, section){
   LRN.y = window.scrollY || 0;
   VO.listening = false; voStop(); saveLessonAudio(t[1]);
@@ -2886,6 +3009,7 @@ function openLesson(t, section){
     s.appendChild(document.createTextNode("The big idea for this topic is being written. It will appear here, and it will work with no signal."));
     a.appendChild(s); show("lesson"); return;
   }
+  savePages(L);
   /* four parts, one at a time: Principle, Picture it, Memory aid, Check.
      The check hides its answer until asked, so it tests understanding. */
   var rail = el("div","lsteps"); rail.setAttribute("aria-label","Lesson steps");
@@ -2945,6 +3069,8 @@ function openLesson(t, section){
         stage.appendChild(ans);
       } else stage.appendChild(el("p","lthink","Work it out before you look."));
     }
+    /* the check's sources would give the answer away: only after it is shown */
+    if(L.src && (at < 3 || shown)) drawSources(stage, L.src[at]);
     prev.style.visibility = at === 0 ? "hidden" : "visible";
     next.textContent = at < 3 ? "Next" : shown ? "Done" : "Show answer";
   }

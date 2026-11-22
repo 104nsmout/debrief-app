@@ -1,12 +1,16 @@
 /* Maneuver Debrief — offline service worker.
    VERSION is injected at build time from a hash of index.html, so every
    rebuild invalidates the old cache automatically. Nothing to bump by hand. */
-var VERSION = "56e53807bb39";
+var VERSION = "e4dfef93619d";
 var CACHE   = "debrief-" + VERSION;
+/* highlighted FAA book pages: file names carry a hash of the image, so a
+   saved copy is never stale and outlives app updates */
+var PAGES   = "debrief-pages";
 
 var SHELL = [
   "./",
   "./index.html",
+  "./lessons.js",
   "./manifest.webmanifest",
   "./icons/icon-180.png",
   "./icons/icon-192.png",
@@ -34,8 +38,8 @@ self.addEventListener("activate", function (e) {
   e.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(keys.map(function (k) {
-        /* narration lives in its own cache, managed by the app: keep it */
-        if (k !== CACHE && k !== "debrief-audio") return caches.delete(k);
+        /* narration and source pages live in their own caches: an app update keeps them */
+        if (k !== CACHE && k !== "debrief-audio" && k !== PAGES) return caches.delete(k);
       }));
     }).then(function () { return self.clients.claim(); })
   );
@@ -84,6 +88,18 @@ self.addEventListener("fetch", function (e) {
   /* audio is fetched and cached by the app itself; players ask for byte
      ranges, which a whole cached file would answer wrongly on iPhone */
   if (url.origin === self.location.origin && url.pathname.indexOf("/audio/") !== -1) return;
+
+  if (url.origin === self.location.origin && url.pathname.indexOf("/pages/") !== -1) {
+    e.respondWith(caches.open(PAGES).then(function (cache) {
+      return cache.match(req).then(function (hit) {
+        return hit || fetch(req).then(function (res) {
+          if (res && res.ok) cache.put(req, res.clone()).catch(function () {});
+          return res;
+        });
+      });
+    }));
+    return;
+  }
 
   if (url.origin === self.location.origin) {
     e.respondWith(staleWhileRevalidate(req));

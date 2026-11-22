@@ -35,6 +35,12 @@ The whole app is one ~4,600-line `index.html`: inline CSS, an early `<script>` f
 ### Service worker (`app/sw.js`)
 Stale-while-revalidate for the shell and the font/Sentry CDNs; the `debrief-audio` cache is managed by the app and must be kept on activate. **Whenever `app/index.html` (or another shell file) changes, change `VERSION` in `sw.js`** to a new 12-hex-char value (e.g. first 12 chars of `sha256sum app/index.html`). Despite the file's comment, there is no build step that does this; every app commit bumps it by hand. `app/vercel.json` makes `index.html` and `sw.js` uncached at the edge so updates land on the next launch.
 
+### Learn tab lessons
+- Topics are the `TOPICS` list in `index.html`; lesson content is `app/lessons.js` (`window.LEARN = { books, lessons }`), keyed by topic code (e.g. `HYPX`). Decisions behind the format are in `docs/DECISIONS.md`.
+- Each lesson has four steps (`principle`/`more`, `picture`, `memory`, `check`) and `src[step]`: source cards with verbatim FAA quotes and the cited book, chapter, printed page `p` and PDF page `pdf`. Lesson text must come only from official FAA/federal sources, and the owner (a CFI) approves each lesson before it ships.
+- After editing `lessons.js`, run `python tools/make_source_pages.py` (Python 3.13 + PyMuPDF installed for this user; `python` may not be on PATH: use `%LOCALAPPDATA%\Programs\Python\Python313\python.exe`). It fails if any quote isn't word for word on its cited page, renders highlighted page JPEGs into `app/pages/` (content-hashed names), and writes `img`/`x`/`y`/`w` back into `lessons.js`. The FAA PDFs it reads live in git-ignored `sources/`; re-download from faa.gov if missing.
+- The service worker keeps page images in their own `debrief-pages` cache (cache-first, survives app updates). `lessons.js` is part of the app shell, so bump `VERSION` in `sw.js` when it changes too.
+
 ## The site (`site/`)
 Plain hand-written HTML pages, each with its own inline CSS and a duplicated header/footer nav: adding or renaming a page means editing the nav in every page. `site/index.html` reads live prices from the Supabase `pricing` table with the publishable key, so price copy should come from there, not be hard-coded.
 
