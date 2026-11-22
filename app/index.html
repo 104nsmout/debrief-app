@@ -511,11 +511,11 @@ body.tabs .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
 .pview .cap{flex:1;min-width:0;font-family:var(--mono);font-size:11px;line-height:1.45;letter-spacing:.4px;color:var(--ink-2)}
 .pview .cap b{display:block;color:var(--ink);font-size:12px}
 .pview .x{flex:none;border:0;border-radius:999px;padding:9px 16px;background:var(--go);color:var(--on-go);font-weight:700;font-size:15px}
-.pview .scroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;background:#fff}
-.pview img{display:block;width:100%;height:auto;max-width:none}
+.pview .scroll{flex:1;display:flex;padding:12px;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;background:#2a2a2a}
+.pview img{display:block;flex:none;margin:auto;width:100%;height:auto;max-width:none;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.5)}
 .pview .foot{padding:10px 16px calc(12px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line);font-size:13px;color:var(--ink-2);display:flex;gap:10px;align-items:center;justify-content:space-between}
 .pview .foot a{color:var(--go)}
-.pview .miss{padding:40px 20px;color:#444;font-size:15px;line-height:1.5;text-align:center}
+.pview .miss{margin:auto;padding:40px 20px;color:#ccc;font-size:15px;line-height:1.5;text-align:center}
 .lplay{display:flex;align-items:center;gap:12px;margin-top:14px;padding:8px 10px 8px 8px;border-radius:999px;
   background:var(--surface);border:1px solid var(--line)}
 .lplay .pp{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--go);color:var(--on-go);
@@ -2971,14 +2971,13 @@ function openPage(s){
   document.addEventListener("keydown", key);
   x.focus();
 
-  /* open zoomed in so the highlighted lines fill the screen width: a whole
-     page at phone width is too small to read */
+  /* open on the whole page, like a document: fit it to the screen both ways,
+     highlights visible, and let the reader zoom in from there */
+  var base = 1;
   img.onload = function(){
-    var z = Math.max(1, Math.min(2.4, 0.92 / (s.w || 1)));
-    scale = z; img.style.width = (z * 100) + "%";
-    var W = img.offsetWidth, H = img.offsetHeight;
-    sc.scrollLeft = Math.max(0, (s.x || 0) * W - (sc.clientWidth - (s.w || 1) * W) / 2);
-    sc.scrollTop = Math.max(0, (s.y || 0) * H - sc.clientHeight * 0.25);
+    var aw = sc.clientWidth - 24, ah = sc.clientHeight - 24;
+    base = Math.min(1, (ah * img.naturalWidth / img.naturalHeight) / aw);
+    scale = 1; img.style.width = (base * 100) + "%";
   };
   img.onerror = function(){
     sc.innerHTML = "";
@@ -2990,10 +2989,14 @@ function openPage(s){
   var scale = 1;
   function zoomTo(n, cx, cy){
     n = Math.max(1, Math.min(4, n));
-    var r = sc.getBoundingClientRect(), px = cx - r.left, py = cy - r.top;
-    var fx = (sc.scrollLeft + px) / (scale), fy = (sc.scrollTop + py) / (scale);
-    scale = n; img.style.width = (n * 100) + "%";
-    sc.scrollLeft = fx * n - px; sc.scrollTop = fy * n - py;
+    /* measure against the page itself: it is centred while it fits, so the
+       space around it changes as it grows */
+    var r0 = img.getBoundingClientRect();
+    var fx = (cx - r0.left) / r0.width, fy = (cy - r0.top) / r0.height;
+    scale = n; img.style.width = (n * base * 100) + "%";
+    var r1 = img.getBoundingClientRect();
+    sc.scrollLeft += r1.left + fx * r1.width - cx;
+    sc.scrollTop += r1.top + fy * r1.height - cy;
   }
   var d0 = 0, s0 = 1, mid = null, lastTap = 0;
   function dist(t){ return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }

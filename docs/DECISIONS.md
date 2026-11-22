@@ -14,6 +14,7 @@ One line per decision, and why.
 - Same pilot five; Hypoxia reworked first, reusing its sources.
 - Library stays free for now; revisit paid access when it covers most topics.
 - Teaching aids are written descriptions for now; diagrams later.
+- The page viewer opens on the whole page (fitted to the screen, on a dark backdrop) with the highlights visible, and the reader pinches or double-taps to zoom: opening zoomed onto a paragraph felt abrupt and less professional.
 - One highlighted image per book page per topic (all that topic's quotes from the page), shared by its cards: fewer, smaller downloads and one chip per page.
 
 ## Learn tab lessons (2026-11-21, format superseded above; sourcing, page-image, review and narration decisions still stand)
