@@ -2,7 +2,21 @@
 
 One line per decision, and why.
 
-## Learn tab lessons (2026-11-21)
+## Learn tab becomes a CFI teaching library (2026-11-21, supersedes the lesson format below)
+
+- Each topic is a reference page for the instructor, not a lesson for the student: CFIs are the customers, and briefing prep is the moment it gets used.
+- Written instructor to instructor; students can still open it.
+- One scrollable page per topic, readable in about a minute, with a jump bar: no step-by-step flow.
+- Six sections in order: Quick take, Common mistakes, Analogies, Teaching aids, Scenarios (answer hidden), Resources.
+- Facts (quick take, mistakes, scenario answers) carry FAA source chips that open the highlighted page; analogies and teaching aids are labelled "Teaching idea", drafted by Claude and approved by the CFI.
+- Resources list the related ACS elements (Private, Commercial, CFI ACS), verified against the ACS PDFs like any other source.
+- Keep the certificate filter; drop the "done" checkmarks (a reference library has nothing to complete).
+- Same pilot five; Hypoxia reworked first, reusing its sources.
+- Library stays free for now; revisit paid access when it covers most topics.
+- Teaching aids are written descriptions for now; diagrams later.
+- One highlighted image per book page per topic (all that topic's quotes from the page), shared by its cards: fewer, smaller downloads and one chip per page.
+
+## Learn tab lessons (2026-11-21, format superseded above; sourcing, page-image, review and narration decisions still stand)
 
 - Lessons are sourced only from official FAA/federal material (handbooks, AIM, 14 CFR, ACs, ACS): every fact must trace back to the FAA.
 - Source PDFs live in a git-ignored `sources/` folder, downloaded from faa.gov: they are hundreds of MB and must never ship to users' phones.

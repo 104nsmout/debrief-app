@@ -471,9 +471,33 @@ body.tabs .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
 .lans{margin-top:18px;padding:16px 18px;border-radius:14px;border-left:3px solid var(--go);background:var(--surface);font-size:16.5px;line-height:1.6}
 .lans b{color:var(--go)}
 .lthink{margin-top:14px;font-size:14px;color:var(--ink-2)}
+/* library page */
+.ljump{position:sticky;top:0;z-index:5;display:flex;gap:6px;overflow-x:auto;margin:18px -16px 0;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--line);scrollbar-width:none}
+.ljump::-webkit-scrollbar{display:none}
+.ljump button{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:7px 12px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.lpart{scroll-margin-top:64px;margin-top:30px}
+.lpart h2{display:flex;align-items:center;gap:10px;margin:0 0 12px;font-family:var(--display);font-weight:800;font-size:21px;letter-spacing:-.2px}
+.ltag{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--ink-2);border:1px dashed #444;border-radius:6px;padding:3px 6px}
+.lquick{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.lquick li{padding:12px 14px 12px 16px;border-left:3px solid var(--go);background:var(--surface);border-radius:4px 12px 12px 4px}
+.lquick p,.lmis p,.laid p,.lscn p{margin:0;font-size:15.5px;line-height:1.55;color:var(--ink)}
+.lrefs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.lrefs:empty{display:none}
+.lref{border:1px solid color-mix(in srgb,#FFDB00 45%,transparent);background:color-mix(in srgb,#FFDB00 10%,transparent);color:#FFE45C;border-radius:7px;padding:4px 8px;font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.3px}
+.lmis,.laid,.lscn{padding:13px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);margin-top:10px}
+.lmis p.said{color:var(--warn);font-style:italic;margin-bottom:6px}
+.lanal{margin:10px 0 0;padding:12px 14px;border-radius:14px;background:var(--go-soft);border:1px solid color-mix(in srgb,var(--go) 30%,transparent);font-size:15.5px;line-height:1.55;color:var(--ink)}
+.laid b{display:block;margin-bottom:4px;font-family:var(--display);font-size:16px;color:var(--go)}
+.lscn p.q{font-family:var(--display);font-weight:700;font-size:16.5px;line-height:1.4}
+.lscn .show{margin-top:10px;border:0;background:none;padding:0;color:var(--go);font-weight:700;font-size:14.5px}
+.lscn .ans{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.lacs .code{margin-top:8px;font-size:14.5px;color:var(--ink)}
+.lacs .code b{font-family:var(--mono);font-size:12.5px;color:var(--go);font-weight:600}
+.lchecked{margin:30px 0 10px;font-size:12.5px;line-height:1.5;color:var(--ink-2)}
 /* source cards: the FAA text behind each step, word for word */
 .lsrcs{margin-top:26px;display:grid;gap:10px}
-.lsrcs .k{margin-bottom:-2px;color:var(--ink-2)}
+.lsrcs .k{margin-bottom:-2px;color:var(--ink-2);font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase}
+.lpart .lsrcs:first-of-type{margin-top:4px}
 .lsrc{display:block;width:100%;text-align:left;padding:13px 14px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--line);color:var(--ink);font:inherit;cursor:pointer}
 .lsrc:active{border-color:#444}
 .lsrc .ref{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.8px;color:var(--ink-2);text-transform:uppercase}
@@ -2724,10 +2748,6 @@ var TOPICS = [["REGULATIONS & PAPERWORK",[["14 CFR Part 61","61","PICFA"],["14 C
 var LEARN = (window.LEARN && window.LEARN.lessons) ? window.LEARN : { books:{}, lessons:{} };
 var LESSONS = LEARN.lessons;
 var anyReady = Object.keys(LESSONS).length > 0;
-var LKEY = "debrief.learned.v1";
-function learned(){ try{ return JSON.parse(localStorage.getItem(LKEY) || "{}") || {}; }catch(e){ return {}; } }
-function markLearned(code){ try{ var m = learned(); m[code] = Date.now(); localStorage.setItem(LKEY, JSON.stringify(m)); }catch(e){} }
-var STEPS = ["Principle","Picture it","Memory aid","Check"];
 var CERTS = [["ALL","All"],["P","Private"],["I","Instrument"],["C","Commercial"],["F","CFI"],["A","ATP"]];
 var CERT_NAME = { P:"Private", I:"Instrument", C:"Commercial", F:"CFI", A:"ATP" };
 var LRN = { cert:"ALL", q:"", y:0 };
@@ -2769,7 +2789,6 @@ function renderLearn(){
       /* dim the unwritten ones only once some are written */
       var b = el("button", ready || !anyReady ? "ltopic" : "ltopic soon"); b.type = "button";
       b.appendChild(el("span","lcode",t[1])); b.appendChild(document.createTextNode(t[0]));
-      if(learned()[t[1]]){ var tk = el("span","tick","\u2713"); tk.setAttribute("aria-label","done"); b.appendChild(tk); }
       b.addEventListener("click", function(){ openLesson(t, sec[0]); });
       wrap.appendChild(b);
     });
@@ -2778,7 +2797,7 @@ function renderLearn(){
   if(!n) list.appendChild(el("p","lempty","No topics match that search."));
   $("learnSum").textContent = n + " topic" + (n === 1 ? "" : "s") + " · "
     + (LRN.cert === "ALL" ? "all certificates" : CERT_NAME[LRN.cert])
-    + (anyReady ? " \u00b7 " + Object.keys(LESSONS).length + (Object.keys(LESSONS).length === 1 ? " lesson ready" : " lessons ready") : "");
+    + (anyReady ? " \u00b7 " + Object.keys(LESSONS).length + (Object.keys(LESSONS).length === 1 ? " topic written" : " topics written") : "");
 }
 
 /* ---------- narration ----------
@@ -2898,20 +2917,20 @@ function voPaint(){
 }
 
 /* ---------- sources ----------
-   Every step carries the FAA text it is built on (L.src[step]): the quotes,
-   word for word, and a picture of the book page with those lines
-   highlighted. The pictures are fetched the first time a lesson opens, so
+   Every topic carries the FAA text it is built on (L.src, by id): the
+   quotes, word for word, and a picture of the book page with those lines
+   highlighted. The pictures are fetched the first time a topic opens, so
    the service worker keeps them for a flight with no signal. */
 function srcRef(s){ return s.b + " · Ch. " + s.ch + " · p. " + s.p; }
 function savePages(L){
-  (L.src || []).forEach(function(step){ (step || []).forEach(function(s){
-    if(s.img) fetch(s.img).catch(function(){});
-  }); });
+  Object.keys(L.src || {}).forEach(function(id){
+    var s = L.src[id]; if(s && s.img) fetch(s.img).catch(function(){});
+  });
 }
 function drawSources(stage, list){
   if(!list || !list.length) return;
   var box = el("div","lsrcs");
-  box.appendChild(el("div","k","From the FAA"));
+  box.appendChild(el("div","k","FAA references"));
   list.forEach(function(s){
     var b = el("button","lsrc"); b.type = "button";
     b.setAttribute("aria-label", "Open " + srcRef(s) + ", highlighted");
@@ -2996,100 +3015,112 @@ function openPage(s){
   sc.addEventListener("dblclick", function(e){ zoomTo(scale > 1.4 ? 1 : 2.5, e.clientX, e.clientY); });
 }
 
+/* one library page: everything a CFI needs to brief a topic, on one scroll.
+   Facts carry chips naming their FAA source; a chip opens the book page. */
+function srcShort(s){ return s.code || (s.b + " " + s.p); }
+function refChips(L, ids){
+  var row = el("div","lrefs"), seen = {};
+  (ids || []).forEach(function(id){
+    var s = L.src[id]; if(!s || seen[srcShort(s)]) return;
+    /* two quotes from one page share one highlighted picture: one chip */
+    seen[srcShort(s)] = true;
+    var b = el("button","lref",srcShort(s)); b.type = "button";
+    b.setAttribute("aria-label", "Source: " + srcRef(s) + ". Open the page");
+    b.addEventListener("click", function(ev){ ev.stopPropagation(); openPage(s); });
+    row.appendChild(b);
+  });
+  return row;
+}
 function openLesson(t, section){
   LRN.y = window.scrollY || 0;
-  VO.listening = false; voStop(); saveLessonAudio(t[1]);
+  VO.listening = false; voStop();
   var a = $("lessonBody"); a.innerHTML = "";
   a.appendChild(el("span","lcode",t[1]));
   a.appendChild(el("h1",null,t[0]));
   a.appendChild(el("div","lmeta", section + " · " + t[2].split("").map(function(c){ return CERT_NAME[c]; }).join(", ")));
   var L = LESSONS[t[1]];
   if(!L){
-    var s = el("div","lsoon"); s.appendChild(el("b",null,"Lesson coming soon."));
-    s.appendChild(document.createTextNode("The big idea for this topic is being written. It will appear here, and it will work with no signal."));
-    a.appendChild(s); show("lesson"); return;
+    var s = el("div","lsoon"); s.appendChild(el("b",null,"Coming soon."));
+    s.appendChild(document.createTextNode("The teaching notes for this topic are being written. They will appear here, and they will work with no signal."));
+    a.appendChild(s); show("lesson"); window.scrollTo(0, 0); return;
   }
   savePages(L);
-  /* four parts, one at a time: Principle, Picture it, Memory aid, Check.
-     The check hides its answer until asked, so it tests understanding. */
-  var rail = el("div","lsteps"); rail.setAttribute("aria-label","Lesson steps");
-  var stage = el("div","lstage"); stage.setAttribute("aria-live","polite");
-  var nav = el("div","lnav");
-  var prev = el("button","prev","Back"); prev.type = "button"; prev.id = "lessonPrev";
-  var next = el("button","next","Next"); next.type = "button"; next.id = "lessonNext";
-  nav.appendChild(prev); nav.appendChild(next);
-  a.appendChild(rail); a.appendChild(stage); a.appendChild(nav);
-  var at = 0, shown = false;
 
-  function para(txt, cls){ var p = el("p", cls || null, txt); stage.appendChild(p); return p; }
-  function blocks(list){
-    list.forEach(function(b){
-      if(b.hook) stage.appendChild(el("div","lhook","“" + b.hook + "”"));
-      else if(b.p) para(b.p);
-      else if(b.acro){
-        var ul = el("ul","lacro");
-        b.acro.forEach(function(r){
-          var li = el("li"); li.appendChild(el("b",null,r[0])); li.appendChild(el("span",null,r[1]));
-          if(r[2]) li.appendChild(el("small",null,r[2]));
-          ul.appendChild(li);
-        });
-        stage.appendChild(ul);
-      } else if(b.list){
-        var ul2 = el("ul","llist");
-        b.list.forEach(function(r){
-          var li = el("li");
-          if(r[0]){ li.appendChild(el("b",null,r[0])); li.appendChild(document.createTextNode(" ")); }
-          li.appendChild(document.createTextNode(r[1])); ul2.appendChild(li);
-        });
-        stage.appendChild(ul2);
-      }
+  var jump = el("nav","ljump"); jump.setAttribute("aria-label","Sections");
+  a.appendChild(jump);
+  function part(key, title, idea){
+    var sec = el("section","lpart"); sec.id = "lp-" + key;
+    var h = el("h2",null,title);
+    if(idea) h.appendChild(el("span","ltag","Teaching idea"));
+    sec.appendChild(h); a.appendChild(sec);
+    var j = el("button",null,title); j.type = "button";
+    j.addEventListener("click", function(){ sec.scrollIntoView({ behavior:"smooth", block:"start" }); });
+    jump.appendChild(j);
+    return sec;
+  }
+
+  if(L.quick){
+    var ul = el("ul","lquick");
+    L.quick.forEach(function(q){ var li = el("li"); li.appendChild(el("p",null,q.t)); li.appendChild(refChips(L, q.s)); ul.appendChild(li); });
+    part("quick","Quick take").appendChild(ul);
+  }
+  if(L.mistakes){
+    var ms = part("mistakes","Common mistakes");
+    L.mistakes.forEach(function(m){
+      var c = el("div","lmis");
+      c.appendChild(el("p","said","“" + m.m + "”"));
+      c.appendChild(el("p",null,m.fix)); c.appendChild(refChips(L, m.s));
+      ms.appendChild(c);
     });
   }
-  function paint(){
-    rail.innerHTML = "";
-    STEPS.forEach(function(name, i){
-      var b = el("button", i < at ? "past" : null); b.type = "button";
-      b.appendChild(el("i")); b.appendChild(document.createTextNode(name));
-      if(i === at) b.setAttribute("aria-current","step");
-      b.addEventListener("click", function(){ go(i); });
-      rail.appendChild(b);
-    });
-    stage.innerHTML = "";
-    stage.appendChild(el("div","k", (at + 1) + " of 4 · " + STEPS[at]));
-    var vkey = at < 3 ? String(at + 1) : (shown ? "4a" : "4q");
-    var vrow = voRow(t[1], vkey, t[0], STEPS[at] + (at === 3 ? (shown ? " · Answer" : " · Question") : ""));
-    if(vrow) stage.appendChild(vrow);
-    if(at === 0){ stage.appendChild(el("p","big",L.principle)); if(L.more) para(L.more, "more"); }
-    if(at === 1){ (Array.isArray(L.picture) ? L.picture : [L.picture]).forEach(function(x){ para(x); }); }
-    if(at === 2){ blocks(L.memory); }
-    if(at === 3){
-      stage.appendChild(el("p","lq",L.check.q));
-      if(shown){
-        var ans = el("div","lans"); ans.appendChild(el("b",null,"Answer. ")); ans.appendChild(document.createTextNode(L.check.a));
-        stage.appendChild(ans);
-      } else stage.appendChild(el("p","lthink","Work it out before you look."));
-    }
-    /* the check's sources would give the answer away: only after it is shown */
-    if(L.src && (at < 3 || shown)) drawSources(stage, L.src[at]);
-    prev.style.visibility = at === 0 ? "hidden" : "visible";
-    next.textContent = at < 3 ? "Next" : shown ? "Done" : "Show answer";
+  if(L.analogies){
+    var an = part("analogies","Analogies", true);
+    L.analogies.forEach(function(x){ an.appendChild(el("p","lanal",x)); });
   }
-  function go(i){ at = Math.max(0, Math.min(3, i)); if(at < 3) shown = false; paint(); window.scrollTo(0, 0); }
-  prev.addEventListener("click", function(){ go(at - 1); });
-  next.addEventListener("click", function(){
-    if(at < 3) go(at + 1);
-    else if(!shown){ shown = true; paint(); }
-    else { markLearned(t[1]); openLearn(true); }
+  if(L.aids){
+    var ad = part("aids","Teaching aids", true);
+    L.aids.forEach(function(x){ var c = el("div","laid"); c.appendChild(el("b",null,x.h)); c.appendChild(el("p",null,x.t)); ad.appendChild(c); });
+  }
+  if(L.scenarios){
+    var sc = part("scenarios","Scenarios");
+    L.scenarios.forEach(function(x){
+      var c = el("div","lscn");
+      c.appendChild(el("p","q",x.q));
+      var btn = el("button","show","Show answer"); btn.type = "button"; btn.setAttribute("aria-expanded","false");
+      var ans = el("div","ans"); ans.hidden = true;
+      ans.appendChild(el("p",null,x.a)); ans.appendChild(refChips(L, x.s));
+      btn.addEventListener("click", function(){
+        ans.hidden = !ans.hidden; btn.setAttribute("aria-expanded", String(!ans.hidden));
+        btn.textContent = ans.hidden ? "Show answer" : "Hide answer";
+      });
+      c.appendChild(btn); c.appendChild(ans); sc.appendChild(c);
+    });
+  }
+  /* every FAA source behind this page, then the ACS tasks it serves */
+  var res = part("res","Resources"), books = [], acs = [];
+  Object.keys(L.src).forEach(function(id){
+    var s = L.src[id];
+    if(!(LEARN.books[s.b] || {}).acs) books.push(s);
   });
-  /* a sideways swipe moves between steps */
-  var x0 = null, y0 = 0;
-  stage.addEventListener("touchstart", function(e){ x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive:true });
-  stage.addEventListener("touchend", function(e){
-    if(x0 === null) return;
-    var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
-    if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5){ if(dx < 0 && at < 3) go(at + 1); else if(dx > 0) go(at - 1); }
-  }, { passive:true });
-  paint(); show("lesson");
+  drawSources(res, books);
+  (L.acs || []).forEach(function(id){ if(L.src[id]) acs.push(L.src[id]); });
+  if(acs.length){
+    var box = el("div","lsrcs"); box.appendChild(el("div","k","ACS tasks"));
+    acs.forEach(function(s){
+      var bk = LEARN.books[s.b] || {};
+      var b = el("button","lsrc lacs"); b.type = "button";
+      b.setAttribute("aria-label", "Open " + (bk.name || s.b) + ", " + s.code + ", highlighted");
+      var r = el("div","ref"); r.appendChild(el("b",null,bk.name || s.b));
+      r.appendChild(el("span",null,"View ›")); b.appendChild(r);
+      var line = el("div","code"); line.appendChild(el("b",null,s.code)); line.appendChild(document.createTextNode(" " + s.label));
+      b.appendChild(line); b.appendChild(el("div","sec",s.sec + " · p. " + s.p));
+      b.addEventListener("click", function(){ openPage(s); });
+      box.appendChild(b);
+    });
+    res.appendChild(box);
+  }
+  if(L.checked) a.appendChild(el("p","lchecked","Checked against " + L.checked + ". Teaching ideas are an instructor’s suggestions, not FAA text."));
+  show("lesson"); window.scrollTo(0, 0);
 }
 
 function openLearn(keep){

@@ -2,13 +2,15 @@
 
     python tools/make_source_pages.py
 
-Reads app/lessons.js. For every source card it:
+Reads app/lessons.js. Checks every cited source id exists, then for every
+source card it:
   1. opens the cited page of the FAA PDF in sources/ (git-ignored),
   2. checks the printed page number and that every quote is on that page
      word for word (only the first letter's case may differ); any miss
      stops the build, so a misquote can't ship,
   3. highlights the quotes (and any extra "hl" phrases) and saves the page
-     as a JPEG in app/pages/, named by a hash of its content,
+     as a JPEG in app/pages/, named by a hash of its content; cards in one
+     topic that cite the same page share one image,
   4. writes the image name ("img") and where the highlights sit ("x", "y",
      "w": fractions of the page) back into app/lessons.js.
 Images no longer referenced are deleted.
@@ -34,6 +36,7 @@ YELLOW = (1.0, 0.86, 0.0)
 
 def norm(s):
     """Collapse whitespace, join words hyphenated across lines, unify quotes."""
+    s = s.replace("−", "-").replace("–", "-")
     s = s.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
     s = re.sub(r"([-/])\s*\n\s*", r"\1", s)
     return re.sub(r"\s+", " ", s).strip()
@@ -52,22 +55,30 @@ def main():
     docs, used, errors = {}, set(), []
 
     for code, lesson in data["lessons"].items():
-        for step, cards in enumerate(lesson.get("src", [])):
-            for card in cards:
-                where = f"{code} step {step + 1} {card['b']} p.{card['p']}"
-                book = books[card["b"]]
-                if card["b"] not in docs:
-                    docs[card["b"]] = pymupdf.open(SOURCES / book["file"])
-                page = docs[card["b"]][card["pdf"] - 1]
-                flat = norm(page.get_text())
-
+        cited = {i for part in ("quick", "mistakes", "scenarios") for item in lesson.get(part, []) for i in item.get("s", [])}
+        cited |= set(lesson.get("acs", []))
+        for missing in sorted(cited - set(lesson["src"])):
+            errors.append(f"{code}: cites source {missing!r}, which isn't defined")
+        # one picture per book page per topic, with every quote this topic
+        # takes from that page highlighted; each card still remembers where
+        # its own quote sits, so the viewer opens on it
+        groups = {}
+        for sid, card in lesson["src"].items():
+            groups.setdefault((card["b"], card["pdf"]), []).append((sid, card))
+        for (b, pdf), cards in groups.items():
+            if b not in docs:
+                docs[b] = pymupdf.open(SOURCES / books[b]["file"])
+            page = docs[b][pdf - 1]
+            flat = norm(page.get_text())
+            all_quads, placed = [], []
+            for sid, card in cards:
+                where = f"{code} {sid} {b} p.{card['p']}"
                 if not re.search(r"(^|\s)" + re.escape(card["p"]) + r"(\s|$)", flat):
-                    errors.append(f"{where}: printed page number {card['p']} not found on PDF page {card['pdf']}")
+                    errors.append(f"{where}: printed page number {card['p']} not found on PDF page {pdf}")
                 for q in card["q"]:
                     nq = norm(q)
                     if nq not in flat and (nq[0].swapcase() + nq[1:]) not in flat:
                         errors.append(f"{where}: quote not on page word for word: {q!r}")
-
                 rects = []
                 for phrase in card["q"] + card.get("hl", []):
                     quads = page.search_for(phrase, quads=True)
@@ -79,22 +90,26 @@ def main():
                     if not quads:
                         errors.append(f"{where}: could not place highlight for {phrase!r}")
                         continue
-                    page.add_highlight_annot(quads).set_colors(stroke=YELLOW)
+                    all_quads.append(quads)
                     rects += [q.rect for q in quads]
-                if not rects:
-                    continue
-
-                pix = page.get_pixmap(matrix=pymupdf.Matrix(ZOOM, ZOOM), annots=True)
-                for a in list(page.annots()):
-                    page.delete_annot(a)
-                jpg = pix.tobytes(output="jpeg", jpg_quality=JPEG_QUALITY)
-                name = f"{card['b']}-{card['pdf']}-{hashlib.sha256(jpg).hexdigest()[:10]}.jpg"
-                (PAGES / name).write_bytes(jpg)
-                used.add(name)
+                if rects:
+                    placed.append((card, rects))
+            if not placed:
+                continue
+            for quads in all_quads:
+                page.add_highlight_annot(quads).set_colors(stroke=YELLOW)
+            pix = page.get_pixmap(matrix=pymupdf.Matrix(ZOOM, ZOOM), annots=True)
+            for a in list(page.annots()):
+                page.delete_annot(a)
+            jpg = pix.tobytes(output="jpeg", jpg_quality=JPEG_QUALITY)
+            name = f"{b}-{pdf}-{hashlib.sha256(jpg).hexdigest()[:10]}.jpg"
+            (PAGES / name).write_bytes(jpg)
+            used.add(name)
+            W, H = page.rect.width, page.rect.height
+            for card, rects in placed:
                 card["img"] = "pages/" + name
-                # where the highlights sit, as fractions of the page, so the
-                # viewer can open zoomed in on them
-                W, H = page.rect.width, page.rect.height
+                # where this card's highlights sit, as fractions of the page,
+                # so the viewer can open zoomed in on them
                 x0, x1 = min(r.x0 for r in rects), max(r.x1 for r in rects)
                 card["y"] = round(min(r.y0 for r in rects) / H, 3)
                 card["x"] = round(x0 / W, 3)
