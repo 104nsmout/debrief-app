@@ -2,6 +2,21 @@
 
 One line per decision, and why.
 
+## What's New notes (2026-11-21)
+
+- Only notable updates get a note; small fixes ship silently: a note after every push trains people to dismiss it unread.
+- Shown once as a small card on the home screen, closed with ✕ (never a popup, never on grading screens): something small to read once.
+- No archive of past notes: the owner only wants a one-time read.
+- Notes ship inside the app (`app/news.js`), not in Supabase: each note arrives with the update it describes and works offline.
+- Claude drafts each note in plain language; the owner approves it on the preview with the feature.
+- Brand-new installs skip What's New: changes to an app they've never used mean nothing to them.
+- Notes are labelled by date, not version number; the app has no user-facing versions.
+- App only for now; a public changelog on cfidebrief.com can come later.
+- Headline plus at most three one-line points; if several notes were missed, only the newest shows.
+- The "New version ready" bar names the new note's headline, to give a reason to tap Reload.
+- A note may carry one button to the new feature (e.g. Open Learn).
+- The first note announces the CFI teaching library.
+
 ## Learn tab becomes a CFI teaching library (2026-11-21, supersedes the lesson format below)
 
 - Each topic is a reference page for the instructor, not a lesson for the student: CFIs are the customers, and briefing prep is the moment it gets used.

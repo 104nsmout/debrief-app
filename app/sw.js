@@ -1,7 +1,7 @@
 /* Maneuver Debrief — offline service worker.
    VERSION is injected at build time from a hash of index.html, so every
    rebuild invalidates the old cache automatically. Nothing to bump by hand. */
-var VERSION = "09d6ee5bf01e";
+var VERSION = "593e90e4e2d5";
 var CACHE   = "debrief-" + VERSION;
 /* highlighted FAA book pages: file names carry a hash of the image, so a
    saved copy is never stale and outlives app updates */
@@ -11,6 +11,7 @@ var SHELL = [
   "./",
   "./index.html",
   "./lessons.js",
+  "./news.js",
   "./manifest.webmanifest",
   "./icons/icon-180.png",
   "./icons/icon-192.png",

@@ -515,6 +515,15 @@ body.tabs .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
 .pview img{display:block;flex:none;margin:auto;width:100%;height:auto;max-width:none;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.5)}
 .pview .foot{padding:10px 16px calc(12px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line);font-size:13px;color:var(--ink-2);display:flex;gap:10px;align-items:center;justify-content:space-between}
 .pview .foot a{color:var(--go)}
+/* What's New: a small card on the home screen, read once */
+.news{position:relative;margin-bottom:13px;padding:12px 44px 13px 14px;border-radius:12px;background:var(--surface-2);border-left:3px solid var(--go)}
+.news[hidden]{display:none}
+.news .nd{font-family:var(--mono,monospace);font-size:11px;letter-spacing:1.2px;color:var(--go);text-transform:uppercase}
+.news .nt{font-family:var(--display);font-weight:700;font-size:15px;color:var(--ink);margin-top:3px}
+.news ul{margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.45;color:var(--ink-2)}
+.news li+li{margin-top:2px}
+.news .nb{margin-top:10px;min-height:38px;font-size:14px;border-color:var(--go)}
+.news .nx{position:absolute;top:4px;right:4px;width:40px;height:40px;border:0;background:none;color:var(--ink-2);font-size:18px;line-height:1;border-radius:10px}
 .pview .miss{margin:auto;padding:40px 20px;color:#ccc;font-size:15px;line-height:1.5;text-align:center}
 .lplay{display:flex;align-items:center;gap:12px;margin-top:14px;padding:8px 10px 8px 8px;border-radius:999px;
   background:var(--surface);border:1px solid var(--line)}
@@ -712,6 +721,8 @@ body.tabs .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
       </button>
     </div>
   </div>
+
+  <div class="news" id="newsBox" hidden></div>
 
   <figure class="quote" id="quoteBox">
     <div class="qmark" aria-hidden="true">&ldquo;</div>
@@ -957,6 +968,7 @@ body.tabs .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
 </div>
 
 <script src="lessons.js"></script>
+<script src="news.js"></script>
 <script>
 (function(){
 "use strict";
@@ -4670,12 +4682,53 @@ function saveDebriefImage(btn){
   });
 }
 
+/* ---------- What's New (notes in news.js) ---------- */
+var NKEY="debrief.news.v1";   /* id of the last note this phone has seen */
+function newsSeen(){ try{ return localStorage.getItem(NKEY); }catch(e){ return null; } }
+function newsDone(id){ try{ localStorage.setItem(NKEY, id); }catch(e){} }
+/* a brand-new install has nothing to catch up on: count it as up to date.
+   An existing install has saved data, or was opened before (a worker controls it). */
+(function(){
+  var n=(window.NEWS||[])[0];
+  try{
+    if(newsSeen()===null && localStorage.getItem(KEY)===null &&
+       !(navigator.serviceWorker && navigator.serviceWorker.controller)) newsDone(n ? n.id : "");
+  }catch(e){}
+})();
+function paintNews(){
+  var box=$("newsBox"), n=(window.NEWS||[])[0];
+  if(!box) return;
+  if(!n || newsSeen()===n.id){ box.hidden=true; return; }
+  var MON=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  var d=String(n.date||"").split("-");
+  function el(tag, cls, txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
+  function close(){ newsDone(n.id); box.hidden=true; }
+  box.textContent="";
+  box.appendChild(el("div","nd","What’s new"+(d.length===3 ? " · "+MON[+d[1]-1]+" "+(+d[2]) : "")));
+  box.appendChild(el("div","nt",n.title));
+  if(n.points && n.points.length){
+    var ul=el("ul");
+    for(var i=0;i<n.points.length && i<3;i++) ul.appendChild(el("li",null,n.points[i]));
+    box.appendChild(ul);
+  }
+  if(n.go==="learn" && n.btn){
+    var b=el("button","ghost nb",n.btn); b.type="button";
+    b.addEventListener("click", function(){ close(); openLearn(false); });
+    box.appendChild(b);
+  }
+  var x=el("button","nx","✕"); x.type="button"; x.setAttribute("aria-label","Close what’s new");
+  x.addEventListener("click", close);
+  box.appendChild(x);
+  box.hidden=false;
+}
+
 /* ---------- boot ---------- */
 load();
 if(S.lastLib && LIB[S.lastLib]) $("f-course").value=S.lastLib;
 libTheme();
 fillLessons(); paintSylNote();
 renderPicker(); renderHome();
+try{ paintNews(); }catch(e){}
 if(S.current && !S.current.done){
   /* keep the in-progress flight one tap away, but open on Home */
   show("home");
@@ -4736,6 +4789,21 @@ setInterval(function(){ if(!document.hidden && navigator.onLine !== false) syncN
     s.textContent = "Your flights and debriefs are kept.";
     s.style.cssText = "font-size:12.5px;color:var(--ink-2);margin-top:2px";
     sp.appendChild(t); sp.appendChild(s);
+
+    /* name what's coming: this page is still the old build, so read the new
+       build's note from the cache its worker just filled (caches list in
+       creation order, so the newest app cache is the last one) */
+    try {
+      caches.keys().then(function (keys) {
+        var k = keys.filter(function (x) { return /^debrief-[0-9a-f]{12}$/.test(x); }).pop();
+        return k && caches.open(k).then(function (c) { return c.match("news.js"); });
+      }).then(function (r) { return r && r.text(); }).then(function (txt) {
+        if (!txt) return;
+        var n = JSON.parse(txt.slice(txt.indexOf("["), txt.lastIndexOf("]") + 1))[0], seen = null;
+        try { seen = localStorage.getItem("debrief.news.v1"); } catch (e) {}
+        if (n && n.title && n.id !== seen) t.textContent = "New version ready: " + n.title;
+      }).catch(function () {});
+    } catch (e) {}
 
     var go = document.createElement("button");
     go.type = "button"; go.className = "ghost";

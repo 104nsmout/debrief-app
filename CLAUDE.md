@@ -35,6 +35,11 @@ The whole app is one ~4,600-line `index.html`: inline CSS, an early `<script>` f
 ### Service worker (`app/sw.js`)
 Stale-while-revalidate for the shell and the font/Sentry CDNs; the `debrief-audio` cache is managed by the app and must be kept on activate. **Whenever `app/index.html` (or another shell file) changes, change `VERSION` in `sw.js`** to a new 12-hex-char value (e.g. first 12 chars of `sha256sum app/index.html`). Despite the file's comment, there is no build step that does this; every app commit bumps it by hand. `app/vercel.json` makes `index.html` and `sw.js` uncached at the edge so updates land on the next launch.
 
+### What's New (`app/news.js`)
+- `window.NEWS` is a list of notes, newest first: `{id, date, title, points (max 3), go?: "learn", btn?}`. Only the first note is shown: once, as a card on the home screen (`paintNews`), until closed. The last seen id is in `debrief.news.v1`; a brand-new install is marked as up to date on first launch.
+- Only user-visible, notable changes get a note; small fixes ship without one. Add a note (new `id`) in the same commit as the feature, drafted in plain CFI-friendly language for the owner to approve on the preview.
+- The "New version ready" bar reads the new build's `news.js` from the newest `debrief-<VERSION>` cache to show its title, so keep everything after `window.NEWS =` valid JSON. `news.js` is a shell file: bump `VERSION` when it changes.
+
 ### Learn tab (CFI teaching library)
 - Topics are the `TOPICS` list in `index.html`; content is `app/lessons.js` (`window.LEARN = { books, lessons }`), keyed by topic code (e.g. `HYPX`), rendered as one scrollable page by `openLesson`. Decisions behind the format are in `docs/DECISIONS.md`.
 - A topic has `quick`, `mistakes`, `analogies`, `aids`, `scenarios`, `acs` and `src` (source cards by id: verbatim quotes, book `b`, chapter, printed page `p`, PDF page `pdf`; ACS cards add `code`/`label`). Facts cite source ids in `s`; analogies and aids are labelled teaching ideas. Facts must come only from official FAA/federal sources, and the owner (a CFI) approves each topic before it ships.
